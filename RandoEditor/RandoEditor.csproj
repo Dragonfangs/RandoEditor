@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{061FECD6-04EE-41A7-BFC9-9EB57C82B661}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>RandoEditor</RootNamespace>
+    <AssemblyName>RandoEditor</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CustomControl\TreeViewScroll.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="KeyEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="KeyEditor.Designer.cs">
+      <DependentUpon>KeyEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="KeySelector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="KeySelector.Designer.cs">
+      <DependentUpon>KeySelector.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Key\BaseKey.cs" />
+    <Compile Include="Key\ComplexKey.cs" />
+    <Compile Include="Key\KeyManager.cs" />
+    <Compile Include="Key\Requirement\ComplexRequirement.cs" />
+    <Compile Include="Key\Requirement\Requirement.cs" />
+    <Compile Include="Key\Requirement\SimpleRequirement.cs" />
+    <Compile Include="LockPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LockPanel.Designer.cs">
+      <DependentUpon>LockPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="LockPanelLogic.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="LockPanelLogic.Designer.cs">
+      <DependentUpon>LockPanelLogic.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Map\AreaMap.cs" />
+    <Compile Include="Node\NodeImageFactory.cs" />
+    <Compile Include="Node\NodeRenderer.cs" />
+    <Compile Include="Node\Connection.cs" />
+    <Compile Include="Node\PathNode.cs" />
+    <Compile Include="Node\NodeType.cs" />
+    <Compile Include="SaveData\SaveData.cs" />
+    <Compile Include="SaveData\SaveManager.cs" />
+    <Compile Include="Utils\Vector2.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\Utility.cs" />
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="KeyEditor.resx">
+      <DependentUpon>KeyEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="KeySelector.resx">
+      <DependentUpon>KeySelector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LockPanel.resx">
+      <DependentUpon>LockPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LockPanelLogic.resx">
+      <DependentUpon>LockPanelLogic.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="bin\Debug\customKeys.json" />
+    <None Include="bin\Debug\eventKeys.json" />
+    <None Include="bin\Debug\randomKeys.json" />
+    <None Include="bin\Debug\randomKeys1.json" />
+    <None Include="bin\Debug\randomKeys2.json" />
+    <None Include="bin\Debug\settingKeys.json" />
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\exclamation.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\exclamation_selected.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\KeyHole.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\KeyHole_selected.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Question.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Question_selected.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\crossroads.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\crossroads_selected.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\crossroads_carried.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\exclamation_carried.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\keyhole_carried.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\question_carried.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\brinstar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Brinstar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Chozodia.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Crateria.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Kraid.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Norfair.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Ridley.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Maps\Metroid-ZeroMission-Tourian.png" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
