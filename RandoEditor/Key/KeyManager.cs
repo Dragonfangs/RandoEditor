@@ -19,42 +19,22 @@ namespace RandoEditor.Key
 		public static void Initialize()
 		{
 			instance.LoadKeys();
-			//instance.GenerateKeys();
 		}
 
 		private void LoadKeys()
 		{
+			if(!SaveManager.Data.BasicKeys.ContainsKey("Random"))
+			{
+				GenerateKeys();
+				return;
+			}
+
 			myRandomizedKeys = SaveManager.Data.BasicKeys["Random"];
 			myEventKeys = SaveManager.Data.BasicKeys["Event"];
 			mySettingKeys = SaveManager.Data.BasicKeys["Setting"];
 
 			myCustomKeys = SaveManager.Data.CustomKeys;
 			foreach (var key in myCustomKeys.Values)
-			{
-				key.myRequirement.ConnectKeys();
-			}
-		}
-
-		private void LoadKeysOld()
-		{
-			var randomReader = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.randomKeys));
-			var text = randomReader.ReadToEnd();
-			myRandomizedKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(text);
-
-			var eventReader = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.eventKeys));
-			myEventKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(eventReader.ReadToEnd());
-
-			var settingKeys = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.settingKeys));
-			mySettingKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(settingKeys.ReadToEnd());
-
-			myCustomKeys = JsonConvert.DeserializeObject<Dictionary<Guid, ComplexKey>>(System.IO.File.ReadAllText("customKeys.json"));
-
-			if(myCustomKeys == null)
-			{
-				myCustomKeys = new Dictionary<Guid, ComplexKey>();
-			}
-
-			foreach(var key in myCustomKeys.Values)
 			{
 				key.myRequirement.ConnectKeys();
 			}

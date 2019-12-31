@@ -18,7 +18,10 @@ namespace RandoEditor.SaveData
 
 		public static void Load()
 		{
-			Data = JsonConvert.DeserializeObject<SaveData>(System.IO.File.ReadAllText(fileName));
+			if (System.IO.File.Exists(fileName))
+			{
+				Data = JsonConvert.DeserializeObject<SaveData>(System.IO.File.ReadAllText(fileName));
+			}
 		}
 
 		public static void Save()

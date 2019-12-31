@@ -131,26 +131,6 @@ namespace RandoEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] customKeys {
-            get {
-                object obj = ResourceManager.GetObject("customKeys", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] eventKeys {
-            get {
-                object obj = ResourceManager.GetObject("eventKeys", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap exclamation {
@@ -261,32 +241,12 @@ namespace RandoEditor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] randomKeys {
-            get {
-                object obj = ResourceManager.GetObject("randomKeys", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap ridley_real {
             get {
                 object obj = ResourceManager.GetObject("ridley_real", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] settingKeys {
-            get {
-                object obj = ResourceManager.GetObject("settingKeys", resourceCulture);
-                return ((byte[])(obj));
             }
         }
         
