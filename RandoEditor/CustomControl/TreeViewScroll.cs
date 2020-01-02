@@ -10,7 +10,7 @@ namespace RandoEditor.CustomControl
 		private const int SB_HORZ = 0;
 		private const int SB_VERT = 1;
 
-		[System.Runtime.InteropServices.DllImport("user32.d ll")]
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
 		private static extern int GetScrollPos(int hWnd, int nBar);
 		public int HScrollPos
 		{
@@ -37,8 +37,9 @@ namespace RandoEditor.CustomControl
 							break;
 						}
 				}
-				base.WndProc(ref m);
 			}
+
+			base.WndProc(ref m);
 		}
 	}
 }
