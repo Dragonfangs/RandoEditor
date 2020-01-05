@@ -76,12 +76,6 @@
     <Compile Include="Key\Requirement\ComplexRequirement.cs" />
     <Compile Include="Key\Requirement\Requirement.cs" />
     <Compile Include="Key\Requirement\SimpleRequirement.cs" />
-    <Compile Include="LockPanel.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="LockPanel.Designer.cs">
-      <DependentUpon>LockPanel.cs</DependentUpon>
-    </Compile>
     <Compile Include="LockPanelLogic.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -108,9 +102,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="KeySelector.resx">
       <DependentUpon>KeySelector.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="LockPanel.resx">
-      <DependentUpon>LockPanel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="LockPanelLogic.resx">
       <DependentUpon>LockPanelLogic.cs</DependentUpon>

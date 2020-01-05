@@ -68,6 +68,25 @@ namespace RandoEditor.Node
 			}
 		}
 
+		public void DrawCursorNode(Vector2 aPos, Graphics aGraphicsObj)
+		{
+			var width = nodeSize;
+			var height = nodeSize;
+
+			var nodeRectangle = new Rectangle((int)aPos.x - width / 2, (int)aPos.y - height / 2, width, height);
+
+			var panelRect = new Rectangle(new Point(0, 0), panelSize);
+			var img = myNodeImageFactory.GetNodeImage(new NodeImageFactory.NodeInfo()
+			{
+				type = NodeType.Blank,
+
+				selected = false,
+				carried = true,
+			});
+
+			aGraphicsObj.DrawImage(img, nodeRectangle);
+		}
+
 		private void DrawNode(PathNode aNode, Graphics aGraphicsObj)
 		{
 			var x = TranslateX(aNode.myPos.x);
@@ -75,7 +94,7 @@ namespace RandoEditor.Node
 			var width = nodeSize;
 			var height = nodeSize;
 
-			var nodeRectangle = new Rectangle(x - width / 2, y - width / 2, width, height);
+			var nodeRectangle = new Rectangle(x - width / 2, y - height / 2, width, height);
 
 			var panelRect = new Rectangle(new Point(0, 0), panelSize);
 			if (Utility.RectIntersect(nodeRectangle, panelRect))
@@ -91,6 +110,72 @@ namespace RandoEditor.Node
 				aGraphicsObj.DrawImage(img, nodeRectangle);
 
 				//aGraphicsObj.FillRectangle(myBrush, nodeRectangle);
+			}
+		}
+
+		public void DrawCursorOneWayConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
+		{
+			DrawCursorConnection(startNode, cursorPoint, aGraphicsObj, false);
+		}
+
+		public void DrawCursorTwoWayConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
+		{
+			DrawCursorConnection(startNode, cursorPoint, aGraphicsObj, true);
+		}
+
+		private void DrawCursorConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj, bool twoWay)
+		{
+			var startPoint = new Vector2(TranslateX(startNode.myPos.x), TranslateY(startNode.myPos.y));
+
+			var angle = Utility.AngleBetween(new Vector2(1, 0), startPoint - cursorPoint);
+
+			// Adjust connection point to the sides of node graphic rather than center
+			if (angle > -45 && angle < 45)
+			{
+				startPoint.x -= nodeSize / 2;
+			}
+			else if (angle > -135 && angle < -45)
+			{
+				startPoint.y += nodeSize / 2;
+			}
+			else if (angle > 45 && angle < 135)
+			{
+				startPoint.y -= nodeSize / 2;
+			}
+			else
+			{
+				startPoint.x += nodeSize / 2;
+			}
+
+			DrawConnection(startPoint, cursorPoint, Color.Yellow, aGraphicsObj);
+			if (twoWay)
+			{
+				DrawConnection(cursorPoint, startPoint, Color.Yellow, aGraphicsObj);
+			}
+		}
+
+		private void DrawConnection(Vector2 startPoint, Vector2 endPoint, Color aColor, Graphics aGraphicsObj)
+		{
+			var panelRect = new Rectangle(new Point(0, 0), panelSize);
+			if (Utility.LineInRect(panelRect, startPoint.ToPoint(), endPoint.ToPoint()))
+			{
+				var myPen = new Pen(aColor, nodeSize / 16);
+				aGraphicsObj.DrawLine(myPen, startPoint.ToPoint(), endPoint.ToPoint());
+
+				//Draw arrow end
+				var scale = 10f;
+				var line = (endPoint - startPoint);
+				if (line.Magnitude() > 50)
+				{
+					line = line.Normalized() * scale;
+					var line1 = Utility.Rotate(line, (float)(Math.PI * (14f / 16f)));
+					var line2 = Utility.Rotate(line, (float)(-Math.PI * (14f / 16f)));
+
+					var arrowBrush = new SolidBrush(aColor);
+					aGraphicsObj.FillPolygon(arrowBrush, new Point[3] { endPoint.ToPoint(),
+					(endPoint+line1).ToPoint(),
+					(endPoint+line2).ToPoint()});
+				}
 			}
 		}
 
@@ -126,27 +211,7 @@ namespace RandoEditor.Node
 				endPoint.x -= nodeSize / 2;
 			}
 
-			var panelRect = new Rectangle(new Point(0, 0), panelSize);
-			if (Utility.LineInRect(panelRect, startPoint.ToPoint(), endPoint.ToPoint()))
-			{
-				var myPen = new Pen(aColor, nodeSize / 16);
-				aGraphicsObj.DrawLine(myPen, startPoint.ToPoint(), endPoint.ToPoint());
-
-				//Draw arrow end
-				var scale = 10f;
-				var line = (endPoint - startPoint);
-				if (line.Magnitude() > 50)
-				{
-					line = line.Normalized() * scale;
-					var line1 = Utility.Rotate(line, (float)(Math.PI * (14f / 16f)));
-					var line2 = Utility.Rotate(line, (float)(-Math.PI * (14f / 16f)));
-
-					var arrowBrush = new SolidBrush(aColor);
-					aGraphicsObj.FillPolygon(arrowBrush, new Point[3] { endPoint.ToPoint(),
-					(endPoint+line1).ToPoint(),
-					(endPoint+line2).ToPoint()});
-				}
-			}
+			DrawConnection(startPoint, endPoint, aColor, aGraphicsObj);
 		}
 	}
 }

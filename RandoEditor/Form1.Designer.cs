@@ -46,9 +46,12 @@ namespace RandoEditor
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.lockPanelLogic1 = new RandoEditor.LockPanelLogic();
 			this.keysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.customKeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.lockPanelLogic1 = new RandoEditor.LockPanelLogic();
+			this.chkNewNode = new System.Windows.Forms.CheckBox();
+			this.chkOneWayConnection = new System.Windows.Forms.CheckBox();
+			this.chkTwoWayConnection = new System.Windows.Forms.CheckBox();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -58,9 +61,9 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.panel1.BackColor = System.Drawing.Color.Black;
-			this.panel1.Location = new System.Drawing.Point(12, 27);
+			this.panel1.Location = new System.Drawing.Point(48, 27);
 			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(608, 672);
+			this.panel1.Size = new System.Drawing.Size(572, 672);
 			this.panel1.TabIndex = 0;
 			this.panel1.SizeChanged += new System.EventHandler(this.panel1_SizeChanged);
 			this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
@@ -114,18 +117,9 @@ namespace RandoEditor
 			// saveToolStripMenuItem
 			// 
 			this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-			this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.saveToolStripMenuItem.Size = new System.Drawing.Size(98, 22);
 			this.saveToolStripMenuItem.Text = "Save";
 			this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
-			// 
-			// lockPanelLogic1
-			// 
-			this.lockPanelLogic1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.lockPanelLogic1.Location = new System.Drawing.Point(626, 54);
-			this.lockPanelLogic1.Name = "lockPanelLogic1";
-			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 632);
-			this.lockPanelLogic1.TabIndex = 5;
 			// 
 			// keysToolStripMenuItem
 			// 
@@ -138,20 +132,66 @@ namespace RandoEditor
 			// customKeysToolStripMenuItem
 			// 
 			this.customKeysToolStripMenuItem.Name = "customKeysToolStripMenuItem";
-			this.customKeysToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.customKeysToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
 			this.customKeysToolStripMenuItem.Text = "Custom keys";
 			this.customKeysToolStripMenuItem.Click += new System.EventHandler(this.customKeysToolStripMenuItem_Click);
+			// 
+			// lockPanelLogic1
+			// 
+			this.lockPanelLogic1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.lockPanelLogic1.Location = new System.Drawing.Point(626, 54);
+			this.lockPanelLogic1.Name = "lockPanelLogic1";
+			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 632);
+			this.lockPanelLogic1.TabIndex = 5;
+			// 
+			// chkNewNode
+			// 
+			this.chkNewNode.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkNewNode.Location = new System.Drawing.Point(13, 46);
+			this.chkNewNode.Name = "chkNewNode";
+			this.chkNewNode.Size = new System.Drawing.Size(29, 29);
+			this.chkNewNode.TabIndex = 6;
+			this.chkNewNode.Text = "New Node";
+			this.chkNewNode.UseVisualStyleBackColor = true;
+			this.chkNewNode.CheckedChanged += new System.EventHandler(this.chkNewNode_CheckedChanged);
+			// 
+			// chkOneWayConnection
+			// 
+			this.chkOneWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkOneWayConnection.Location = new System.Drawing.Point(13, 81);
+			this.chkOneWayConnection.Name = "chkOneWayConnection";
+			this.chkOneWayConnection.Size = new System.Drawing.Size(29, 29);
+			this.chkOneWayConnection.TabIndex = 7;
+			this.chkOneWayConnection.Text = "One-way connection";
+			this.chkOneWayConnection.UseVisualStyleBackColor = true;
+			this.chkOneWayConnection.CheckedChanged += new System.EventHandler(this.chkOneWayConnection_CheckedChanged);
+			// 
+			// chkTwoWayConnection
+			// 
+			this.chkTwoWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkTwoWayConnection.Location = new System.Drawing.Point(13, 116);
+			this.chkTwoWayConnection.Name = "chkTwoWayConnection";
+			this.chkTwoWayConnection.Size = new System.Drawing.Size(29, 29);
+			this.chkTwoWayConnection.TabIndex = 8;
+			this.chkTwoWayConnection.Text = "Two-way connection";
+			this.chkTwoWayConnection.UseVisualStyleBackColor = true;
+			this.chkTwoWayConnection.CheckedChanged += new System.EventHandler(this.chkTwoWayConnection_CheckedChanged);
 			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(822, 711);
+			this.Controls.Add(this.chkTwoWayConnection);
+			this.Controls.Add(this.chkOneWayConnection);
+			this.Controls.Add(this.chkNewNode);
 			this.Controls.Add(this.lockPanelLogic1);
 			this.Controls.Add(this.comboBoxEvent);
 			this.Controls.Add(this.comboBox1);
 			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.menuStrip1);
+			this.MinimumSize = new System.Drawing.Size(700, 400);
 			this.Name = "Form1";
 			this.Text = "Form1";
 			this.menuStrip1.ResumeLayout(false);
@@ -172,6 +212,9 @@ namespace RandoEditor
 		private LockPanelLogic lockPanelLogic1;
 		private ToolStripMenuItem keysToolStripMenuItem;
 		private ToolStripMenuItem customKeysToolStripMenuItem;
+		private CheckBox chkNewNode;
+		private CheckBox chkOneWayConnection;
+		private CheckBox chkTwoWayConnection;
 	}
 }
 

@@ -15,6 +15,14 @@ namespace RandoEditor
 {
     public partial class Form1 : Form
     {
+		private enum PointerState
+		{
+			None = 0,
+			Place,
+			OneWay,
+			TwoWay,
+		}
+
 		private AreaMap myMap = new AreaMap();
 		private NodeRenderer myNodeRenderer = new NodeRenderer();
         private List<PathNode> myNodes = new List<PathNode>();
@@ -25,16 +33,21 @@ namespace RandoEditor
 		private Vector2 mapPickedUpPos = new Vector2(0,0);
 		private bool carriedMap = false;
 
+		private Vector2 mousePos = new Vector2(0, 0);
+
 		private Vector2 selectedOffset = null;
 				
 		private float baseZoomScale = 0.1f;
 		private float ZoomScale { get { return baseZoomScale * (Utility.CalcDiag(panel1.Width, panel1.Height) / 1000f); } set { baseZoomScale = value; } }
+
+		private PointerState myPointerState = PointerState.None;
 
         public Form1()
         {
             InitializeComponent();
 
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
+			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
 
 			comboBox1.DataSource = Enum.GetValues(typeof(NodeType));
 			comboBox1.Enabled = false;
@@ -96,6 +109,11 @@ namespace RandoEditor
 			}
 		}
 
+		private Vector2 TranslateVector(Vector2 v)
+		{
+			return new Vector2(TranslateX(v.x), TranslateY(v.y));
+		}
+
 		private int TranslateX(float x)
         {
             return (int) ((imageBasePos.x + x) * ZoomScale);
@@ -120,7 +138,7 @@ namespace RandoEditor
 			var panelRect = new Rectangle(new Point(0,0), panel1.Size);
 			myMap.Draw(imageBasePos, ZoomScale, graphicsObj, panelRect);
 
-			//DrawDebugMessage($"{ZoomScale}", graphicsObj);
+			//DrawDebugMessage($"{myPointerState}", graphicsObj);
 
 			myNodeRenderer.BasePos = imageBasePos;
 			myNodeRenderer.Zoom = ZoomScale;
@@ -129,13 +147,66 @@ namespace RandoEditor
 			myNodeRenderer.panelSize = panel1.Size;
 
 			myNodeRenderer.RenderNodes(myNodes, graphicsObj);
+
+			//Draw cursor
+			if (myPointerState == PointerState.Place)
+			{
+				myNodeRenderer.DrawCursorNode(mousePos, graphicsObj);
+			}
+			else if(myPointerState == PointerState.OneWay && selectedNode != null)
+			{
+				myNodeRenderer.DrawCursorOneWayConnection(selectedNode, mousePos, graphicsObj);
+			}
+			else if (myPointerState == PointerState.TwoWay && selectedNode != null)
+			{
+				myNodeRenderer.DrawCursorTwoWayConnection(selectedNode, mousePos, graphicsObj);
+			}
+		}
+
+		private void UpdatePointerState()
+		{
+			if (chkNewNode.Checked)
+			{
+				myPointerState = PointerState.Place;
+			}
+			else if (chkTwoWayConnection.Checked)
+			{
+				myPointerState = PointerState.TwoWay;
+			}
+			else if (chkOneWayConnection.Checked)
+			{
+				myPointerState = PointerState.OneWay;
+			}
+			else if (ModifierKeys == Keys.Control)
+			{
+				myPointerState = PointerState.Place;
+			}
+			else if (ModifierKeys == Keys.Shift)
+			{
+				myPointerState = PointerState.TwoWay;
+			}
+			else if (ModifierKeys == Keys.Alt)
+			{
+				myPointerState = PointerState.OneWay;
+			}
+			else
+			{
+				myPointerState = PointerState.None;
+			}
+		}
+
+		private void UncheckStateBoxes()
+		{
+			chkNewNode.Checked = false;
+			chkTwoWayConnection.Checked = false;
+			chkOneWayConnection.Checked = false;
 		}
 
 		private void panel1_MouseDown(object sender, MouseEventArgs e)
 		{
 			var mousePos = new Vector2(e.X, e.Y);
 			PathNode newNode = null;
-			if (ModifierKeys == Keys.Control)
+			if (myPointerState == PointerState.Place)
 			{
 				newNode = new PathNode();
 
@@ -149,6 +220,7 @@ namespace RandoEditor
 				selectedOffset = new Vector2(0, 0);
 
 				UpdateNodeSettings();
+				UncheckStateBoxes();
 			}
 			else
 			{
@@ -157,53 +229,58 @@ namespace RandoEditor
 				
 				foreach (var node in myNodes)
 				{
-					var screenSpaceNodePos = new Vector2(TranslateX(node.myPos.x), TranslateY(node.myPos.y));
+					var screenSpaceNodePos = TranslateVector(node.myPos);
 
 					if (mousePos.x > (screenSpaceNodePos.x - width / 2) && mousePos.y > (screenSpaceNodePos.y - height / 2) &&
 						mousePos.x < (screenSpaceNodePos.x + width / 2) && mousePos.y < (screenSpaceNodePos.y + height / 2))
 					{
 						newNode = node;
-						selectedOffset = (mousePos - screenSpaceNodePos) / ZoomScale;
 						break;
 					}
 				}
 
 				if (newNode != null)
 				{
-					if (ModifierKeys == Keys.Shift)
+					if (myPointerState == PointerState.TwoWay && selectedNode != null)
 					{
-						if (selectedNode != null)
+						if (selectedNode.myConnections.Contains(newNode) && newNode.myConnections.Contains(selectedNode))
 						{
-							if (!selectedNode.myConnections.Contains(newNode) && !newNode.myConnections.Contains(selectedNode))
-							{
-								selectedNode.CreateConnection(newNode);
-								newNode.CreateConnection(selectedNode);
-							}
-							else
-							{
-								selectedNode.RemoveConnection(newNode);
-								newNode.RemoveConnection(selectedNode);
-							}
+							selectedNode.RemoveConnection(newNode);
+							newNode.RemoveConnection(selectedNode);
 						}
-					}
-					else if (ModifierKeys == Keys.Alt)
-					{
-						if (selectedNode != null)
+						else
 						{
 							if (!selectedNode.myConnections.Contains(newNode))
 							{
 								selectedNode.CreateConnection(newNode);
 							}
-							else
+							if (!newNode.myConnections.Contains(selectedNode))
 							{
-								selectedNode.RemoveConnection(newNode);
+								newNode.CreateConnection(selectedNode);
 							}
 						}
+
+						UncheckStateBoxes();
+					}
+					else if (myPointerState == PointerState.OneWay && selectedNode != null)
+					{
+						if (!selectedNode.myConnections.Contains(newNode))
+						{
+							selectedNode.CreateConnection(newNode);
+						}
+						else
+						{
+							selectedNode.RemoveConnection(newNode);
+						}
+
+						UncheckStateBoxes();
 					}
 					else
 					{
 						carriedNode = newNode;
 						selectedNode = newNode;
+						
+						selectedOffset = (mousePos - TranslateVector(newNode.myPos)) / ZoomScale;
 
 						UpdateNodeSettings();
 					}
@@ -242,7 +319,7 @@ namespace RandoEditor
 
 		private void panel1_MouseMove(object sender, MouseEventArgs e)
 		{
-			var mousePos = new Vector2(e.X, e.Y);
+			mousePos = new Vector2(e.X, e.Y);
 
 			if (carriedNode != null)
 			{
@@ -253,7 +330,9 @@ namespace RandoEditor
 			{
 				imageBasePos = (mousePos / ZoomScale) - selectedOffset;
 			}
-			
+
+			UpdatePointerState();
+
 			Refresh();
 		}
 
@@ -275,6 +354,10 @@ namespace RandoEditor
 		private void panel1_MouseHover(object sender, EventArgs e)
 		{
 			panel1.Focus();
+
+			UpdatePointerState();
+
+			Refresh();
 		}
 
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -325,6 +408,17 @@ namespace RandoEditor
 					Refresh();
 				}
 			}
+
+			UpdatePointerState();
+
+			Refresh();
+		}
+
+		private void panel1_KeyUp(object sender, KeyEventArgs e)
+		{
+			UpdatePointerState();
+
+			Refresh();
 		}
 
 		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
@@ -341,6 +435,42 @@ namespace RandoEditor
 
 			if(lockPanelLogic1.Visible)
 				lockPanelLogic1.RefreshNode();
+		}
+
+		private void chkNewNode_CheckedChanged(object sender, EventArgs e)
+		{
+			if (chkNewNode.Checked)
+			{
+				chkTwoWayConnection.Checked = false;
+				chkOneWayConnection.Checked = false;
+			}
+
+			UpdatePointerState();
+			Refresh();
+		}
+
+		private void chkOneWayConnection_CheckedChanged(object sender, EventArgs e)
+		{
+			if (chkOneWayConnection.Checked)
+			{
+				chkNewNode.Checked = false;
+				chkTwoWayConnection.Checked = false;
+			}
+
+			UpdatePointerState();
+			Refresh();
+		}
+
+		private void chkTwoWayConnection_CheckedChanged(object sender, EventArgs e)
+		{
+			if (chkTwoWayConnection.Checked)
+			{
+				chkNewNode.Checked = false;
+				chkOneWayConnection.Checked = false;
+			}
+
+			UpdatePointerState();
+			Refresh();
 		}
 	}
 }
