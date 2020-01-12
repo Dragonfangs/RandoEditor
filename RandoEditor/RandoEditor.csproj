@@ -132,6 +132,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Resources\defaultEventKeys.json" />
+    <None Include="Resources\defaultRandomKeys.json" />
+    <None Include="Resources\defaultSettingKeys.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

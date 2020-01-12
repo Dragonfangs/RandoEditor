@@ -40,7 +40,7 @@ namespace RandoEditor.Node
 
 			if (myNodeType == NodeType.EventKey)
 			{
-				myEventKeyId = Guid.Empty;
+				myEventKeyId = null;
 			}
 
 			myNodeType = aNodeType;
@@ -77,7 +77,7 @@ namespace RandoEditor.Node
 			}
 		}
 
-		public Guid myEventKeyId;
+		public Guid? myEventKeyId;
 		[NonSerialized]
 		public BaseKey myEventKey;
 
@@ -85,12 +85,16 @@ namespace RandoEditor.Node
 		{
 			myEventKey = key;
 
-			myEventKeyId = key?.Id ?? Guid.Empty;
+			myEventKeyId = key?.Id;
 		}
 
 		public void ConnectKeys()
 		{
-			myEventKey = KeyManager.GetKey(id);
+			if (myEventKeyId.HasValue)
+			{
+				myEventKey = KeyManager.GetKey(myEventKeyId.Value);
+			}
+
 			myRequirement.ConnectKeys();
 		}
 

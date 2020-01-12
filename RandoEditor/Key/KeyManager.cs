@@ -25,7 +25,7 @@ namespace RandoEditor.Key
 		{
 			if(!SaveManager.Data.BasicKeys.ContainsKey("Random"))
 			{
-				GenerateKeys();
+				SetDefaultKeys();
 				return;
 			}
 
@@ -38,6 +38,18 @@ namespace RandoEditor.Key
 			{
 				key.myRequirement.ConnectKeys();
 			}
+		}
+
+		private void SetDefaultKeys()
+		{
+			var randomReader = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.defaultRandomKeys));
+			myRandomizedKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(randomReader.ReadToEnd());
+
+			var eventReader = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.defaultEventKeys));
+			myEventKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(eventReader.ReadToEnd());
+
+			var settingKeys = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.defaultSettingKeys));
+			mySettingKeys = JsonConvert.DeserializeObject<Dictionary<Guid, BaseKey>>(settingKeys.ReadToEnd());
 		}
 
 		// Don't use this, only for debug purposes

@@ -139,6 +139,15 @@
   <data name="crossroads_selected" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\crossroads_selected.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="defaultEventKeys" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\defaultEventKeys.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="defaultRandomKeys" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\defaultRandomKeys.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="defaultSettingKeys" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\defaultSettingKeys.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="exclamation" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\exclamation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
