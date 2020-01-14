@@ -20,6 +20,9 @@ namespace RandoEditor.Utils
 		/// <returns>The resized image.</returns>
 		public static Bitmap ResizeImage(Image image, int width, int height)
 		{
+			if (width < 1 || height < 1)
+				return null;
+
 			var destRect = new Rectangle(0, 0, width, height);
 			var destImage = new Bitmap(width, height);
 

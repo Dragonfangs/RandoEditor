@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,6 +22,12 @@ namespace RandoEditor.Utils
 		{
 			x = otherVector.x;
 			y = otherVector.y;
+		}
+
+		public Vector2(Point aPoint)
+		{
+			x = aPoint.X;
+			y = aPoint.Y;
 		}
 
 		public static Vector2 operator +(Vector2 v1, Vector2 v2)
