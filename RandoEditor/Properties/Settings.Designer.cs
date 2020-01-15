@@ -22,5 +22,29 @@ namespace RandoEditor.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool SimpleNodeGraphics {
+            get {
+                return ((bool)(this["SimpleNodeGraphics"]));
+            }
+            set {
+                this["SimpleNodeGraphics"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int MapQuality {
+            get {
+                return ((int)(this["MapQuality"]));
+            }
+            set {
+                this["MapQuality"] = value;
+            }
+        }
     }
 }

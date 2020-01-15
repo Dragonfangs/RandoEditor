@@ -102,5 +102,35 @@ namespace RandoEditor.Node
 
 			return null;
 		}
+
+		public Color GetNodeColor(NodeInfo info)
+		{
+			if (info.carried)
+				return Color.Black;
+			if (info.selected)
+				return Color.Yellow;
+
+			if (info.type == NodeType.Blank)
+			{
+				return Color.Gray;
+			}
+
+			if (info.type == NodeType.RandomKey)
+			{
+				return Color.Green;
+			}
+
+			if (info.type == NodeType.EventKey)
+			{
+				return Color.Blue;
+			}
+
+			if (info.type == NodeType.Lock)
+			{
+				return Color.Red;
+			}
+
+			return Color.Gray;
+		}
 	}
 }

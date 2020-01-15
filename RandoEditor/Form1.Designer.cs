@@ -52,6 +52,7 @@ namespace RandoEditor
 			this.chkNewNode = new System.Windows.Forms.CheckBox();
 			this.chkOneWayConnection = new System.Windows.Forms.CheckBox();
 			this.chkTwoWayConnection = new System.Windows.Forms.CheckBox();
+			this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -99,7 +100,8 @@ namespace RandoEditor
 			// 
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.keysToolStripMenuItem});
+            this.keysToolStripMenuItem,
+            this.settingsToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
 			this.menuStrip1.Size = new System.Drawing.Size(822, 24);
@@ -178,6 +180,13 @@ namespace RandoEditor
 			this.chkTwoWayConnection.UseVisualStyleBackColor = true;
 			this.chkTwoWayConnection.CheckedChanged += new System.EventHandler(this.chkTwoWayConnection_CheckedChanged);
 			// 
+			// settingsToolStripMenuItem
+			// 
+			this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+			this.settingsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+			this.settingsToolStripMenuItem.Text = "Settings";
+			this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -215,6 +224,7 @@ namespace RandoEditor
 		private CheckBox chkNewNode;
 		private CheckBox chkOneWayConnection;
 		private CheckBox chkTwoWayConnection;
+		private ToolStripMenuItem settingsToolStripMenuItem;
 	}
 }
 

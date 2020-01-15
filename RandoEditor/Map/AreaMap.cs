@@ -12,8 +12,6 @@ namespace RandoEditor.Map
 {
 	public class AreaMap
 	{
-		private float imageCompression = 1.5f;
-
 		private class LODLevel
 		{
 			public float Diagonal;
@@ -109,7 +107,15 @@ namespace RandoEditor.Map
 		{
 			var rectDiag = Utility.CalcDiag(aSize.Width, aSize.Height);
 
-			var applicableLODs = anArea.LODs.Where(lod => lod.Diagonal > (rectDiag / imageCompression));
+			//10 is Max quality, maybe save this as not a magic number somewhere?
+			var maxQuality = 10f;
+			var maxScale = 7f;
+			var scale = maxScale / maxQuality;
+			float invertedQualitySetting = maxQuality - (int)Properties.Settings.Default["MapQuality"];
+
+			var compressionScale = 1 + (invertedQualitySetting * scale);
+
+			var applicableLODs = anArea.LODs.Where(lod => lod.Diagonal > (rectDiag / compressionScale));
 			if (!applicableLODs.Any())
 			{
 				return anArea.LODs.First().Image;

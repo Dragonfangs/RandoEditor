@@ -99,17 +99,27 @@ namespace RandoEditor.Node
 			var panelRect = new Rectangle(new Point(0, 0), panelSize);
 			if (Utility.RectIntersect(nodeRectangle, panelRect))
 			{
-				var img = myNodeImageFactory.GetNodeImage(new NodeImageFactory.NodeInfo()
+				var nodeInfo = new NodeImageFactory.NodeInfo()
 				{
 					type = aNode.myNodeType,
 
 					selected = aNode.id == selectedNodeId,
 					carried = aNode.id == carriedNodeId,
-				});
+				};
 
-				aGraphicsObj.DrawImage(img, nodeRectangle);
+				if ((bool)Properties.Settings.Default["SimpleNodeGraphics"])
+				{
+					var color = myNodeImageFactory.GetNodeColor(nodeInfo);
 
-				//aGraphicsObj.FillRectangle(myBrush, nodeRectangle);
+					var brush = new SolidBrush(color);
+					aGraphicsObj.FillRectangle(brush, nodeRectangle);
+				}
+				else
+				{
+					var img = myNodeImageFactory.GetNodeImage(nodeInfo);
+
+					aGraphicsObj.DrawImage(img, nodeRectangle);
+				}
 			}
 		}
 

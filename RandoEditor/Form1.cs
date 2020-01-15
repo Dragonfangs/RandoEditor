@@ -437,6 +437,13 @@ namespace RandoEditor
 				lockPanelLogic1.RefreshNode();
 		}
 
+		private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			new SettingsForm().ShowDialog();
+
+			Refresh();
+		}
+
 		private void chkNewNode_CheckedChanged(object sender, EventArgs e)
 		{
 			if (chkNewNode.Checked)
