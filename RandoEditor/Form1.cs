@@ -57,6 +57,9 @@ namespace RandoEditor
 			comboBoxEvent.Enabled = false;
 			comboBoxEvent.Visible = false;
 
+			txtRandomId.Enabled = false;
+			txtRandomId.Visible = false;
+
 			lockPanelLogic1.Enabled = false;
 			lockPanelLogic1.Visible = false;
 
@@ -96,6 +99,12 @@ namespace RandoEditor
 
 				comboBoxEvent.Enabled = (selectedNode.myNodeType == NodeType.EventKey);
 				comboBoxEvent.Visible = (selectedNode.myNodeType == NodeType.EventKey);
+
+				if (selectedNode.myNodeType == NodeType.RandomKey)
+					txtRandomId.Text = selectedNode.myRandomKeyIdentifier;
+
+				txtRandomId.Enabled = (selectedNode.myNodeType == NodeType.RandomKey);
+				txtRandomId.Visible = (selectedNode.myNodeType == NodeType.RandomKey);
 			}
 			else
 			{
@@ -103,7 +112,10 @@ namespace RandoEditor
 
 				comboBoxEvent.Visible = false;
 				comboBoxEvent.Enabled = false;
-
+				
+				txtRandomId.Enabled = false;
+				txtRandomId.Visible = false;
+				
 				lockPanelLogic1.Visible = false;
 				lockPanelLogic1.Enabled = false;
 			}
@@ -378,8 +390,14 @@ namespace RandoEditor
 			if (selectedNode != null)
 			{
 				selectedNode.SetEventKey((BaseKey)comboBoxEvent.SelectedItem);
-
-				UpdateNodeSettings();
+			}
+		}
+		
+		private void txtRandomId_TextChanged(object sender, EventArgs e)
+		{
+			if (selectedNode != null)
+			{
+				selectedNode.myRandomKeyIdentifier = txtRandomId.Text;
 			}
 		}
 

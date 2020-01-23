@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-using RandoEditor.Key;
-using RandoEditor.Utils;
-using RandoEditor.Key.Requirement;
+using Verifier.Key;
+using Verifier.Key.Requirement;
 
-namespace RandoEditor.Node
+namespace Verifier.Node
 {
 	[Serializable]
 	public class PathNode
@@ -21,8 +18,6 @@ namespace RandoEditor.Node
 		public Guid id;
 
 		public NodeType myNodeType;
-
-		public Vector2 myPos;
 
 		public List<Guid> myConnectionIds = new List<Guid>();
 		[NonSerialized]
@@ -59,46 +54,32 @@ namespace RandoEditor.Node
 			}
 		}
 
-		public void CreateConnection(PathNode otherNode)
-		{
-			if (!myConnectionIds.Contains(otherNode.id))
-			{
-				myConnectionIds.Add(otherNode.id);
-				myConnections.Add(otherNode);
-			}
-		}
-
-		public void RemoveConnection(PathNode otherNode)
-		{
-			if (myConnectionIds.Contains(otherNode.id))
-			{
-				myConnectionIds.Remove(otherNode.id);
-				myConnections.Remove(otherNode);
-			}
-		}
-
 		public Guid? myEventKeyId;
 		[NonSerialized]
-		public BaseKey myEventKey;
+		public BaseKey myKey;
 
 		public void SetEventKey(BaseKey key)
 		{
-			myEventKey = key;
+			myKey = key;
 
 			myEventKeyId = key?.Id;
 		}
+
+		public string myRandomKeyIdentifier;
 
 		public void ConnectKeys()
 		{
 			if (myEventKeyId.HasValue)
 			{
-				myEventKey = KeyManager.GetKey(myEventKeyId.Value);
+				myKey = KeyManager.GetKey(myEventKeyId.Value);
+			}
+			else if (!String.IsNullOrEmpty(myRandomKeyIdentifier))
+			{
+				myKey = KeyManager.GetMappedRandomKey(myRandomKeyIdentifier);
 			}
 
 			myRequirement.ConnectKeys();
 		}
-
-		public string myRandomKeyIdentifier;
 
 		public ComplexRequirement myRequirement = new ComplexRequirement();
 	}

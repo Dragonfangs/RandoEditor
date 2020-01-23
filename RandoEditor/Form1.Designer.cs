@@ -53,6 +53,7 @@ namespace RandoEditor
 			this.chkOneWayConnection = new System.Windows.Forms.CheckBox();
 			this.chkTwoWayConnection = new System.Windows.Forms.CheckBox();
 			this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.txtRandomId = new System.Windows.Forms.TextBox();
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -187,11 +188,20 @@ namespace RandoEditor
 			this.settingsToolStripMenuItem.Text = "Settings";
 			this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
 			// 
+			// txtRandomId
+			// 
+			this.txtRandomId.Location = new System.Drawing.Point(626, 55);
+			this.txtRandomId.Name = "txtRandomId";
+			this.txtRandomId.Size = new System.Drawing.Size(189, 20);
+			this.txtRandomId.TabIndex = 9;
+			this.txtRandomId.TextChanged += new System.EventHandler(this.txtRandomId_TextChanged);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(822, 711);
+			this.Controls.Add(this.txtRandomId);
 			this.Controls.Add(this.chkTwoWayConnection);
 			this.Controls.Add(this.chkOneWayConnection);
 			this.Controls.Add(this.chkNewNode);
@@ -225,6 +235,7 @@ namespace RandoEditor
 		private CheckBox chkOneWayConnection;
 		private CheckBox chkTwoWayConnection;
 		private ToolStripMenuItem settingsToolStripMenuItem;
+		private TextBox txtRandomId;
 	}
 }
 
