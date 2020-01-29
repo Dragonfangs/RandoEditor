@@ -40,13 +40,13 @@ namespace Verifier
 				if (PathExists(startNode, endNode, anInventory))
 					return true;
 
-				var reachableKeys = keyNodes.Where(node => !anInventory.myKeys.Contains(node.myKey)).Where(node => PathExists(startNode, node, anInventory)).ToList();
+				var reachableKeys = keyNodes.Where(node => !anInventory.myNodes.Contains(node)).Where(node => PathExists(startNode, node, anInventory)).ToList();
 
-				var retracableKeys = reachableKeys.Where(node => PathExists(node, startNode, anInventory.Expand(node.myKey))).Select(node => node.myKey).ToList();
+				var retracableKeys = reachableKeys.Where(node => PathExists(node, startNode, anInventory.Expand(node))).ToList();
 
 				if (retracableKeys.Any())
 				{
-					anInventory.myKeys.AddRange(retracableKeys);
+					anInventory.myNodes.AddRange(retracableKeys);
 				}
 				else
 				{

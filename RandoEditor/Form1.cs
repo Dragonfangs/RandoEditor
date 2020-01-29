@@ -308,7 +308,7 @@ namespace RandoEditor
 				selectedOffset = (mousePos / ZoomScale) - imageBasePos;
 			}
 
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void panel1_MouseUp(object sender, MouseEventArgs e)
@@ -325,8 +325,8 @@ namespace RandoEditor
 
 			carriedNode = null;
 			carriedMap = false;
-			
-			Refresh();
+
+			panel1.Refresh();
 		}
 
 		private void panel1_MouseMove(object sender, MouseEventArgs e)
@@ -345,7 +345,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void panel1_MouseWheel(object sender, MouseEventArgs e)
@@ -359,7 +359,7 @@ namespace RandoEditor
 				var newZoomScale = ZoomScale;
 
 				imageBasePos = imageBasePos + ((mousePos / newZoomScale) - (mousePos / oldZoomScale));
-				Refresh();
+				panel1.Refresh();
 			}
 		}
 
@@ -369,7 +369,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -423,20 +423,20 @@ namespace RandoEditor
 
 					UpdateNodeSettings();
 
-					Refresh();
+					panel1.Refresh();
 				}
 			}
 
 			UpdatePointerState();
 
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void panel1_KeyUp(object sender, KeyEventArgs e)
 		{
 			UpdatePointerState();
 
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
@@ -471,7 +471,7 @@ namespace RandoEditor
 			}
 
 			UpdatePointerState();
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void chkOneWayConnection_CheckedChanged(object sender, EventArgs e)
@@ -483,7 +483,7 @@ namespace RandoEditor
 			}
 
 			UpdatePointerState();
-			Refresh();
+			panel1.Refresh();
 		}
 
 		private void chkTwoWayConnection_CheckedChanged(object sender, EventArgs e)
@@ -495,7 +495,7 @@ namespace RandoEditor
 			}
 
 			UpdatePointerState();
-			Refresh();
+			panel1.Refresh();
 		}
 	}
 }

@@ -32,7 +32,7 @@ namespace RandoEditor.SaveData
 
 		public static void Save()
 		{
-			System.IO.File.WriteAllText(fileName, JsonConvert.SerializeObject(Data));
+			System.IO.File.WriteAllText(fileName, JsonConvert.SerializeObject(Data, Formatting.Indented));
 		}
 
 		private static void HandleVersionUpdate()

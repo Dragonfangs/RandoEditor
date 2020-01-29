@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Verifier.Node;
 
 namespace Verifier.Key
 {
@@ -6,21 +7,21 @@ namespace Verifier.Key
 	{
 		public Inventory()
 		{
-			myKeys = new List<BaseKey>();
+			myNodes = new List<PathNode>();
 		}
 
 		public Inventory(Inventory other)
 		{
-			myKeys = new List<BaseKey>(other.myKeys);
+			myNodes = new List<PathNode>(other.myNodes);
 		}
 
-		public Inventory Expand(BaseKey key)
+		public Inventory Expand(PathNode key)
 		{
 			var newInv = new Inventory(this);
-			newInv.myKeys.Add(key);
+			newInv.myNodes.Add(key);
 			return newInv;
 		}
 
-		public List<BaseKey> myKeys;
+		public List<PathNode> myNodes;
 	}
 }

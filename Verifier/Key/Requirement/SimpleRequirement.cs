@@ -25,6 +25,8 @@ namespace Verifier.Key.Requirement
 		{
 		}
 
+		public uint myRepeatCount = 1;
+
 		public Guid myKeyId;
 		[NonSerialized]
 		public BaseKey myKey;
@@ -36,7 +38,7 @@ namespace Verifier.Key.Requirement
 
 		public override bool Unlocked(Inventory anInventory)
 		{
-			return anInventory.myKeys.Contains(myKey);
+			return anInventory.myNodes.Count(node => node.myKey == myKey) >= myRepeatCount;
 		}
 	}
 }

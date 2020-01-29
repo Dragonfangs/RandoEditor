@@ -16,7 +16,9 @@ namespace RandoEditor
 				:base()
 			{
 				Tag = req;
-				
+
+				m_ComboBox.Tag = this;
+
 				m_ComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 
 				m_ComboBox.Items.AddRange(((RequirementType[])Enum.GetValues(typeof(RequirementType))).Select(x => RequirementTypeConverter.Convert(x)).ToArray());
@@ -46,7 +48,9 @@ namespace RandoEditor
 			public AddingTreeNode(Requirement req)
 				: base()
 			{
+				btnAddComplex.Tag = this;
 				btnAddComplex.Text = "Complex";
+				btnAddSimple.Tag = this;
 				btnAddSimple.Text = "Simple";
 
 				Tag = req;
@@ -62,6 +66,19 @@ namespace RandoEditor
 				: base(req.myKey.Name)
 			{
 				Tag = req;
+
+				if (req.myKey?.Repeatable == true)
+				{
+					Text = $"          {req.myKey.Name}";
+
+					m_NumericUpDown.Tag = this;
+
+					m_NumericUpDown.Minimum = 1;
+					m_NumericUpDown.Maximum = 9;
+					m_NumericUpDown.Increment = 1;
+
+					m_NumericUpDown.Value = req.myRepeatCount;
+				}
 			}
 
 			public KeyTreeNode(ComplexRequirement req)
@@ -71,6 +88,15 @@ namespace RandoEditor
 			}
 
 			public bool Deletable { get; set; } = true;
+
+			private NumericUpDown m_NumericUpDown = new NumericUpDown();
+			public NumericUpDown NumericUpDown
+			{
+				get
+				{
+					return m_NumericUpDown;
+				}
+			}
 		}
 
 		public class SeparatorTreeNode : TreeNode
@@ -223,7 +249,7 @@ namespace RandoEditor
 			if (req == null)
 				return;
 
-			var nodesThatShouldHaveSeparator = aNode.Nodes.Cast<TreeNode>().Where(node => node != aNode.LastNode).ToList();
+			var nodesThatShouldHaveSeparator = aNode.Nodes.Cast<TreeNode>().Take(aNode.Nodes.Count - 2).ToList();
 			foreach (TreeNode node in nodesThatShouldHaveSeparator)
 			{
 				aNode.Nodes.Insert(node.Index + 1, new SeparatorTreeNode(req.myType));
@@ -239,17 +265,21 @@ namespace RandoEditor
 		{
 			foreach (TreeNode node in collection)
 			{
+				if (node is KeyTreeNode keyTreeNode)
+				{
+					if (keyTreeNode.Tag is SimpleRequirement req && req.myKey?.Repeatable == true)
+					{
+						treeView1.Controls.Add(keyTreeNode.NumericUpDown);
+
+						keyTreeNode.NumericUpDown.ValueChanged += new EventHandler(NumericUpDown_ValueChanged);
+
+						keyTreeNode.NumericUpDown.Show();
+					}
+				}
+
 				if (node is DropDownTreeNode dropDownNode)
 				{
 					treeView1.Controls.Add(dropDownNode.ComboBox);
-
-					dropDownNode.ComboBox.Tag = node;
-
-					dropDownNode.ComboBox.SetBounds(
-						dropDownNode.Bounds.X,
-						dropDownNode.Bounds.Y,
-						dropDownNode.Bounds.Width+50,
-						dropDownNode.Bounds.Height);
 
 					dropDownNode.ComboBox.SelectedValueChanged += new EventHandler(ComboBox_SelectedValueChanged);
 					dropDownNode.ComboBox.KeyDown += new KeyEventHandler(ComboBox_KeyDown);
@@ -262,21 +292,6 @@ namespace RandoEditor
 					treeView1.Controls.Add(addingNode.btnAddComplex);
 					treeView1.Controls.Add(addingNode.btnAddSimple);
 
-					addingNode.btnAddComplex.Tag = node;
-					addingNode.btnAddSimple.Tag = node;
-
-					addingNode.btnAddComplex.SetBounds(
-						addingNode.Bounds.X,
-						addingNode.Bounds.Y,
-						20,
-						addingNode.Bounds.Height);
-
-					addingNode.btnAddSimple.SetBounds(
-						addingNode.btnAddComplex.Bounds.X + addingNode.btnAddComplex.Bounds.Width + 5,
-						addingNode.Bounds.Y,
-						20,
-						addingNode.Bounds.Height);
-
 					addingNode.Text = "                  ";
 					addingNode.btnAddComplex.Click += new EventHandler(btnAddComplex_Clicked);
 					addingNode.btnAddSimple.Click += new EventHandler(btnAddSimple_Clicked);
@@ -288,6 +303,8 @@ namespace RandoEditor
 				if (node.IsExpanded)
 					ShowControls(node.Nodes);
 			}
+
+			UpdateControls();
 		}
 
 		private void HideControls()
@@ -299,6 +316,15 @@ namespace RandoEditor
 		{
 			foreach (TreeNode node in collection)
 			{
+				if (node is KeyTreeNode keyTreeNode)
+				{
+					keyTreeNode.NumericUpDown.ValueChanged -= NumericUpDown_ValueChanged;
+					
+					keyTreeNode.NumericUpDown.Hide();
+
+					treeView1.Controls.Remove(keyTreeNode.NumericUpDown);
+				}
+
 				if (node is DropDownTreeNode dropDownNode)
 				{
 					dropDownNode.ComboBox.SelectedValueChanged -= ComboBox_SelectedValueChanged;
@@ -336,6 +362,15 @@ namespace RandoEditor
 		{
 			foreach (TreeNode node in collection)
 			{
+				if (node is KeyTreeNode keyTreeNode)
+				{
+					keyTreeNode.NumericUpDown.SetBounds(
+						keyTreeNode.Bounds.X,
+						keyTreeNode.Bounds.Y,
+						30,
+						keyTreeNode.Bounds.Height);
+				}
+
 				if (node is DropDownTreeNode dropDownNode)
 				{
 					dropDownNode.ComboBox.SetBounds(
@@ -393,6 +428,17 @@ namespace RandoEditor
 		private void treeView1_MouseWheel(object sender, MouseEventArgs e)
 		{
 			UpdateControls();
+		}
+
+		void NumericUpDown_ValueChanged(object sender, EventArgs e)
+		{
+			if (sender is NumericUpDown num &&
+				num.Tag is TreeNode parentNode &&
+				parentNode.Tag is SimpleRequirement req && 
+				req.myKey?.Repeatable == true)
+			{
+				req.myRepeatCount = (uint)num.Value;
+			}
 		}
 
 		void ComboBox_SelectedValueChanged(object sender, EventArgs e)
@@ -455,9 +501,11 @@ namespace RandoEditor
 						parentNode.Parent.Nodes.Insert(parentNode.Parent.Nodes.Count - 1, GenerateLeafNode(newReq));
 					}
 				}
+
+				HideControls();
 				GenerateSeparators(parentNode.Parent);
-				UpdateControls();
-			}			
+				ShowControls();
+			}
 		}
 
 		private void treeView1_KeyDown(object sender, KeyEventArgs e)
@@ -467,11 +515,12 @@ namespace RandoEditor
 				var nodeToRemove = treeView1.SelectedNode;
 				if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && keyNode.Deletable) || nodeToRemove is DropDownTreeNode))
 				{
+					HideControls();
 					var parentNode = nodeToRemove.Parent;
 					(parentNode.Tag as ComplexRequirement).myRequirements.Remove(nodeToRemove.Tag as Requirement);
 					nodeToRemove.Remove();
 					GenerateSeparators(parentNode);
-					UpdateControls();
+					ShowControls();
 				}
 			}
 		}

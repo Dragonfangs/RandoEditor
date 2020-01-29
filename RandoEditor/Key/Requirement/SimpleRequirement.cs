@@ -25,6 +25,8 @@ namespace RandoEditor.Key.Requirement
 		{
 		}
 
+		public uint myRepeatCount = 1;
+
 		public Guid myKeyId;
 		[NonSerialized]
 		public BaseKey myKey;
