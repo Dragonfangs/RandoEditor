@@ -133,29 +133,9 @@ namespace RandoEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        internal static byte[] defaultEventKeys {
+        internal static byte[] defaultKeys {
             get {
-                object obj = ResourceManager.GetObject("defaultEventKeys", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] defaultRandomKeys {
-            get {
-                object obj = ResourceManager.GetObject("defaultRandomKeys", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] defaultSettingKeys {
-            get {
-                object obj = ResourceManager.GetObject("defaultSettingKeys", resourceCulture);
+                object obj = ResourceManager.GetObject("defaultKeys", resourceCulture);
                 return ((byte[])(obj));
             }
         }
