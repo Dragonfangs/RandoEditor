@@ -93,6 +93,16 @@ namespace RandoEditor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap ComplexRequirement {
+            get {
+                object obj = ResourceManager.GetObject("ComplexRequirement", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap crateria_real {
             get {
                 object obj = ResourceManager.GetObject("crateria_real", resourceCulture);
@@ -137,6 +147,16 @@ namespace RandoEditor.Properties {
             get {
                 object obj = ResourceManager.GetObject("defaultKeys", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap DoubleConnection {
+            get {
+                object obj = ResourceManager.GetObject("DoubleConnection", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         
@@ -256,6 +276,26 @@ namespace RandoEditor.Properties {
         internal static System.Drawing.Bitmap ridley_real {
             get {
                 object obj = ResourceManager.GetObject("ridley_real", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SimpleRequirement {
+            get {
+                object obj = ResourceManager.GetObject("SimpleRequirement", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap SingleConnection {
+            get {
+                object obj = ResourceManager.GetObject("SingleConnection", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

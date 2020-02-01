@@ -40,23 +40,25 @@ namespace RandoEditor
 		/// </summary>
 		private void InitializeComponent()
         {
+			this.components = new System.ComponentModel.Container();
 			this.panel1 = new RandoEditor.Form1.MyPanel();
 			this.comboBox1 = new System.Windows.Forms.ComboBox();
 			this.comboBoxEvent = new System.Windows.Forms.ComboBox();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.keysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.customKeysToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.lockPanelLogic1 = new RandoEditor.LockPanelLogic();
-			this.chkNewNode = new System.Windows.Forms.CheckBox();
 			this.chkOneWayConnection = new System.Windows.Forms.CheckBox();
 			this.chkTwoWayConnection = new System.Windows.Forms.CheckBox();
 			this.txtRandomId = new System.Windows.Forms.TextBox();
-			this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.chkNewNode = new System.Windows.Forms.CheckBox();
+			this.toolTip = new System.Windows.Forms.ToolTip(this.components);
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -116,19 +118,40 @@ namespace RandoEditor
 			// 
 			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newToolStripMenuItem,
-			this.openToolStripMenuItem,
-			this.saveToolStripMenuItem,
-			this.saveAsToolStripMenuItem});
+            this.openToolStripMenuItem,
+            this.saveToolStripMenuItem,
+            this.saveAsToolStripMenuItem});
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
 			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.fileToolStripMenuItem.Text = "File";
 			// 
+			// newToolStripMenuItem
+			// 
+			this.newToolStripMenuItem.Name = "newToolStripMenuItem";
+			this.newToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+			this.newToolStripMenuItem.Text = "New";
+			this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
+			// 
+			// openToolStripMenuItem
+			// 
+			this.openToolStripMenuItem.Name = "openToolStripMenuItem";
+			this.openToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+			this.openToolStripMenuItem.Text = "Open...";
+			this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+			// 
 			// saveToolStripMenuItem
 			// 
 			this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-			this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.saveToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
 			this.saveToolStripMenuItem.Text = "Save";
 			this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
+			// 
+			// saveAsToolStripMenuItem
+			// 
+			this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+			this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(123, 22);
+			this.saveAsToolStripMenuItem.Text = "Save As...";
+			this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
 			// 
 			// keysToolStripMenuItem
 			// 
@@ -161,36 +184,29 @@ namespace RandoEditor
 			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 632);
 			this.lockPanelLogic1.TabIndex = 5;
 			// 
-			// chkNewNode
-			// 
-			this.chkNewNode.Appearance = System.Windows.Forms.Appearance.Button;
-			this.chkNewNode.Location = new System.Drawing.Point(13, 46);
-			this.chkNewNode.Name = "chkNewNode";
-			this.chkNewNode.Size = new System.Drawing.Size(29, 29);
-			this.chkNewNode.TabIndex = 6;
-			this.chkNewNode.Text = "New Node";
-			this.chkNewNode.UseVisualStyleBackColor = true;
-			this.chkNewNode.CheckedChanged += new System.EventHandler(this.chkNewNode_CheckedChanged);
-			// 
 			// chkOneWayConnection
 			// 
 			this.chkOneWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkOneWayConnection.BackgroundImage = global::RandoEditor.Properties.Resources.SingleConnection;
+			this.chkOneWayConnection.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
 			this.chkOneWayConnection.Location = new System.Drawing.Point(13, 81);
 			this.chkOneWayConnection.Name = "chkOneWayConnection";
 			this.chkOneWayConnection.Size = new System.Drawing.Size(29, 29);
 			this.chkOneWayConnection.TabIndex = 7;
-			this.chkOneWayConnection.Text = "One-way connection";
+			this.toolTip.SetToolTip(this.chkOneWayConnection, "Create One-Way Connection");
 			this.chkOneWayConnection.UseVisualStyleBackColor = true;
 			this.chkOneWayConnection.CheckedChanged += new System.EventHandler(this.chkOneWayConnection_CheckedChanged);
 			// 
 			// chkTwoWayConnection
 			// 
 			this.chkTwoWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkTwoWayConnection.BackgroundImage = global::RandoEditor.Properties.Resources.DoubleConnection;
+			this.chkTwoWayConnection.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
 			this.chkTwoWayConnection.Location = new System.Drawing.Point(13, 116);
 			this.chkTwoWayConnection.Name = "chkTwoWayConnection";
 			this.chkTwoWayConnection.Size = new System.Drawing.Size(29, 29);
 			this.chkTwoWayConnection.TabIndex = 8;
-			this.chkTwoWayConnection.Text = "Two-way connection";
+			this.toolTip.SetToolTip(this.chkTwoWayConnection, "Create Two-Way Connection");
 			this.chkTwoWayConnection.UseVisualStyleBackColor = true;
 			this.chkTwoWayConnection.CheckedChanged += new System.EventHandler(this.chkTwoWayConnection_CheckedChanged);
 			// 
@@ -202,26 +218,18 @@ namespace RandoEditor
 			this.txtRandomId.TabIndex = 9;
 			this.txtRandomId.TextChanged += new System.EventHandler(this.txtRandomId_TextChanged);
 			// 
-			// saveAsToolStripMenuItem
+			// chkNewNode
 			// 
-			this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-			this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.saveAsToolStripMenuItem.Text = "Save As...";
-			this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
-			// 
-			// newToolStripMenuItem
-			// 
-			this.newToolStripMenuItem.Name = "newToolStripMenuItem";
-			this.newToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.newToolStripMenuItem.Text = "New";
-			this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
-			// 
-			// openToolStripMenuItem
-			// 
-			this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-			this.openToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-			this.openToolStripMenuItem.Text = "Open...";
-			this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
+			this.chkNewNode.Appearance = System.Windows.Forms.Appearance.Button;
+			this.chkNewNode.BackgroundImage = global::RandoEditor.Properties.Resources.crossroads;
+			this.chkNewNode.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+			this.chkNewNode.Location = new System.Drawing.Point(13, 46);
+			this.chkNewNode.Name = "chkNewNode";
+			this.chkNewNode.Size = new System.Drawing.Size(29, 29);
+			this.chkNewNode.TabIndex = 6;
+			this.toolTip.SetToolTip(this.chkNewNode, "Create new node");
+			this.chkNewNode.UseVisualStyleBackColor = true;
+			this.chkNewNode.CheckedChanged += new System.EventHandler(this.chkNewNode_CheckedChanged);
 			// 
 			// Form1
 			// 
@@ -267,6 +275,7 @@ namespace RandoEditor
 		private ToolStripMenuItem newToolStripMenuItem;
 		private ToolStripMenuItem openToolStripMenuItem;
 		private ToolStripMenuItem saveAsToolStripMenuItem;
+		private ToolTip toolTip;
 	}
 }
 

@@ -127,6 +127,9 @@
   <data name="chozodia_real" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Maps\Metroid-ZeroMission-Chozodia.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ComplexRequirement" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ComplexRequirement.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="crateria_real" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Maps\Metroid-ZeroMission-Crateria.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -141,6 +144,9 @@
   </data>
   <data name="defaultKeys" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\defaultKeys.json;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="DoubleConnection" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\DoubleConnection.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="exclamation" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\exclamation.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -177,6 +183,12 @@
   </data>
   <data name="ridley_real" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Maps\Metroid-ZeroMission-Ridley.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SimpleRequirement" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\SimpleRequirement.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SingleConnection" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\SingleConnection.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="tourian_real" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Maps\Metroid-ZeroMission-Tourian.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

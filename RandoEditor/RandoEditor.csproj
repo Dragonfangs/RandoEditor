@@ -206,6 +206,17 @@
   <ItemGroup>
     <None Include="Resources\Maps\Metroid-ZeroMission-Tourian.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\DoubleConnection.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SingleConnection.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ComplexRequirement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SimpleRequirement.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

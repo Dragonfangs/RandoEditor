@@ -49,15 +49,21 @@ namespace RandoEditor
 				: base()
 			{
 				btnAddComplex.Tag = this;
-				btnAddComplex.Text = "Complex";
+				btnAddComplex.BackgroundImage = Properties.Resources.ComplexRequirement;
+				btnAddComplex.BackgroundImageLayout = ImageLayout.Zoom;
+				myToolTip.SetToolTip(btnAddComplex, "Add Complex Requirement");
 				btnAddSimple.Tag = this;
-				btnAddSimple.Text = "Simple";
+				btnAddSimple.BackgroundImage = Properties.Resources.SimpleRequirement;
+				btnAddSimple.BackgroundImageLayout = ImageLayout.Zoom;
+				myToolTip.SetToolTip(btnAddSimple, "Add Simple Requirement");
 
 				Tag = req;
 			}
 
 			public Button btnAddComplex = new Button();
 			public Button btnAddSimple = new Button();
+
+			private ToolTip myToolTip = new ToolTip();
 		}
 
 		public class KeyTreeNode : TreeNode
@@ -343,7 +349,7 @@ namespace RandoEditor
 
 					addingNode.btnAddComplex.Hide();
 					addingNode.btnAddSimple.Hide();
-					
+
 					treeView1.Controls.Remove(addingNode.btnAddComplex);
 					treeView1.Controls.Remove(addingNode.btnAddSimple);
 				}
@@ -385,13 +391,13 @@ namespace RandoEditor
 					addingNode.btnAddComplex.SetBounds(
 						addingNode.Bounds.X,
 						addingNode.Bounds.Y,
-						20,
+						22,
 						addingNode.Bounds.Height);
 
 					addingNode.btnAddSimple.SetBounds(
 						addingNode.btnAddComplex.Bounds.X + addingNode.btnAddComplex.Bounds.Width + 5,
 						addingNode.Bounds.Y,
-						20,
+						22,
 						addingNode.Bounds.Height);
 				}
 
