@@ -193,7 +193,7 @@ namespace RandoEditor
 			this.chkOneWayConnection.Name = "chkOneWayConnection";
 			this.chkOneWayConnection.Size = new System.Drawing.Size(29, 29);
 			this.chkOneWayConnection.TabIndex = 7;
-			this.toolTip.SetToolTip(this.chkOneWayConnection, "Create One-Way Connection");
+			this.toolTip.SetToolTip(this.chkOneWayConnection, "Create One-Way Connection (Alt)");
 			this.chkOneWayConnection.UseVisualStyleBackColor = true;
 			this.chkOneWayConnection.CheckedChanged += new System.EventHandler(this.chkOneWayConnection_CheckedChanged);
 			// 
@@ -206,7 +206,7 @@ namespace RandoEditor
 			this.chkTwoWayConnection.Name = "chkTwoWayConnection";
 			this.chkTwoWayConnection.Size = new System.Drawing.Size(29, 29);
 			this.chkTwoWayConnection.TabIndex = 8;
-			this.toolTip.SetToolTip(this.chkTwoWayConnection, "Create Two-Way Connection");
+			this.toolTip.SetToolTip(this.chkTwoWayConnection, "Create Two-Way Connection (Shift)");
 			this.chkTwoWayConnection.UseVisualStyleBackColor = true;
 			this.chkTwoWayConnection.CheckedChanged += new System.EventHandler(this.chkTwoWayConnection_CheckedChanged);
 			// 
@@ -227,7 +227,7 @@ namespace RandoEditor
 			this.chkNewNode.Name = "chkNewNode";
 			this.chkNewNode.Size = new System.Drawing.Size(29, 29);
 			this.chkNewNode.TabIndex = 6;
-			this.toolTip.SetToolTip(this.chkNewNode, "Create new node");
+			this.toolTip.SetToolTip(this.chkNewNode, "Create new node (Ctrl)");
 			this.chkNewNode.UseVisualStyleBackColor = true;
 			this.chkNewNode.CheckedChanged += new System.EventHandler(this.chkNewNode_CheckedChanged);
 			// 
