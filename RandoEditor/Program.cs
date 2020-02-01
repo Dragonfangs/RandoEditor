@@ -16,7 +16,9 @@ namespace RandoEditor
         [STAThread]
         static void Main()
         {
-			SaveManager.Load();
+			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
+				SaveManager.New();
+
 			KeyManager.Initialize();
 
             Application.EnableVisualStyles();

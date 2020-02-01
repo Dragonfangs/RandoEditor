@@ -10,6 +10,7 @@ using RandoEditor.Node;
 using Newtonsoft.Json;
 using RandoEditor.Key;
 using RandoEditor.SaveData;
+using System.IO;
 
 namespace RandoEditor
 {
@@ -65,12 +66,7 @@ namespace RandoEditor
 
 			myMap.GenerateAllLODs();
 
-			myNodes = SaveManager.Data.Nodes;
-			foreach (var node in myNodes)
-			{
-				node.FormConnections(myNodes);
-				node.ConnectKeys();
-			}
+			InitializeNodes();
 		}
 
 		private void SaveNodes()
@@ -439,14 +435,6 @@ namespace RandoEditor
 			panel1.Refresh();
 		}
 
-		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			SaveNodes();
-			KeyManager.SaveKeys();
-
-			SaveManager.Save();
-		}
-
 		private void customKeysToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			new KeyEditor().ShowDialog();
@@ -496,6 +484,88 @@ namespace RandoEditor
 
 			UpdatePointerState();
 			panel1.Refresh();
+		}
+
+		private void InitializeNodes()
+		{
+			myNodes = SaveManager.Data.Nodes;
+			foreach (var node in myNodes)
+			{
+				node.FormConnections(myNodes);
+				node.ConnectKeys();
+			}
+		}
+
+		private void newToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			SaveManager.New();
+
+			KeyManager.Initialize();
+			InitializeNodes();
+		}
+
+		private void openToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			var dialog = new OpenFileDialog();
+
+			/*try
+			{
+				dialog.InitialDirectory = Path.GetDirectoryName((string)Properties.Settings.Default["LatestFilePath"]);
+			}
+			catch(Exception)
+			{
+				dialog.InitialDirectory = string.Empty;
+			}*/
+
+			dialog.Filter = "logic files (*.lgc)|*.lgc";
+
+			if (dialog.ShowDialog() == DialogResult.OK)
+			{
+				if (SaveManager.Open(dialog.FileName))
+				{
+					KeyManager.Initialize();
+					InitializeNodes();
+				}
+				else
+				{
+					MessageBox.Show($"Opening {dialog.FileName} failed", "Load error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
+		}
+
+		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			SaveNodes();
+			KeyManager.SaveKeys();
+
+			Save();
+		}
+
+		private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			SaveNodes();
+			KeyManager.SaveKeys();
+
+			SaveAs();
+		}
+
+		private void Save()
+		{
+			if (!SaveManager.Save((string)Properties.Settings.Default["LatestFilePath"]))
+				SaveAs();
+		}
+
+		private void SaveAs()
+		{
+			var dialog = new SaveFileDialog();
+
+			dialog.Filter = "logic files (*.lgc)|*.lgc";
+
+			if(dialog.ShowDialog() == DialogResult.OK)
+			{
+				if(!SaveManager.Save(dialog.FileName))
+					MessageBox.Show($"Saving to {dialog.FileName} failed", "Save error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 	}
 }

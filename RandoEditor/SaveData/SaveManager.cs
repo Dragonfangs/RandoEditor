@@ -13,26 +13,56 @@ namespace RandoEditor.SaveData
 
 		private static SaveManager instance = new SaveManager();
 
-		// TODO: handle selecting your own save file
-		private static string fileName = "ZeroMission.lgc";
-
-		public static void Load()
+		public static void New()
 		{
-			if (System.IO.File.Exists(fileName))
-			{
-				Data = JsonConvert.DeserializeObject<SaveData>(System.IO.File.ReadAllText(fileName));
-				HandleVersionUpdate();
-			}
-			else
-			{
-				// Current version
-				Data.version = new Version(0, 1, 0, 0);
-			}
+			Data.Nodes.Clear();
+			Data.BasicKeys.Clear();
+			Data.CustomKeys.Clear();
+
+			Properties.Settings.Default["LatestFilePath"] = string.Empty;
+
+			// Current version
+			Data.version = new Version(0, 1, 0, 0);
 		}
 
-		public static void Save()
+		public static bool Open(string fileName)
 		{
-			System.IO.File.WriteAllText(fileName, JsonConvert.SerializeObject(Data, Formatting.Indented));
+			try
+			{
+				if (System.IO.File.Exists(fileName))
+				{
+					Data = JsonConvert.DeserializeObject<SaveData>(System.IO.File.ReadAllText(fileName));
+					HandleVersionUpdate();
+
+					Properties.Settings.Default["LatestFilePath"] = fileName;
+					Properties.Settings.Default.Save();
+
+					return true;
+				}
+			}
+			catch (Exception)
+			{
+			}
+
+			return false;
+		}
+
+		public static bool Save(string fileName)
+		{
+			try
+			{
+				System.IO.File.WriteAllText(fileName, JsonConvert.SerializeObject(Data, Formatting.Indented));
+
+				Properties.Settings.Default["LatestFilePath"] = fileName;
+				Properties.Settings.Default.Save();
+
+				return true;
+			}
+			catch (Exception)
+			{
+			}
+
+			return false;
 		}
 
 		private static void HandleVersionUpdate()

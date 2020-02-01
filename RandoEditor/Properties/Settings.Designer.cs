@@ -46,5 +46,17 @@ namespace RandoEditor.Properties {
                 this["MapQuality"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LatestFilePath {
+            get {
+                return ((string)(this["LatestFilePath"]));
+            }
+            set {
+                this["LatestFilePath"] = value;
+            }
+        }
     }
 }
