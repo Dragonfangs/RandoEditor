@@ -1,4 +1,4 @@
-﻿using RandoEditor.Key;
+﻿using Common.Key;
 using System;
 using System.Windows.Forms;
 

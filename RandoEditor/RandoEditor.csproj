@@ -70,12 +70,6 @@
     <Compile Include="KeySelector.Designer.cs">
       <DependentUpon>KeySelector.cs</DependentUpon>
     </Compile>
-    <Compile Include="Key\BaseKey.cs" />
-    <Compile Include="Key\ComplexKey.cs" />
-    <Compile Include="Key\KeyManager.cs" />
-    <Compile Include="Key\Requirement\ComplexRequirement.cs" />
-    <Compile Include="Key\Requirement\Requirement.cs" />
-    <Compile Include="Key\Requirement\SimpleRequirement.cs" />
     <Compile Include="LockPanelLogic.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -83,12 +77,9 @@
       <DependentUpon>LockPanelLogic.cs</DependentUpon>
     </Compile>
     <Compile Include="Map\AreaMap.cs" />
+    <Compile Include="Node\Connection.cs" />
     <Compile Include="Node\NodeImageFactory.cs" />
     <Compile Include="Node\NodeRenderer.cs" />
-    <Compile Include="Node\Connection.cs" />
-    <Compile Include="Node\PathNode.cs" />
-    <Compile Include="Node\NodeType.cs" />
-    <Compile Include="SaveData\SaveData.cs" />
     <Compile Include="SaveData\SaveManager.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
@@ -96,10 +87,8 @@
     <Compile Include="SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Utils\Vector2.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utils\Utility.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
@@ -217,6 +206,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SimpleRequirement.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{07e29104-b1d6-4a8f-ae7e-8a0934d69166}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Node;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace RandoEditor.Node
 {
 	public class Connection : IEquatable<Connection>
 	{
-		public Connection(PathNode aNode, PathNode anotherNode)
+		public Connection(NodeBase aNode, NodeBase anotherNode)
 		{
 			node1 = aNode;
 			node2 = anotherNode;
@@ -28,7 +29,7 @@ namespace RandoEditor.Node
 			return node1Hash ^ node2Hash;
 		}
 
-		public PathNode node1;
-		public PathNode node2;
+		public NodeBase node1;
+		public NodeBase node2;
 	}
 }

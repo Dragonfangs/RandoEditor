@@ -9,7 +9,7 @@ namespace RandoEditor.SaveData
 {
 	public class SaveManager
 	{
-		public static SaveData Data { get; set; } = new SaveData();
+		public static Common.SaveData.SaveData Data { get; set; } = new Common.SaveData.SaveData();
 
 		private static SaveManager instance = new SaveManager();
 
@@ -31,7 +31,7 @@ namespace RandoEditor.SaveData
 			{
 				if (System.IO.File.Exists(fileName))
 				{
-					Data = JsonConvert.DeserializeObject<SaveData>(System.IO.File.ReadAllText(fileName));
+					Data = JsonConvert.DeserializeObject<Common.SaveData.SaveData>(System.IO.File.ReadAllText(fileName));
 					HandleVersionUpdate();
 
 					Properties.Settings.Default["LatestFilePath"] = fileName;

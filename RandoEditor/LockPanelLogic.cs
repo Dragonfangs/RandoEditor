@@ -2,9 +2,9 @@
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using RandoEditor.Node;
-using RandoEditor.Key.Requirement;
-using RandoEditor.Key;
+using Common.Node;
+using Common.Key.Requirement;
+using Common.Key;
 
 namespace RandoEditor
 {
@@ -69,13 +69,13 @@ namespace RandoEditor
 		public class KeyTreeNode : TreeNode
 		{
 			public KeyTreeNode(SimpleRequirement req)
-				: base(req.myKey.Name)
+				: base(req.GetKey().Name)
 			{
 				Tag = req;
 
-				if (req.myKey?.Repeatable == true)
+				if (req.GetKey().Repeatable == true)
 				{
-					Text = $"          {req.myKey.Name}";
+					Text = $"          {req.GetKey().Name}";
 
 					m_NumericUpDown.Tag = this;
 
@@ -173,7 +173,7 @@ namespace RandoEditor
 			{
 				var parent = new KeyTreeNode(sReq);
 
-				if (sReq.myKey is ComplexKey cKey)
+				if (sReq.GetKey() is ComplexKey cKey)
 				{
 					var childReqs = cKey.myRequirement.myRequirements.Select(req => GenerateLeafNode(req)).ToList();
 					foreach (var child in childReqs)
@@ -247,7 +247,7 @@ namespace RandoEditor
 				req = cReq;
 			}
 
-			if (aNode.Tag is SimpleRequirement sReq && sReq.myKey is ComplexKey cKey)
+			if (aNode.Tag is SimpleRequirement sReq && sReq.GetKey() is ComplexKey cKey)
 			{
 				req = cKey.myRequirement;
 			}
@@ -273,7 +273,7 @@ namespace RandoEditor
 			{
 				if (node is KeyTreeNode keyTreeNode)
 				{
-					if (keyTreeNode.Tag is SimpleRequirement req && req.myKey?.Repeatable == true)
+					if (keyTreeNode.Tag is SimpleRequirement req && req.GetKey()?.Repeatable == true)
 					{
 						treeView1.Controls.Add(keyTreeNode.NumericUpDown);
 
@@ -441,7 +441,7 @@ namespace RandoEditor
 			if (sender is NumericUpDown num &&
 				num.Tag is TreeNode parentNode &&
 				parentNode.Tag is SimpleRequirement req && 
-				req.myKey?.Repeatable == true)
+				req.GetKey()?.Repeatable == true)
 			{
 				req.myRepeatCount = (uint)num.Value;
 			}
@@ -499,7 +499,7 @@ namespace RandoEditor
 				
 				foreach (var key in keySelector.SelectedKeys.Distinct())
 				{
-					if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.myKey == key))
+					if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
 					{
 						var newReq = new SimpleRequirement(key);
 						requirement.myRequirements.Add(newReq);

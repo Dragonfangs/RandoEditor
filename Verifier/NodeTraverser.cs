@@ -1,27 +1,29 @@
-﻿using System;
+﻿using Common.Key;
+using Common.Node;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verifier.Key;
-using Verifier.Node;
-using Verifier.SaveData;
 
 namespace Verifier
 {
 	public class NodeTraverser
 	{
-		public bool VerifyBeatable()
+		public bool VerifyBeatable(Common.SaveData.SaveData someData, Dictionary<string, Guid> aRandomMap)
 		{
-			var nodes = SaveManager.Data.Nodes;
+			KeyManager.Initialize(someData);
+			KeyManager.SetRandomKeyMap(aRandomMap);
+
+			var nodes = someData.Nodes;
 			foreach (var node in nodes)
 			{
 				node.FormConnections(nodes);
-				node.ConnectKeys();
 			}
 
-			var keyNodes = nodes.Where(node => node.myKey != null).ToList();
-			var eventNodes = keyNodes.Where(node => node.myNodeType == NodeType.EventKey);
-			var startNode = eventNodes.FirstOrDefault(x => String.Equals(x.myKey.Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
-			var endNode = eventNodes.FirstOrDefault(x => String.Equals(x.myKey.Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));
+			var keyNodes = nodes.Where(node => node is KeyNode).ToList();
+			var eventNodes = keyNodes.Where(node => node is EventKeyNode).Select(node => node as EventKeyNode);
+			var startNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
+			var endNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));
 
 			if (startNode == null || endNode == null)
 			{
@@ -33,7 +35,7 @@ namespace Verifier
 			return SearchBeatable(startNode, endNode, keyNodes, inventory);
 		}
 
-		private bool SearchBeatable(PathNode startNode, PathNode endNode, List<PathNode> keyNodes, Inventory anInventory)
+		private bool SearchBeatable(NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
 		{
 			while (true)
 			{
@@ -55,18 +57,18 @@ namespace Verifier
 			}
 		}
 
-		private bool PathExists(PathNode currentNode, PathNode endNode, Inventory anInventory, List<PathNode> visitedNodes = null)
+		private bool PathExists(NodeBase currentNode, NodeBase endNode, Inventory anInventory, List<NodeBase> visitedNodes = null)
 		{
 			if (currentNode == endNode)
 				return true;
 
 			if (visitedNodes == null)
-				visitedNodes = new List<PathNode>();
+				visitedNodes = new List<NodeBase>();
 			
 			if (visitedNodes.Contains(currentNode))
 				return false;
 			
-			if (currentNode.myNodeType == NodeType.Lock && !currentNode.myRequirement.Unlocked(anInventory))
+			if (currentNode is LockNode lockNode && !anInventory.Unlocks(lockNode.myRequirement))
 				return false;
 
 			visitedNodes.Add(currentNode);

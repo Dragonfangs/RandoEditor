@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-
-using RandoEditor.Utils;
+using Common.Utils;
 using RandoEditor.Map;
-using RandoEditor.Node;
+using Common.Node;
 using Newtonsoft.Json;
-using RandoEditor.Key;
+using Common.Key;
 using RandoEditor.SaveData;
-using System.IO;
+using RandoEditor.Node;
 
 namespace RandoEditor
 {
@@ -19,16 +18,19 @@ namespace RandoEditor
 		private enum PointerState
 		{
 			None = 0,
-			Place,
+			PlaceBlank,
+			PlaceLock,
+			PlaceRandom,
+			PlaceEvent,
 			OneWay,
 			TwoWay,
 		}
 
 		private AreaMap myMap = new AreaMap();
 		private NodeRenderer myNodeRenderer = new NodeRenderer();
-        private List<PathNode> myNodes = new List<PathNode>();
-        private PathNode carriedNode = null;
-		private PathNode selectedNode = null;
+        private List<NodeBase> myNodes = new List<NodeBase>();
+        private NodeBase carriedNode = null;
+		private NodeBase selectedNode = null;
 		
 		private Vector2 imageBasePos = new Vector2(0,0);
 		private Vector2 mapPickedUpPos = new Vector2(0,0);
@@ -49,9 +51,6 @@ namespace RandoEditor
 
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
-
-			comboBox1.DataSource = Enum.GetValues(typeof(NodeType));
-			comboBox1.Enabled = false;
 
 			comboBoxEvent.DataSource = KeyManager.GetEventKeys().ToList();
 			comboBoxEvent.DisplayMember = "Name";
@@ -79,33 +78,28 @@ namespace RandoEditor
 		{
 			if (selectedNode != null)
 			{
-				comboBox1.Enabled = true;
-				comboBox1.SelectedItem = selectedNode.myNodeType;
-
-				if (selectedNode.myNodeType == NodeType.Lock)
+				if (selectedNode is LockNode lockNode)
 				{
-					lockPanelLogic1.SetNode(selectedNode.myRequirement);
+					lockPanelLogic1.SetNode(lockNode.myRequirement);
 				}
 
 				lockPanelLogic1.Visible = (selectedNode.myNodeType == NodeType.Lock);
 				lockPanelLogic1.Enabled = (selectedNode.myNodeType == NodeType.Lock);
 
-				if(selectedNode.myNodeType == NodeType.EventKey)
-					comboBoxEvent.SelectedItem = selectedNode.myEventKey;
+				if(selectedNode is EventKeyNode eventNode)
+					comboBoxEvent.SelectedItem = eventNode.GetKey();
 
 				comboBoxEvent.Enabled = (selectedNode.myNodeType == NodeType.EventKey);
 				comboBoxEvent.Visible = (selectedNode.myNodeType == NodeType.EventKey);
 
-				if (selectedNode.myNodeType == NodeType.RandomKey)
-					txtRandomId.Text = selectedNode.myRandomKeyIdentifier;
+				if (selectedNode is RandomKeyNode randomNode)
+					txtRandomId.Text = randomNode.myRandomKeyIdentifier;
 
 				txtRandomId.Enabled = (selectedNode.myNodeType == NodeType.RandomKey);
 				txtRandomId.Visible = (selectedNode.myNodeType == NodeType.RandomKey);
 			}
 			else
 			{
-				comboBox1.Enabled = false;
-
 				comboBoxEvent.Visible = false;
 				comboBoxEvent.Enabled = false;
 				
@@ -157,11 +151,23 @@ namespace RandoEditor
 			myNodeRenderer.RenderNodes(myNodes, graphicsObj);
 
 			//Draw cursor
-			if (myPointerState == PointerState.Place)
+			if (myPointerState == PointerState.PlaceBlank)
 			{
-				myNodeRenderer.DrawCursorNode(mousePos, graphicsObj);
+				myNodeRenderer.DrawCursorNode(mousePos, NodeType.Blank, graphicsObj);
 			}
-			else if(myPointerState == PointerState.OneWay && selectedNode != null)
+			else if (myPointerState == PointerState.PlaceLock)
+			{
+				myNodeRenderer.DrawCursorNode(mousePos, NodeType.Lock, graphicsObj);
+			}
+			else if (myPointerState == PointerState.PlaceRandom)
+			{
+				myNodeRenderer.DrawCursorNode(mousePos, NodeType.RandomKey, graphicsObj);
+			}
+			else if (myPointerState == PointerState.PlaceEvent)
+			{
+				myNodeRenderer.DrawCursorNode(mousePos, NodeType.EventKey, graphicsObj);
+			}
+			else if (myPointerState == PointerState.OneWay && selectedNode != null)
 			{
 				myNodeRenderer.DrawCursorOneWayConnection(selectedNode, mousePos, graphicsObj);
 			}
@@ -173,9 +179,21 @@ namespace RandoEditor
 
 		private void UpdatePointerState()
 		{
-			if (chkNewNode.Checked)
+			if (chkNewBlankNode.Checked)
 			{
-				myPointerState = PointerState.Place;
+				myPointerState = PointerState.PlaceBlank;
+			}
+			else if (chkNewLockNode.Checked)
+			{
+				myPointerState = PointerState.PlaceLock;
+			}
+			else if (chkNewRandomNode.Checked)
+			{
+				myPointerState = PointerState.PlaceRandom;
+			}
+			else if (chkNewEventNode.Checked)
+			{
+				myPointerState = PointerState.PlaceEvent;
 			}
 			else if (chkTwoWayConnection.Checked)
 			{
@@ -184,10 +202,6 @@ namespace RandoEditor
 			else if (chkOneWayConnection.Checked)
 			{
 				myPointerState = PointerState.OneWay;
-			}
-			else if (ModifierKeys == Keys.Control)
-			{
-				myPointerState = PointerState.Place;
 			}
 			else if (ModifierKeys == Keys.Shift)
 			{
@@ -203,22 +217,31 @@ namespace RandoEditor
 			}
 		}
 
-		private void UncheckStateBoxes()
-		{
-			chkNewNode.Checked = false;
-			chkTwoWayConnection.Checked = false;
-			chkOneWayConnection.Checked = false;
-		}
-
 		private void panel1_MouseDown(object sender, MouseEventArgs e)
 		{
 			var mousePos = new Vector2(e.X, e.Y);
-			PathNode newNode = null;
-			if (myPointerState == PointerState.Place)
+			NodeBase newNode = null;
+			if (myPointerState == PointerState.PlaceBlank ||
+				myPointerState == PointerState.PlaceLock ||
+				myPointerState == PointerState.PlaceRandom ||
+				myPointerState == PointerState.PlaceEvent)
 			{
-				newNode = new PathNode();
-
-				newNode.SetNodeType(NodeType.Blank);
+				switch(myPointerState)
+				{
+					case PointerState.PlaceBlank:
+						newNode = new BlankNode();
+						break;
+					case PointerState.PlaceLock:
+						newNode = new LockNode();
+						break;
+					case PointerState.PlaceRandom:
+						newNode = new RandomKeyNode();
+						break;
+					case PointerState.PlaceEvent:
+						newNode = new EventKeyNode();
+						break;
+				}
+				
 				newNode.myPos = (mousePos / ZoomScale) - imageBasePos;
 
 				myNodes.Add(newNode);
@@ -368,32 +391,19 @@ namespace RandoEditor
 			panel1.Refresh();
 		}
 
-		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			if(selectedNode != null)
-			{
-				if (Enum.TryParse(comboBox1.SelectedItem.ToString(), out NodeType type))
-				{
-					selectedNode.SetNodeType(type);
-				}
-
-				UpdateNodeSettings();
-			}
-		}
-
 		private void comboBoxEvent_SelectedIndexChanged(object sender, EventArgs e)
 		{
-			if (selectedNode != null)
+			if (selectedNode is EventKeyNode eventNode)
 			{
-				selectedNode.SetEventKey((BaseKey)comboBoxEvent.SelectedItem);
+				eventNode.SetKey((BaseKey)comboBoxEvent.SelectedItem);
 			}
 		}
 		
 		private void txtRandomId_TextChanged(object sender, EventArgs e)
 		{
-			if (selectedNode != null)
+			if (selectedNode is RandomKeyNode randomNode)
 			{
-				selectedNode.myRandomKeyIdentifier = txtRandomId.Text;
+				randomNode.myRandomKeyIdentifier = txtRandomId.Text;
 			}
 		}
 
@@ -448,39 +458,32 @@ namespace RandoEditor
 			new SettingsForm().ShowDialog();
 
 			Refresh();
-		}
+		}		
 
-		private void chkNewNode_CheckedChanged(object sender, EventArgs e)
+		private void UncheckAllExcept(CheckBox chkBox)
 		{
-			if (chkNewNode.Checked)
-			{
+			if(chkBox != chkNewBlankNode)
+				chkNewBlankNode.Checked = false;
+			if (chkBox != chkNewLockNode)
+				chkNewLockNode.Checked = false;
+			if (chkBox != chkNewRandomNode)
+				chkNewRandomNode.Checked = false;
+			if (chkBox != chkNewEventNode)
+				chkNewEventNode.Checked = false;
+			if (chkBox != chkTwoWayConnection)
 				chkTwoWayConnection.Checked = false;
+			if (chkBox != chkOneWayConnection)
 				chkOneWayConnection.Checked = false;
-			}
-
-			UpdatePointerState();
-			panel1.Refresh();
 		}
 
-		private void chkOneWayConnection_CheckedChanged(object sender, EventArgs e)
+		private void UncheckStateBoxes()
 		{
-			if (chkOneWayConnection.Checked)
-			{
-				chkNewNode.Checked = false;
-				chkTwoWayConnection.Checked = false;
-			}
-
-			UpdatePointerState();
-			panel1.Refresh();
+			UncheckAllExcept(null);
 		}
 
-		private void chkTwoWayConnection_CheckedChanged(object sender, EventArgs e)
+		private void CheckBoxChecked(object sender, EventArgs e)
 		{
-			if (chkTwoWayConnection.Checked)
-			{
-				chkNewNode.Checked = false;
-				chkOneWayConnection.Checked = false;
-			}
+			UncheckAllExcept(sender as CheckBox);
 
 			UpdatePointerState();
 			panel1.Refresh();
@@ -492,7 +495,6 @@ namespace RandoEditor
 			foreach (var node in myNodes)
 			{
 				node.FormConnections(myNodes);
-				node.ConnectKeys();
 			}
 		}
 
@@ -500,7 +502,7 @@ namespace RandoEditor
 		{
 			SaveManager.New();
 
-			KeyManager.Initialize();
+			KeyManager.Initialize(SaveManager.Data);
 			InitializeNodes();
 		}
 
@@ -508,22 +510,13 @@ namespace RandoEditor
 		{
 			var dialog = new OpenFileDialog();
 
-			/*try
-			{
-				dialog.InitialDirectory = Path.GetDirectoryName((string)Properties.Settings.Default["LatestFilePath"]);
-			}
-			catch(Exception)
-			{
-				dialog.InitialDirectory = string.Empty;
-			}*/
-
 			dialog.Filter = "logic files (*.lgc)|*.lgc";
 
 			if (dialog.ShowDialog() == DialogResult.OK)
 			{
 				if (SaveManager.Open(dialog.FileName))
 				{
-					KeyManager.Initialize();
+					KeyManager.Initialize(SaveManager.Data);
 					InitializeNodes();
 				}
 				else
@@ -536,7 +529,7 @@ namespace RandoEditor
 		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			SaveNodes();
-			KeyManager.SaveKeys();
+			KeyManager.SaveKeys(SaveManager.Data);
 
 			Save();
 		}
@@ -544,7 +537,7 @@ namespace RandoEditor
 		private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			SaveNodes();
-			KeyManager.SaveKeys();
+			KeyManager.SaveKeys(SaveManager.Data);
 
 			SaveAs();
 		}

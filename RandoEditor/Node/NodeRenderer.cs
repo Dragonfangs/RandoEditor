@@ -1,4 +1,5 @@
-﻿using RandoEditor.Utils;
+﻿using Common.Node;
+using Common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -29,11 +30,11 @@ namespace RandoEditor.Node
 			return (int)((BasePos.y + y) * Zoom);
 		}
 
-		public void RenderNodes(List<PathNode> nodes, Graphics graphicsObj)
+		public void RenderNodes(List<NodeBase> nodes, Graphics graphicsObj)
 		{
 			var connections = new List<Connection>();
 
-			PathNode selected = null;
+			NodeBase selected = null;
 
 			foreach (var node in nodes)
 			{
@@ -68,7 +69,7 @@ namespace RandoEditor.Node
 			}
 		}
 
-		public void DrawCursorNode(Vector2 aPos, Graphics aGraphicsObj)
+		public void DrawCursorNode(Vector2 aPos, NodeType aType, Graphics aGraphicsObj)
 		{
 			var width = nodeSize;
 			var height = nodeSize;
@@ -78,7 +79,7 @@ namespace RandoEditor.Node
 			var panelRect = new Rectangle(new Point(0, 0), panelSize);
 			var img = myNodeImageFactory.GetNodeImage(new NodeImageFactory.NodeInfo()
 			{
-				type = NodeType.Blank,
+				type = aType,
 
 				selected = false,
 				carried = true,
@@ -87,7 +88,7 @@ namespace RandoEditor.Node
 			aGraphicsObj.DrawImage(img, nodeRectangle);
 		}
 
-		private void DrawNode(PathNode aNode, Graphics aGraphicsObj)
+		private void DrawNode(NodeBase aNode, Graphics aGraphicsObj)
 		{
 			var x = TranslateX(aNode.myPos.x);
 			var y = TranslateY(aNode.myPos.y);
@@ -123,17 +124,17 @@ namespace RandoEditor.Node
 			}
 		}
 
-		public void DrawCursorOneWayConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
+		public void DrawCursorOneWayConnection(NodeBase startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
 		{
 			DrawCursorConnection(startNode, cursorPoint, aGraphicsObj, false);
 		}
 
-		public void DrawCursorTwoWayConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
+		public void DrawCursorTwoWayConnection(NodeBase startNode, Vector2 cursorPoint, Graphics aGraphicsObj)
 		{
 			DrawCursorConnection(startNode, cursorPoint, aGraphicsObj, true);
 		}
 
-		private void DrawCursorConnection(PathNode startNode, Vector2 cursorPoint, Graphics aGraphicsObj, bool twoWay)
+		private void DrawCursorConnection(NodeBase startNode, Vector2 cursorPoint, Graphics aGraphicsObj, bool twoWay)
 		{
 			var startPoint = new Vector2(TranslateX(startNode.myPos.x), TranslateY(startNode.myPos.y));
 

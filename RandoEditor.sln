@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RandoEditor", "RandoEditor\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Verifier", "Verifier\Verifier.csproj", "{A157BE40-AB44-4806-BD1A-670DEDE2824A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{07E29104-B1D6-4A8F-AE7E-8A0934D69166}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VerifierTests", "VerifierTests\VerifierTests.csproj", "{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{A157BE40-AB44-4806-BD1A-670DEDE2824A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A157BE40-AB44-4806-BD1A-670DEDE2824A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A157BE40-AB44-4806-BD1A-670DEDE2824A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

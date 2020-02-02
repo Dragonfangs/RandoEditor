@@ -1,4 +1,5 @@
-﻿using RandoEditor.Utils;
+﻿using Common.Node;
+using Common.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace RandoEditor.Node
 {
-	
 	public class NodeImageFactory
 	{
 		public class NodeInfo

@@ -1,4 +1,4 @@
-﻿using RandoEditor.Key;
+﻿using Common.Key;
 using RandoEditor.SaveData;
 using System;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ namespace RandoEditor
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
-			KeyManager.Initialize();
+			KeyManager.Initialize(SaveManager.Data);
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
