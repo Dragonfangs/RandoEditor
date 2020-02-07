@@ -61,6 +61,7 @@ namespace RandoEditor
 			this.chkNewLockNode = new System.Windows.Forms.CheckBox();
 			this.chkNewRandomNode = new System.Windows.Forms.CheckBox();
 			this.chkNewEventNode = new System.Windows.Forms.CheckBox();
+			this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.menuStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -262,6 +263,11 @@ namespace RandoEditor
 			this.chkNewEventNode.UseVisualStyleBackColor = true;
 			this.chkNewEventNode.CheckedChanged += new System.EventHandler(this.CheckBoxChecked);
 			// 
+			// contextMenuStrip
+			// 
+			this.contextMenuStrip.Name = "contextMenuStrip";
+			this.contextMenuStrip.Size = new System.Drawing.Size(181, 26);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -311,6 +317,7 @@ namespace RandoEditor
 		private CheckBox chkNewLockNode;
 		private CheckBox chkNewRandomNode;
 		private CheckBox chkNewEventNode;
+		private ContextMenuStrip contextMenuStrip;
 	}
 }
 

@@ -36,7 +36,7 @@ namespace RandoEditor
 		private Vector2 mapPickedUpPos = new Vector2(0,0);
 		private bool carriedMap = false;
 
-		private Vector2 mousePos = new Vector2(0, 0);
+		private Vector2 myMousePos = new Vector2(0, 0);
 
 		private Vector2 selectedOffset = null;
 				
@@ -111,6 +111,31 @@ namespace RandoEditor
 			}
 		}
 
+		private void DeleteNode(NodeBase nodeToDelete)
+		{
+			if (nodeToDelete == null)
+				return;
+
+			if (nodeToDelete == selectedNode)
+			{
+				selectedNode = null;
+			}
+			if (nodeToDelete == carriedNode)
+			{
+				carriedNode = null;
+			}
+
+			foreach (var node in myNodes)
+			{
+				node.myConnections.Remove(nodeToDelete);
+			}
+			myNodes.Remove(nodeToDelete);
+
+			UpdateNodeSettings();
+
+			panel1.Refresh();
+		}
+
 		private Vector2 TranslateVector(Vector2 v)
 		{
 			return new Vector2(TranslateX(v.x), TranslateY(v.y));
@@ -153,27 +178,27 @@ namespace RandoEditor
 			//Draw cursor
 			if (myPointerState == PointerState.PlaceBlank)
 			{
-				myNodeRenderer.DrawCursorNode(mousePos, NodeType.Blank, graphicsObj);
+				myNodeRenderer.DrawCursorNode(myMousePos, NodeType.Blank, graphicsObj);
 			}
 			else if (myPointerState == PointerState.PlaceLock)
 			{
-				myNodeRenderer.DrawCursorNode(mousePos, NodeType.Lock, graphicsObj);
+				myNodeRenderer.DrawCursorNode(myMousePos, NodeType.Lock, graphicsObj);
 			}
 			else if (myPointerState == PointerState.PlaceRandom)
 			{
-				myNodeRenderer.DrawCursorNode(mousePos, NodeType.RandomKey, graphicsObj);
+				myNodeRenderer.DrawCursorNode(myMousePos, NodeType.RandomKey, graphicsObj);
 			}
 			else if (myPointerState == PointerState.PlaceEvent)
 			{
-				myNodeRenderer.DrawCursorNode(mousePos, NodeType.EventKey, graphicsObj);
+				myNodeRenderer.DrawCursorNode(myMousePos, NodeType.EventKey, graphicsObj);
 			}
 			else if (myPointerState == PointerState.OneWay && selectedNode != null)
 			{
-				myNodeRenderer.DrawCursorOneWayConnection(selectedNode, mousePos, graphicsObj);
+				myNodeRenderer.DrawCursorOneWayConnection(selectedNode, myMousePos, graphicsObj);
 			}
 			else if (myPointerState == PointerState.TwoWay && selectedNode != null)
 			{
-				myNodeRenderer.DrawCursorTwoWayConnection(selectedNode, mousePos, graphicsObj);
+				myNodeRenderer.DrawCursorTwoWayConnection(selectedNode, myMousePos, graphicsObj);
 			}
 		}
 
@@ -217,105 +242,146 @@ namespace RandoEditor
 			}
 		}
 
-		private void panel1_MouseDown(object sender, MouseEventArgs e)
+		private NodeBase FindClickedNode(Vector2 someMousePos)
 		{
-			var mousePos = new Vector2(e.X, e.Y);
-			NodeBase newNode = null;
-			if (myPointerState == PointerState.PlaceBlank ||
-				myPointerState == PointerState.PlaceLock ||
-				myPointerState == PointerState.PlaceRandom ||
-				myPointerState == PointerState.PlaceEvent)
+			var width = NodeRenderer.nodeSize;
+			var height = NodeRenderer.nodeSize;
+
+			foreach (var node in myNodes)
 			{
-				switch(myPointerState)
+				var screenSpaceNodePos = TranslateVector(node.myPos);
+
+				if (someMousePos.x > (screenSpaceNodePos.x - width / 2) && someMousePos.y > (screenSpaceNodePos.y - height / 2) &&
+					someMousePos.x < (screenSpaceNodePos.x + width / 2) && someMousePos.y < (screenSpaceNodePos.y + height / 2))
 				{
-					case PointerState.PlaceBlank:
-						newNode = new BlankNode();
-						break;
-					case PointerState.PlaceLock:
-						newNode = new LockNode();
-						break;
-					case PointerState.PlaceRandom:
-						newNode = new RandomKeyNode();
-						break;
-					case PointerState.PlaceEvent:
-						newNode = new EventKeyNode();
-						break;
+					return node;
 				}
-				
-				newNode.myPos = (mousePos / ZoomScale) - imageBasePos;
+			}
 
-				myNodes.Add(newNode);
+			return null;
+		}
 
-				selectedNode = newNode;
-				carriedNode = newNode;
-				selectedOffset = new Vector2(0, 0);
+		private void UpdateConnections(Vector2 mousePos, NodeBase newNode)
+		{
+			if (newNode == null)
+				return;
 
-				UpdateNodeSettings();
+			if (myPointerState == PointerState.TwoWay && selectedNode != null && selectedNode != newNode)
+			{
+				if (selectedNode.myConnections.Contains(newNode) && newNode.myConnections.Contains(selectedNode))
+				{
+					selectedNode.RemoveConnection(newNode);
+					newNode.RemoveConnection(selectedNode);
+				}
+				else
+				{
+					if (!selectedNode.myConnections.Contains(newNode))
+					{
+						selectedNode.CreateConnection(newNode);
+					}
+					if (!newNode.myConnections.Contains(selectedNode))
+					{
+						newNode.CreateConnection(selectedNode);
+					}
+				}
+
+				UncheckStateBoxes();
+			}
+			else if (myPointerState == PointerState.OneWay && selectedNode != null && selectedNode != newNode)
+			{
+				if (!selectedNode.myConnections.Contains(newNode))
+				{
+					selectedNode.CreateConnection(newNode);
+				}
+				else
+				{
+					selectedNode.RemoveConnection(newNode);
+				}
+
 				UncheckStateBoxes();
 			}
 			else
 			{
-				var width = NodeRenderer.nodeSize;
-				var height = NodeRenderer.nodeSize;
-				
-				foreach (var node in myNodes)
-				{
-					var screenSpaceNodePos = TranslateVector(node.myPos);
+				carriedNode = newNode;
+				selectedNode = newNode;
 
-					if (mousePos.x > (screenSpaceNodePos.x - width / 2) && mousePos.y > (screenSpaceNodePos.y - height / 2) &&
-						mousePos.x < (screenSpaceNodePos.x + width / 2) && mousePos.y < (screenSpaceNodePos.y + height / 2))
-					{
-						newNode = node;
-						break;
-					}
-				}
+				selectedOffset = (mousePos - TranslateVector(newNode.myPos)) / ZoomScale;
 
-				if (newNode != null)
-				{
-					if (myPointerState == PointerState.TwoWay && selectedNode != null)
-					{
-						if (selectedNode.myConnections.Contains(newNode) && newNode.myConnections.Contains(selectedNode))
-						{
-							selectedNode.RemoveConnection(newNode);
-							newNode.RemoveConnection(selectedNode);
-						}
-						else
-						{
-							if (!selectedNode.myConnections.Contains(newNode))
-							{
-								selectedNode.CreateConnection(newNode);
-							}
-							if (!newNode.myConnections.Contains(selectedNode))
-							{
-								newNode.CreateConnection(selectedNode);
-							}
-						}
+				UpdateNodeSettings();
+			}
+		}
 
-						UncheckStateBoxes();
-					}
-					else if (myPointerState == PointerState.OneWay && selectedNode != null)
-					{
-						if (!selectedNode.myConnections.Contains(newNode))
-						{
-							selectedNode.CreateConnection(newNode);
-						}
-						else
-						{
-							selectedNode.RemoveConnection(newNode);
-						}
+		private NodeBase PlaceNewNode(NodeType type, Vector2 mousePos)
+		{
+			NodeBase newNode = null;
+			switch (type)
+			{
+				case NodeType.Blank:
+					newNode = new BlankNode();
+					break;
+				case NodeType.Lock:
+					newNode = new LockNode();
+					break;
+				case NodeType.RandomKey:
+					newNode = new RandomKeyNode();
+					break;
+				case NodeType.EventKey:
+					newNode = new EventKeyNode();
+					break;
+				default:
+					return null;
+			}
 
-						UncheckStateBoxes();
-					}
-					else
-					{
-						carriedNode = newNode;
-						selectedNode = newNode;
-						
-						selectedOffset = (mousePos - TranslateVector(newNode.myPos)) / ZoomScale;
+			newNode.myPos = (mousePos / ZoomScale) - imageBasePos;
 
-						UpdateNodeSettings();
-					}
-				}
+			myNodes.Add(newNode);
+
+			selectedNode = newNode;
+
+			UpdateNodeSettings();
+
+			panel1.Refresh();
+
+			return newNode;
+		}
+
+		private void panel1_MouseDown(object sender, MouseEventArgs e)
+		{
+			var mousePos = new Vector2(e.Location);
+
+			if (e.Button != MouseButtons.Left)
+				return;
+
+			NodeBase newNode = null;
+
+			switch (myPointerState)
+			{
+				case PointerState.PlaceBlank:
+					newNode = PlaceNewNode(NodeType.Blank, mousePos);
+					break;
+				case PointerState.PlaceLock:
+					newNode = PlaceNewNode(NodeType.Lock, mousePos);
+					break;
+				case PointerState.PlaceRandom:
+					newNode = PlaceNewNode(NodeType.RandomKey, mousePos);
+					break;
+				case PointerState.PlaceEvent:
+					newNode = PlaceNewNode(NodeType.EventKey, mousePos);
+					break;
+			}
+
+			if(newNode != null)
+			{
+				carriedNode = newNode;
+				selectedOffset = new Vector2(0, 0);
+
+				UncheckStateBoxes();
+			}
+			else
+			{
+				newNode = FindClickedNode(mousePos);
+
+				UpdateConnections(mousePos, newNode);
 			}
 
 			// No node was hit, activate map dragging
@@ -332,34 +398,112 @@ namespace RandoEditor
 
 		private void panel1_MouseUp(object sender, MouseEventArgs e)
 		{
-			if (carriedMap)
+			var mousePos = new Vector2(e.Location);
+			if (e.Button == MouseButtons.Left)
 			{
-				//If picked up map but didn't move it, consider it as just clicking the map
-				if ((mapPickedUpPos - imageBasePos).Magnitude() < 1)
+				if (carriedMap)
 				{
-					selectedNode = null;
-					UpdateNodeSettings();
+					//If picked up map but didn't move it, consider it as just clicking the map
+					if ((mapPickedUpPos - imageBasePos).Magnitude() < 1)
+					{
+						selectedNode = null;
+						UpdateNodeSettings();
+					}
 				}
+
+				carriedNode = null;
+				carriedMap = false;
+
+				panel1.Refresh();
 			}
+			else if(e.Button == MouseButtons.Right && myPointerState == PointerState.None)
+			{
+				NodeBase clickedNode = FindClickedNode(mousePos);
 
-			carriedNode = null;
-			carriedMap = false;
+				contextMenuStrip.Tag = mousePos;
 
-			panel1.Refresh();
+				contextMenuStrip.Items.Clear();
+				if (clickedNode != null && selectedNode != null && selectedNode != clickedNode)
+				{
+					contextMenuStrip.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+
+					var connectionThere = selectedNode.myConnections.Contains(clickedNode);
+					var connectionFrom = clickedNode.myConnections.Contains(selectedNode);
+
+					if(connectionThere != connectionFrom)
+					{
+						var item = new ToolStripMenuItem("Complete Two-Way Connection");
+						item.Click += completeConnectionContextMenuItem_Click;
+						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						contextMenuStrip.Items.Add(item);
+					}
+
+					if (!connectionThere && !connectionFrom)
+					{
+						var item = new ToolStripMenuItem("Create New One-Way Connection");
+						item.Click += oneWayConnectionContextMenuItem_Click;
+						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						contextMenuStrip.Items.Add(item);
+
+						var item2 = new ToolStripMenuItem("Create New Two-Way Connection");
+						item2.Click += completeConnectionContextMenuItem_Click;
+						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						contextMenuStrip.Items.Add(item2);
+					}
+
+					if (connectionThere || connectionFrom)
+					{
+						var item = new ToolStripMenuItem("Remove Connection");
+						item.Click += removeConnectionContextMenuItem_Click;
+						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						contextMenuStrip.Items.Add(item);
+					}
+				}
+				
+				var blankItem = new ToolStripMenuItem("Create New Blank Node");
+				blankItem.Click += placeNewContextMenuItem_Click;
+				blankItem.Tag = NodeType.Blank;
+				contextMenuStrip.Items.Add(blankItem);
+
+				var lockItem = new ToolStripMenuItem("Create New Lock Node");
+				lockItem.Click += placeNewContextMenuItem_Click;
+				lockItem.Tag = NodeType.Lock;
+				contextMenuStrip.Items.Add(lockItem);
+
+				var randomItem = new ToolStripMenuItem("Create New Randomized Key Node");
+				randomItem.Click += placeNewContextMenuItem_Click;
+				randomItem.Tag = NodeType.RandomKey;
+				contextMenuStrip.Items.Add(randomItem);
+
+				var eventItem = new ToolStripMenuItem("Create New Event Key Node");
+				eventItem.Click += placeNewContextMenuItem_Click;
+				eventItem.Tag = NodeType.EventKey;
+				contextMenuStrip.Items.Add(eventItem);
+				
+				if(clickedNode != null)
+				{
+					var deleteItem = new ToolStripMenuItem("Delete Node");
+					deleteItem.Click += deleteContextMenuItem_Click;
+					deleteItem.Tag = clickedNode;
+					contextMenuStrip.Items.Add(deleteItem);
+				}
+
+				contextMenuStrip.Show(panel1.PointToScreen(mousePos.ToPoint()));
+			}
 		}
 
 		private void panel1_MouseMove(object sender, MouseEventArgs e)
 		{
-			mousePos = new Vector2(e.X, e.Y);
+			myMousePos = new Vector2(e.X, e.Y);
 
 			if (carriedNode != null)
 			{
-				carriedNode.myPos = (mousePos / ZoomScale) - (selectedOffset + imageBasePos);
+				carriedNode.myPos = (myMousePos / ZoomScale) - (selectedOffset + imageBasePos);
 			}
 
 			if(carriedMap)
 			{
-				imageBasePos = (mousePos / ZoomScale) - selectedOffset;
+				imageBasePos = (myMousePos / ZoomScale) - selectedOffset;
 			}
 
 			UpdatePointerState();
@@ -414,23 +558,14 @@ namespace RandoEditor
 
 		private void panel1_KeyDown(object sender, KeyEventArgs e)
 		{
-			if(e.KeyCode == Keys.Delete)
+			if (e.KeyCode == Keys.Escape)
 			{
-				if(selectedNode != null)
-				{
-					foreach(var node in myNodes)
-					{
-						node.myConnections.Remove(selectedNode);
-					}
-					myNodes.Remove(selectedNode);
+				UncheckStateBoxes();
+			}
 
-					selectedNode = null;
-					carriedNode = null;
-
-					UpdateNodeSettings();
-
-					panel1.Refresh();
-				}
+			if (e.KeyCode == Keys.Delete)
+			{
+				DeleteNode(selectedNode);
 			}
 
 			UpdatePointerState();
@@ -496,6 +631,61 @@ namespace RandoEditor
 			{
 				node.FormConnections(myNodes);
 			}
+		}
+
+		private void completeConnectionContextMenuItem_Click(object sender, EventArgs e)
+		{			
+			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+
+			if (!nodes.Item1.myConnections.Contains(nodes.Item2))
+			{
+				nodes.Item1.CreateConnection(nodes.Item2);
+			}
+
+			if (!nodes.Item2.myConnections.Contains(nodes.Item1))
+			{
+				nodes.Item2.CreateConnection(nodes.Item1);
+			}
+		}
+
+		private void oneWayConnectionContextMenuItem_Click(object sender, EventArgs e)
+		{
+			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+
+			if (!nodes.Item1.myConnections.Contains(nodes.Item2))
+			{
+				nodes.Item1.CreateConnection(nodes.Item2);
+			}
+		}
+
+		private void removeConnectionContextMenuItem_Click(object sender, EventArgs e)
+		{
+			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+
+			if (nodes.Item1.myConnections.Contains(nodes.Item2))
+			{
+				nodes.Item1.RemoveConnection(nodes.Item2);
+			}
+
+			if (nodes.Item2.myConnections.Contains(nodes.Item1))
+			{
+				nodes.Item2.RemoveConnection(nodes.Item1);
+			}
+		}
+
+		private void placeNewContextMenuItem_Click(object sender, EventArgs e)
+		{
+			var type = (NodeType)((ToolStripMenuItem)sender).Tag;
+			var pos = (Vector2)contextMenuStrip.Tag;
+
+			PlaceNewNode(type, pos);
+		}
+
+		private void deleteContextMenuItem_Click(object sender, EventArgs e)
+		{
+			var nodeToDelete = (NodeBase)((ToolStripMenuItem)sender).Tag;
+
+			DeleteNode(nodeToDelete);
 		}
 
 		private void newToolStripMenuItem_Click(object sender, EventArgs e)

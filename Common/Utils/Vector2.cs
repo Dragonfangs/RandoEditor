@@ -17,10 +17,14 @@ namespace Common.Utils
 			y = someY;
 		}
 
-		public Vector2(Vector2 otherVector)
+		public Vector2(System.Drawing.Point somePoint)
+			:this(somePoint.X, somePoint.Y)
 		{
-			x = otherVector.x;
-			y = otherVector.y;
+		}
+
+		public Vector2(Vector2 otherVector)
+			: this(otherVector.x, otherVector.y)
+		{
 		}
 
 		public static Vector2 operator +(Vector2 v1, Vector2 v2)

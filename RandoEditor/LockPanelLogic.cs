@@ -17,35 +17,28 @@ namespace RandoEditor
 			{
 				Tag = req;
 
-				m_ComboBox.Tag = this;
+				ComboBox.Tag = this;
 
-				m_ComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+				ComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 
-				m_ComboBox.Items.AddRange(((RequirementType[])Enum.GetValues(typeof(RequirementType))).Select(x => RequirementTypeConverter.Convert(x)).ToArray());
+				ComboBox.Items.AddRange(((RequirementType[])Enum.GetValues(typeof(RequirementType))).Select(x => RequirementTypeConverter.Convert(x)).ToArray());
 
 				if (req.myType == RequirementType.AND)
 				{
-					m_ComboBox.SelectedItem = RequirementTypeConverter.Convert(RequirementType.AND);
+					ComboBox.SelectedItem = RequirementTypeConverter.Convert(RequirementType.AND);
 				}
 				else if (req.myType == RequirementType.OR)
 				{
-					m_ComboBox.SelectedItem = RequirementTypeConverter.Convert(RequirementType.OR);
+					ComboBox.SelectedItem = RequirementTypeConverter.Convert(RequirementType.OR);
 				}
 			}
 
-			private ComboBox m_ComboBox = new ComboBox();
-			public ComboBox ComboBox
-			{
-				get
-				{
-					return m_ComboBox;
-				}
-			}
+			public ComboBox ComboBox { get; } = new ComboBox();
 		}
 
 		public class AddingTreeNode : TreeNode
 		{
-			public AddingTreeNode(Requirement req)
+			public AddingTreeNode()
 				: base()
 			{
 				btnAddComplex.Tag = this;
@@ -56,8 +49,6 @@ namespace RandoEditor
 				btnAddSimple.BackgroundImage = Properties.Resources.SimpleRequirement;
 				btnAddSimple.BackgroundImageLayout = ImageLayout.Zoom;
 				myToolTip.SetToolTip(btnAddSimple, "Add Simple Requirement");
-
-				Tag = req;
 			}
 
 			public Button btnAddComplex = new Button();
@@ -77,13 +68,13 @@ namespace RandoEditor
 				{
 					Text = $"          {req.GetKey().Name}";
 
-					m_NumericUpDown.Tag = this;
+					NumericUpDown.Tag = this;
 
-					m_NumericUpDown.Minimum = 1;
-					m_NumericUpDown.Maximum = 9;
-					m_NumericUpDown.Increment = 1;
+					NumericUpDown.Minimum = 1;
+					NumericUpDown.Maximum = 9;
+					NumericUpDown.Increment = 1;
 
-					m_NumericUpDown.Value = req.myRepeatCount;
+					NumericUpDown.Value = req.myRepeatCount;
 				}
 			}
 
@@ -94,15 +85,7 @@ namespace RandoEditor
 			}
 
 			public bool Deletable { get; set; } = true;
-
-			private NumericUpDown m_NumericUpDown = new NumericUpDown();
-			public NumericUpDown NumericUpDown
-			{
-				get
-				{
-					return m_NumericUpDown;
-				}
-			}
+			public NumericUpDown NumericUpDown { get; } = new NumericUpDown();
 		}
 
 		public class SeparatorTreeNode : TreeNode
@@ -223,7 +206,7 @@ namespace RandoEditor
 					parent.Nodes.Add(child);
 				}
 				
-				parent.Nodes.Add(new AddingTreeNode(cReq));
+				parent.Nodes.Add(new AddingTreeNode());
 				GenerateSeparators(parent);
 				return parent;
 			}
@@ -255,7 +238,8 @@ namespace RandoEditor
 			if (req == null)
 				return;
 
-			var nodesThatShouldHaveSeparator = aNode.Nodes.Cast<TreeNode>().Take(aNode.Nodes.Count - 2).ToList();
+			var nodesWithoutAddingnode = aNode.Nodes.Cast<TreeNode>().Where(node => !(node is AddingTreeNode)).ToList();
+			var nodesThatShouldHaveSeparator = nodesWithoutAddingnode.Take(nodesWithoutAddingnode.Count - 1).ToList();
 			foreach (TreeNode node in nodesThatShouldHaveSeparator)
 			{
 				aNode.Nodes.Insert(node.Index + 1, new SeparatorTreeNode(req.myType));
@@ -286,6 +270,10 @@ namespace RandoEditor
 				if (node is DropDownTreeNode dropDownNode)
 				{
 					treeView1.Controls.Add(dropDownNode.ComboBox);
+
+					dropDownNode.ComboBox.ContextMenuStrip = new ContextMenuStrip();
+
+					GenerateContextMenu(dropDownNode.ComboBox.ContextMenuStrip, node, true, true);
 
 					dropDownNode.ComboBox.SelectedValueChanged += new EventHandler(ComboBox_SelectedValueChanged);
 					dropDownNode.ComboBox.KeyDown += new KeyEventHandler(ComboBox_KeyDown);
@@ -463,53 +451,93 @@ namespace RandoEditor
 			{
 				if (node.Parent != null && (node is KeyTreeNode || node is DropDownTreeNode))
 				{
-					HideControls();
-					var parentNode = node.Parent;
-					(parentNode.Tag as ComplexRequirement).myRequirements.Remove(node.Tag as Requirement);
-					node.Remove();
-					GenerateSeparators(parentNode);
-					ShowControls();
+					DeleteNode(node);
 				}
 			}
 		}
 
-		void btnAddComplex_Clicked(object sender, EventArgs e)
+		void AddComplexRequirement(DropDownTreeNode parentNode)
 		{
-			if (sender is Button btn && btn.Tag is TreeNode parentNode && parentNode.Tag is ComplexRequirement requirement)
+			if (parentNode.Tag is ComplexRequirement requirement)
 			{
 				var newReq = new ComplexRequirement();
 				requirement.myRequirements.Add(newReq);
 
 				var newNode = new DropDownTreeNode(newReq);
-				newNode.Nodes.Add(new AddingTreeNode(newReq));
-				
+				newNode.Nodes.Add(new AddingTreeNode());
+
 				HideControls();
-				parentNode.Parent.Nodes.Insert(parentNode.Parent.Nodes.Count - 1, newNode);
-				GenerateSeparators(parentNode.Parent);
+				parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, newNode);
+				GenerateSeparators(parentNode);
 				newNode.Expand();
 			}
 		}
 
-		void btnAddSimple_Clicked(object sender, EventArgs e)
+		void btnAddComplex_Clicked(object sender, EventArgs e)
 		{
-			if (sender is Button btn && btn.Tag is TreeNode parentNode && parentNode.Tag is ComplexRequirement requirement)
+			if (sender is Button btn && btn.Tag is AddingTreeNode node && node.Parent is DropDownTreeNode parentNode)
+			{
+				AddComplexRequirement(parentNode);
+			}
+		}
+
+		void addComplexContextMenuItem_Click(object sender, EventArgs e)
+		{
+			if (sender is ToolStripMenuItem item && item.Tag is DropDownTreeNode parentNode)
+			{
+				AddComplexRequirement(parentNode);
+			}
+		}
+
+		void AddSimpleRequirement(DropDownTreeNode parentNode)
+		{
+			if (parentNode.Tag is ComplexRequirement requirement)
 			{
 				var keySelector = new KeySelector();
 				keySelector.ShowDialog();
-				
+
 				foreach (var key in keySelector.SelectedKeys.Distinct())
 				{
 					if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
 					{
 						var newReq = new SimpleRequirement(key);
 						requirement.myRequirements.Add(newReq);
-						
-						parentNode.Parent.Nodes.Insert(parentNode.Parent.Nodes.Count - 1, GenerateLeafNode(newReq));
+
+						parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
 					}
 				}
 
 				HideControls();
-				GenerateSeparators(parentNode.Parent);
+				GenerateSeparators(parentNode);
+				ShowControls();
+			}
+		}
+
+		void btnAddSimple_Clicked(object sender, EventArgs e)
+		{
+			if (sender is Button btn && btn.Tag is AddingTreeNode node && node.Parent is DropDownTreeNode parentNode)
+			{
+				AddSimpleRequirement(parentNode);
+			}
+		}
+
+		void addSimpleContextMenuItem_Click(object sender, EventArgs e)
+		{
+			if (sender is ToolStripMenuItem item && item.Tag is DropDownTreeNode parentNode)
+			{
+				AddSimpleRequirement(parentNode);
+			}
+		}
+
+		void DeleteNode(TreeNode nodeToRemove)
+		{
+			if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && keyNode.Deletable) || nodeToRemove is DropDownTreeNode))
+			{
+				HideControls();
+				var parentNode = nodeToRemove.Parent;
+				(parentNode.Tag as ComplexRequirement).myRequirements.Remove(nodeToRemove.Tag as Requirement);
+				nodeToRemove.Remove();
+				GenerateSeparators(parentNode);
 				ShowControls();
 			}
 		}
@@ -518,16 +546,54 @@ namespace RandoEditor
 		{
 			if (e.KeyCode == Keys.Delete)
 			{
-				var nodeToRemove = treeView1.SelectedNode;
-				if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && keyNode.Deletable) || nodeToRemove is DropDownTreeNode))
-				{
-					HideControls();
-					var parentNode = nodeToRemove.Parent;
-					(parentNode.Tag as ComplexRequirement).myRequirements.Remove(nodeToRemove.Tag as Requirement);
-					nodeToRemove.Remove();
-					GenerateSeparators(parentNode);
-					ShowControls();
-				}
+				DeleteNode(treeView1.SelectedNode);
+			}
+		}
+
+		private void deleteContextMenuItem_Click(object sender, EventArgs e)
+		{
+			if (sender is ToolStripMenuItem item && item.Tag is TreeNode node)
+			{
+				DeleteNode(node);
+			}
+		}
+
+		private void GenerateContextMenu(ContextMenuStrip contextMenuStrip, TreeNode parentNode, bool canAdd, bool canDelete)
+		{
+			if (canAdd)
+			{
+				var simpleItem = new ToolStripMenuItem("Add Complex Requirement");
+				simpleItem.Click += addComplexContextMenuItem_Click;
+				simpleItem.Tag = parentNode;
+				contextMenuStrip.Items.Add(simpleItem);
+
+				var complexItem = new ToolStripMenuItem("Add Simple Requirement");
+				complexItem.Click += addSimpleContextMenuItem_Click;
+				complexItem.Tag = parentNode;
+				contextMenuStrip.Items.Add(complexItem);
+			}
+
+			if (canDelete)
+			{
+				var deleteItem = new ToolStripMenuItem("Delete Requirement");
+				deleteItem.Click += deleteContextMenuItem_Click;
+				deleteItem.Tag = parentNode;
+				contextMenuStrip.Items.Add(deleteItem);
+			}
+		}
+
+		private void treeView1_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+		{
+			if(e.Button == MouseButtons.Right)
+			{
+				var contextMenuStrip = new ContextMenuStrip();
+				contextMenuStrip.Tag = e.Node;
+
+				GenerateContextMenu(contextMenuStrip, e.Node,
+					e.Node is DropDownTreeNode parentNode,
+					(e.Node.Parent != null && ((e.Node is KeyTreeNode keyNode && keyNode.Deletable) || e.Node is DropDownTreeNode)));
+
+				contextMenuStrip.Show(treeView1.PointToScreen(e.Location));
 			}
 		}
 	}

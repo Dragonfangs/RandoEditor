@@ -31,7 +31,7 @@ namespace RandoEditor
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.treeView1 = new TreeViewScroll();
+			this.treeView1 = new RandoEditor.CustomControl.TreeViewScroll();
 			this.SuspendLayout();
 			// 
 			// treeView1
@@ -44,13 +44,14 @@ namespace RandoEditor
 			this.treeView1.Name = "treeView1";
 			this.treeView1.Size = new System.Drawing.Size(150, 150);
 			this.treeView1.TabIndex = 0;
+			this.treeView1.Scroll += new System.Windows.Forms.ScrollEventHandler(this.treeView1_Scroll);
 			this.treeView1.BeforeCollapse += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeCollapse);
 			this.treeView1.AfterCollapse += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterCollapse);
 			this.treeView1.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeExpand);
 			this.treeView1.AfterExpand += new System.Windows.Forms.TreeViewEventHandler(this.treeView1_AfterExpand);
+			this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView1_NodeMouseClick);
 			this.treeView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.treeView1_KeyDown);
 			this.treeView1.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseWheel);
-			this.treeView1.Scroll += new System.Windows.Forms.ScrollEventHandler(this.treeView1_Scroll);
 			// 
 			// LockPanelLogic
 			// 
