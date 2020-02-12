@@ -60,6 +60,7 @@
 			// btnCancel
 			// 
 			this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
 			this.btnCancel.Location = new System.Drawing.Point(252, 524);
 			this.btnCancel.Name = "btnCancel";
 			this.btnCancel.Size = new System.Drawing.Size(75, 23);
@@ -90,6 +91,7 @@
             listViewGroup3,
             listViewGroup4});
 			this.listView1.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+			this.listView1.HideSelection = false;
 			listViewItem1.Group = listViewGroup1;
 			listViewItem2.Group = listViewGroup1;
 			listViewItem3.Group = listViewGroup1;
@@ -121,8 +123,10 @@
 			// 
 			// KeySelector
 			// 
+			this.AcceptButton = this.btnSelect;
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+			this.CancelButton = this.btnCancel;
 			this.ClientSize = new System.Drawing.Size(339, 559);
 			this.Controls.Add(this.listView1);
 			this.Controls.Add(this.btnCancel);

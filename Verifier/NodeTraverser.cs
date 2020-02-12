@@ -14,13 +14,10 @@ namespace Verifier
 			KeyManager.Initialize(someData);
 			KeyManager.SetRandomKeyMap(aRandomMap);
 
-			var nodes = someData.Nodes;
-			foreach (var node in nodes)
-			{
-				node.FormConnections(nodes);
-			}
+			var nodeCollection = new NodeCollection();
+			nodeCollection.InitializeNodes(someData);
 
-			var keyNodes = nodes.Where(node => node is KeyNode).ToList();
+			var keyNodes = nodeCollection.myNodes.Where(node => node is KeyNode).ToList();
 			var eventNodes = keyNodes.Where(node => node is EventKeyNode).Select(node => node as EventKeyNode);
 			var startNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
 			var endNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));

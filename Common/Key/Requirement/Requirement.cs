@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Memento;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -15,6 +16,29 @@ namespace Common.Key.Requirement
 	[JsonConverter(typeof(RequirementConverter))]
 	public abstract class Requirement
 	{
+		public abstract RequirementMemento CreateMemento();
+		public abstract void RestoreMemento(RequirementMemento memento);
+
+		public static Requirement CreateFromMemento(RequirementMemento memento)
+		{
+			Requirement newReq = null;
+			if (memento is SimpleRequirementMemento)
+			{
+				newReq = new SimpleRequirement();
+			}
+			if (memento is ComplexRequirementMemento)
+			{
+				newReq = new ComplexRequirement();
+			}
+
+			if (newReq != null)
+			{
+				newReq.RestoreMemento(memento);
+			}
+
+			return newReq;
+		}
+
 		public RequirementObjectType myObjectType = RequirementObjectType.Undefined;
 	}
 

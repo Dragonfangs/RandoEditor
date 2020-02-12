@@ -27,11 +27,10 @@ namespace Common.Key
 				!someData.BasicKeys.ContainsKey("Event") ||
 				!someData.BasicKeys.ContainsKey("Setting"))
 			{
-				SetDefaultKeys();
-				return;
+				SetDefaultKeys(someData);
 			}
 
-			myBasicKeys = someData.BasicKeys;;
+			myBasicKeys = someData.BasicKeys;
 
 			myCustomKeys = someData.CustomKeys;
 		}
@@ -41,22 +40,10 @@ namespace Common.Key
 			instance.myRandomKeyMap = randomMap;
 		}
 
-		private void SetDefaultKeys()
+		private void SetDefaultKeys(SaveData.SaveData someData)
 		{
 			var resourceReader = new System.IO.StreamReader(new System.IO.MemoryStream(Properties.Resources.defaultKeys));
-			myBasicKeys = JsonConvert.DeserializeObject< Dictionary<string, Dictionary<Guid, BaseKey>>>(resourceReader.ReadToEnd());
-		}
-
-		public static void SaveKeys(SaveData.SaveData someData)
-		{
-			instance.SaveKeysInternal(someData);
-		}
-
-		private void SaveKeysInternal(SaveData.SaveData someData)
-		{
-			someData.BasicKeys = myBasicKeys;
-
-			someData.CustomKeys = myCustomKeys;
+			someData.BasicKeys = JsonConvert.DeserializeObject< Dictionary<string, Dictionary<Guid, BaseKey>>>(resourceReader.ReadToEnd());
 		}
 
 		static public ICollection<BaseKey> GetRandomKeys()

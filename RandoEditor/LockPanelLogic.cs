@@ -5,6 +5,8 @@ using System.Windows.Forms;
 using Common.Node;
 using Common.Key.Requirement;
 using Common.Key;
+using System.Collections.Generic;
+using Common.Memento;
 
 namespace RandoEditor
 {
@@ -105,8 +107,17 @@ namespace RandoEditor
 		public void SetNode(ComplexRequirement req)
 		{
 			myRequirement = req;
+			if(!myMementos.ContainsKey(req))
+			{
+				myMementos.Add(req, new List<RequirementMemento>());
+			}
 
 			RefreshNode();
+		}
+
+		public void ClearMementos()
+		{
+			myMementos.Clear();
 		}
 
 		public void RefreshNode()
@@ -136,7 +147,8 @@ namespace RandoEditor
 		}
 
 		private ComplexRequirement myRequirement = new ComplexRequirement();
-		
+		private Dictionary<Requirement, List<RequirementMemento>> myMementos = new Dictionary<Requirement, List<RequirementMemento>>();
+
 		private static string GetSeparatorForType(RequirementType type)
 		{
 			switch (type)
@@ -431,6 +443,7 @@ namespace RandoEditor
 				parentNode.Tag is SimpleRequirement req && 
 				req.GetKey()?.Repeatable == true)
 			{
+				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				req.myRepeatCount = (uint)num.Value;
 			}
 		}
@@ -439,6 +452,7 @@ namespace RandoEditor
 		{
 			if (sender is ComboBox box && box.Tag is TreeNode parentNode && parentNode.Tag is ComplexRequirement req)
 			{
+				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				req.myType = RequirementTypeConverter.Convert(box.SelectedItem.ToString());
 
 				GenerateSeparators(parentNode);
@@ -460,6 +474,7 @@ namespace RandoEditor
 		{
 			if (parentNode.Tag is ComplexRequirement requirement)
 			{
+				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				var newReq = new ComplexRequirement();
 				requirement.myRequirements.Add(newReq);
 
@@ -494,22 +509,24 @@ namespace RandoEditor
 			if (parentNode.Tag is ComplexRequirement requirement)
 			{
 				var keySelector = new KeySelector();
-				keySelector.ShowDialog();
-
-				foreach (var key in keySelector.SelectedKeys.Distinct())
+				if (keySelector.ShowDialog() == DialogResult.OK)
 				{
-					if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
+					myMementos[myRequirement].Add(myRequirement.CreateMemento());
+					foreach (var key in keySelector.SelectedKeys.Distinct())
 					{
-						var newReq = new SimpleRequirement(key);
-						requirement.myRequirements.Add(newReq);
+						if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
+						{
+							var newReq = new SimpleRequirement(key);
+							requirement.myRequirements.Add(newReq);
 
-						parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
+							parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
+						}
 					}
-				}
 
-				HideControls();
-				GenerateSeparators(parentNode);
-				ShowControls();
+					HideControls();
+					GenerateSeparators(parentNode);
+					ShowControls();
+				}
 			}
 		}
 
@@ -533,6 +550,8 @@ namespace RandoEditor
 		{
 			if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && keyNode.Deletable) || nodeToRemove is DropDownTreeNode))
 			{
+				myMementos[myRequirement].Add(myRequirement.CreateMemento());
+
 				HideControls();
 				var parentNode = nodeToRemove.Parent;
 				(parentNode.Tag as ComplexRequirement).myRequirements.Remove(nodeToRemove.Tag as Requirement);
@@ -547,6 +566,18 @@ namespace RandoEditor
 			if (e.KeyCode == Keys.Delete)
 			{
 				DeleteNode(treeView1.SelectedNode);
+			}
+
+			if (ModifierKeys == Keys.Control && e.KeyCode == Keys.Z)
+			{
+				if (myMementos[myRequirement].Any())
+				{
+					var memento = myMementos[myRequirement].Last();
+					myMementos[myRequirement].Remove(memento);
+					myRequirement.RestoreMemento(memento);
+
+					RefreshNode();
+				}
 			}
 		}
 
@@ -595,6 +626,11 @@ namespace RandoEditor
 
 				contextMenuStrip.Show(treeView1.PointToScreen(e.Location));
 			}
+		}
+
+		private void treeView1_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			e.Handled = true;
 		}
 	}
 }

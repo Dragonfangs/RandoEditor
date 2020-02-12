@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Linq;
 using Common.Utils;
+using Common.Memento;
 
 namespace Common.Node
 {
@@ -35,12 +36,12 @@ namespace Common.Node
 		[NonSerialized]
 		public List<NodeBase> myConnections = new List<NodeBase>();
 
-		public void FormConnections(List<NodeBase> nodes)
+		public void FormConnections(NodeCollection otherNodes)
 		{
 			myConnections.Clear();
 			foreach(var id in myConnectionIds)
 			{
-				var connection = nodes.FirstOrDefault(node => node.id == id);
+				var connection = otherNodes.myNodes.FirstOrDefault(node => node.id == id);
 				if(connection != null)
 				{
 					myConnections.Add(connection);
@@ -64,6 +65,21 @@ namespace Common.Node
 				myConnectionIds.Remove(otherNode.id);
 				myConnections.Remove(otherNode);
 			}
+		}
+
+		public NodeMemento CreateMemento()
+		{
+			var memento = new NodePositionMemento();
+
+			memento.nodeId = this.id;
+			memento.nodePos = this.myPos;
+
+			return memento;
+		}
+
+		public void RestoreMemento(NodePositionMemento memento, NodeCollection otherNodes)
+		{
+			myPos = memento.nodePos;
 		}
 	}
 

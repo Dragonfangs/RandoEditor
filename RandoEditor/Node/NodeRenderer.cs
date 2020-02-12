@@ -11,11 +11,12 @@ namespace RandoEditor.Node
 		// This ain't pretty but better than passing a bunch of values around right now
 		// Fix when it becomes a problem lol
 		public Vector2 BasePos;
+		public Vector2 CarriedPos;
 		public float Zoom;
 		public Guid carriedNodeId;
 		public Guid selectedNodeId;
 		public Size panelSize;
-
+		
 		public static int nodeSize = 25;
 
 		private NodeImageFactory myNodeImageFactory = new NodeImageFactory(nodeSize);
@@ -90,8 +91,18 @@ namespace RandoEditor.Node
 
 		private void DrawNode(NodeBase aNode, Graphics aGraphicsObj)
 		{
-			var x = TranslateX(aNode.myPos.x);
-			var y = TranslateY(aNode.myPos.y);
+			var nodeInfo = new NodeImageFactory.NodeInfo()
+			{
+				type = aNode.myNodeType,
+
+				selected = aNode.id == selectedNodeId,
+				carried = aNode.id == carriedNodeId,
+			};
+
+			var renderPos = nodeInfo.carried ? CarriedPos : aNode.myPos;
+
+			var x = TranslateX(renderPos.x);
+			var y = TranslateY(renderPos.y);
 			var width = nodeSize;
 			var height = nodeSize;
 
@@ -100,14 +111,6 @@ namespace RandoEditor.Node
 			var panelRect = new Rectangle(new Point(0, 0), panelSize);
 			if (Utility.RectIntersect(nodeRectangle, panelRect))
 			{
-				var nodeInfo = new NodeImageFactory.NodeInfo()
-				{
-					type = aNode.myNodeType,
-
-					selected = aNode.id == selectedNodeId,
-					carried = aNode.id == carriedNodeId,
-				};
-
 				if ((bool)Properties.Settings.Default["SimpleNodeGraphics"])
 				{
 					var color = myNodeImageFactory.GetNodeColor(nodeInfo);
@@ -192,8 +195,11 @@ namespace RandoEditor.Node
 
 		private void DrawConnection(Connection aConnection, Color aColor, Graphics aGraphicsObj)
 		{
-			var startPoint = new Vector2(TranslateX(aConnection.node1.myPos.x), TranslateY(aConnection.node1.myPos.y));
-			var endPoint = new Vector2(TranslateX(aConnection.node2.myPos.x), TranslateY(aConnection.node2.myPos.y));
+			var startPos = aConnection.node1.id == carriedNodeId ? CarriedPos : aConnection.node1.myPos;
+			var endPos = aConnection.node2.id == carriedNodeId ? CarriedPos : aConnection.node2.myPos;
+
+			var startPoint = new Vector2(TranslateX(startPos.x), TranslateY(startPos.y));
+			var endPoint = new Vector2(TranslateX(endPos.x), TranslateY(endPos.y));
 
 			if ((startPoint - endPoint).Magnitude() < nodeSize)
 				return;

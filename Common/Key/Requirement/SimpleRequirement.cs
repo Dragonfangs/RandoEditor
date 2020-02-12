@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Common.Memento;
 
 namespace Common.Key.Requirement
 {
@@ -22,6 +19,25 @@ namespace Common.Key.Requirement
 		public SimpleRequirement(BaseKey key)
 			:this(key.Id)
 		{
+		}
+
+		public override RequirementMemento CreateMemento()
+		{
+			var memento = new SimpleRequirementMemento();
+
+			memento.myRepeatCount = myRepeatCount;
+			memento.myKeyId = myKeyId;
+
+			return memento;
+		}
+
+		public override void RestoreMemento(RequirementMemento memento)
+		{
+			if (memento is SimpleRequirementMemento simpleMemento)
+			{
+				myRepeatCount = simpleMemento.myRepeatCount;
+				myKeyId = simpleMemento.myKeyId;
+			}
 		}
 
 		public uint myRepeatCount = 1;

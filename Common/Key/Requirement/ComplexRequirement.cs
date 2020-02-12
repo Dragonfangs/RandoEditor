@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Memento;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,6 +61,26 @@ namespace Common.Key.Requirement
 		{
 			myType = RequirementType.AND;
 			myRequirements.Clear();
+		}
+
+		public override RequirementMemento CreateMemento()
+		{
+			var memento = new ComplexRequirementMemento();
+
+			memento.myType = myType;
+			memento.myRequirements = myRequirements.Select(x => x.CreateMemento()).ToList();
+
+			return memento;
+		}
+
+		public override void RestoreMemento(RequirementMemento memento)
+		{
+			if(memento is ComplexRequirementMemento complexMemento)
+			{
+				myType = complexMemento.myType;
+
+				myRequirements = complexMemento.myRequirements.Select(x => CreateFromMemento(x)).ToList();
+			}
 		}
 
 		public RequirementType myType;

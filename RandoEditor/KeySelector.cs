@@ -82,6 +82,7 @@ namespace RandoEditor
 
 		private void btnCancel_Click(object sender, EventArgs e)
 		{
+			this.DialogResult = DialogResult.Cancel;
 			this.Close();
 		}
 
@@ -97,6 +98,8 @@ namespace RandoEditor
 			{
 				SelectedKeys.Add((BaseKey)item.Tag);
 			}
+
+			this.DialogResult = DialogResult.OK;
 
 			this.Close();
 		}

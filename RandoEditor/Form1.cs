@@ -10,11 +10,12 @@ using Newtonsoft.Json;
 using Common.Key;
 using RandoEditor.SaveData;
 using RandoEditor.Node;
+using Common.Memento;
 
 namespace RandoEditor
 {
-    public partial class Form1 : Form
-    {
+	public partial class Form1 : Form
+	{
 		private enum PointerState
 		{
 			None = 0,
@@ -28,26 +29,36 @@ namespace RandoEditor
 
 		private AreaMap myMap = new AreaMap();
 		private NodeRenderer myNodeRenderer = new NodeRenderer();
-        private List<NodeBase> myNodes = new List<NodeBase>();
-        private NodeBase carriedNode = null;
+		private NodeCollection myNodeCollection = new NodeCollection();
+		private List<NodeMemento> myMementos = new List<NodeMemento>();
+		private NodeBase carriedNode = null;
 		private NodeBase selectedNode = null;
-		
-		private Vector2 imageBasePos = new Vector2(0,0);
-		private Vector2 mapPickedUpPos = new Vector2(0,0);
+
+		private Vector2 imageBasePos = new Vector2(0, 0);
+		private Vector2 mapPickedUpPos = new Vector2(0, 0);
 		private bool carriedMap = false;
 
 		private Vector2 myMousePos = new Vector2(0, 0);
 
 		private Vector2 selectedOffset = null;
-				
+		private DateTime mouseDownTimeStamp = DateTime.MinValue;
+		private static TimeSpan clickTreshold = TimeSpan.FromMilliseconds(150);
+
 		private float baseZoomScale = 0.1f;
 		private float ZoomScale { get { return baseZoomScale * (Utility.CalcDiag(panel1.Width, panel1.Height) / 1000f); } set { baseZoomScale = value; } }
 
 		private PointerState myPointerState = PointerState.None;
 
-        public Form1()
-        {
-            InitializeComponent();
+		public Form1()
+		{
+			InitializeComponent();
+
+			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
+				SaveManager.New();
+
+			KeyManager.Initialize(SaveManager.Data);
+
+			myNodeCollection.InitializeNodes(SaveManager.Data);
 
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
@@ -64,14 +75,6 @@ namespace RandoEditor
 			lockPanelLogic1.Visible = false;
 
 			myMap.GenerateAllLODs();
-
-			InitializeNodes();
-		}
-
-		private void SaveNodes()
-		{
-			var text = JsonConvert.SerializeObject(myNodes);
-			System.IO.File.WriteAllText("nodes.json", JsonConvert.SerializeObject(myNodes));
 		}
 
 		private void UpdateNodeSettings()
@@ -86,7 +89,7 @@ namespace RandoEditor
 				lockPanelLogic1.Visible = (selectedNode.myNodeType == NodeType.Lock);
 				lockPanelLogic1.Enabled = (selectedNode.myNodeType == NodeType.Lock);
 
-				if(selectedNode is EventKeyNode eventNode)
+				if (selectedNode is EventKeyNode eventNode)
 					comboBoxEvent.SelectedItem = eventNode.GetKey();
 
 				comboBoxEvent.Enabled = (selectedNode.myNodeType == NodeType.EventKey);
@@ -102,10 +105,10 @@ namespace RandoEditor
 			{
 				comboBoxEvent.Visible = false;
 				comboBoxEvent.Enabled = false;
-				
+
 				txtRandomId.Enabled = false;
 				txtRandomId.Visible = false;
-				
+
 				lockPanelLogic1.Visible = false;
 				lockPanelLogic1.Enabled = false;
 			}
@@ -116,24 +119,22 @@ namespace RandoEditor
 			if (nodeToDelete == null)
 				return;
 
-			if (nodeToDelete == selectedNode)
-			{
-				selectedNode = null;
-			}
-			if (nodeToDelete == carriedNode)
-			{
-				carriedNode = null;
-			}
+			myMementos.Add(myNodeCollection.RemoveNode(nodeToDelete));
 
-			foreach (var node in myNodes)
-			{
-				node.myConnections.Remove(nodeToDelete);
-			}
-			myNodes.Remove(nodeToDelete);
-
-			UpdateNodeSettings();
+			UpdateNodeDeleted();
 
 			panel1.Refresh();
+		}
+
+		private void UpdateNodeDeleted()
+		{
+			if (!myNodeCollection.myNodes.Contains(selectedNode))
+			{
+				selectedNode = null;
+				carriedNode = null;
+
+				UpdateNodeSettings();
+			}
 		}
 
 		private Vector2 TranslateVector(Vector2 v)
@@ -142,14 +143,14 @@ namespace RandoEditor
 		}
 
 		private int TranslateX(float x)
-        {
-            return (int) ((imageBasePos.x + x) * ZoomScale);
-        }
+		{
+			return (int)((imageBasePos.x + x) * ZoomScale);
+		}
 
-        private int TranslateY(float y)
-        {
-            return (int) ((imageBasePos.y + y) * ZoomScale);
-        }
+		private int TranslateY(float y)
+		{
+			return (int)((imageBasePos.y + y) * ZoomScale);
+		}
 
 		private void DrawDebugMessage(string message, Graphics graphicsObj)
 		{
@@ -162,7 +163,7 @@ namespace RandoEditor
 		{
 			var graphicsObj = e.Graphics;
 
-			var panelRect = new Rectangle(new Point(0,0), panel1.Size);
+			var panelRect = new Rectangle(new Point(0, 0), panel1.Size);
 			myMap.Draw(imageBasePos, ZoomScale, graphicsObj, panelRect);
 
 			//DrawDebugMessage($"{myPointerState}", graphicsObj);
@@ -173,7 +174,7 @@ namespace RandoEditor
 			myNodeRenderer.selectedNodeId = selectedNode?.id ?? Guid.Empty;
 			myNodeRenderer.panelSize = panel1.Size;
 
-			myNodeRenderer.RenderNodes(myNodes, graphicsObj);
+			myNodeRenderer.RenderNodes(myNodeCollection.myNodes, graphicsObj);
 
 			//Draw cursor
 			if (myPointerState == PointerState.PlaceBlank)
@@ -247,7 +248,7 @@ namespace RandoEditor
 			var width = NodeRenderer.nodeSize;
 			var height = NodeRenderer.nodeSize;
 
-			foreach (var node in myNodes)
+			foreach (var node in myNodeCollection.myNodes)
 			{
 				var screenSpaceNodePos = TranslateVector(node.myPos);
 
@@ -268,6 +269,7 @@ namespace RandoEditor
 
 			if (myPointerState == PointerState.TwoWay && selectedNode != null && selectedNode != newNode)
 			{
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { selectedNode, newNode }));
 				if (selectedNode.myConnections.Contains(newNode) && newNode.myConnections.Contains(selectedNode))
 				{
 					selectedNode.RemoveConnection(newNode);
@@ -289,6 +291,7 @@ namespace RandoEditor
 			}
 			else if (myPointerState == PointerState.OneWay && selectedNode != null && selectedNode != newNode)
 			{
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(selectedNode));
 				if (!selectedNode.myConnections.Contains(newNode))
 				{
 					selectedNode.CreateConnection(newNode);
@@ -302,12 +305,7 @@ namespace RandoEditor
 			}
 			else
 			{
-				carriedNode = newNode;
-				selectedNode = newNode;
-
-				selectedOffset = (mousePos - TranslateVector(newNode.myPos)) / ZoomScale;
-
-				UpdateNodeSettings();
+				PickUpNode(newNode, (mousePos - TranslateVector(newNode.myPos)) / ZoomScale);
 			}
 		}
 
@@ -334,7 +332,7 @@ namespace RandoEditor
 
 			newNode.myPos = (mousePos / ZoomScale) - imageBasePos;
 
-			myNodes.Add(newNode);
+			myMementos.Add(myNodeCollection.AddNode(newNode));
 
 			selectedNode = newNode;
 
@@ -343,6 +341,31 @@ namespace RandoEditor
 			panel1.Refresh();
 
 			return newNode;
+		}
+
+		private void PickUpNode(NodeBase nodeToCarry, Vector2 offset)
+		{
+			carriedNode = nodeToCarry;
+			myNodeRenderer.CarriedPos = carriedNode.myPos;
+
+			selectedOffset = offset;
+			selectedNode = nodeToCarry;
+
+			UpdateNodeSettings();
+		}
+
+		private void DropCarriedNode()
+		{
+			if (carriedNode != null)
+			{
+				if(DateTime.UtcNow - mouseDownTimeStamp > clickTreshold)
+				{
+					myMementos.Add(carriedNode.CreateMemento());
+					carriedNode.myPos = myNodeRenderer.CarriedPos;
+				}
+				
+				carriedNode = null;
+			}
 		}
 
 		private void panel1_MouseDown(object sender, MouseEventArgs e)
@@ -372,10 +395,9 @@ namespace RandoEditor
 
 			if(newNode != null)
 			{
-				carriedNode = newNode;
-				selectedOffset = new Vector2(0, 0);
-
 				UncheckStateBoxes();
+
+				PickUpNode(newNode, new Vector2(0, 0));
 			}
 			else
 			{
@@ -394,6 +416,8 @@ namespace RandoEditor
 			}
 
 			panel1.Refresh();
+
+			mouseDownTimeStamp = DateTime.UtcNow;
 		}
 
 		private void panel1_MouseUp(object sender, MouseEventArgs e)
@@ -411,7 +435,8 @@ namespace RandoEditor
 					}
 				}
 
-				carriedNode = null;
+				DropCarriedNode();
+
 				carriedMap = false;
 
 				panel1.Refresh();
@@ -498,7 +523,7 @@ namespace RandoEditor
 
 			if (carriedNode != null)
 			{
-				carriedNode.myPos = (myMousePos / ZoomScale) - (selectedOffset + imageBasePos);
+				myNodeRenderer.CarriedPos = (myMousePos / ZoomScale) - (selectedOffset + imageBasePos);
 			}
 
 			if(carriedMap)
@@ -568,6 +593,18 @@ namespace RandoEditor
 				DeleteNode(selectedNode);
 			}
 
+			if(ModifierKeys == Keys.Control && e.KeyCode == Keys.Z)
+			{
+				if (myMementos.Any())
+				{
+					var memento = myMementos.Last();
+					myMementos.Remove(memento);
+					myNodeCollection.RestoreMemento(memento);
+
+					UpdateNodeDeleted();
+				}
+			}
+
 			UpdatePointerState();
 
 			panel1.Refresh();
@@ -624,26 +661,15 @@ namespace RandoEditor
 			panel1.Refresh();
 		}
 
-		private void InitializeNodes()
-		{
-			myNodes = SaveManager.Data.Nodes;
-			foreach (var node in myNodes)
-			{
-				node.FormConnections(myNodes);
-			}
-		}
-
 		private void completeConnectionContextMenuItem_Click(object sender, EventArgs e)
 		{			
 			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
 
-			if (!nodes.Item1.myConnections.Contains(nodes.Item2))
+			if (!nodes.Item1.myConnections.Contains(nodes.Item2) || !nodes.Item2.myConnections.Contains(nodes.Item1))
 			{
-				nodes.Item1.CreateConnection(nodes.Item2);
-			}
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
 
-			if (!nodes.Item2.myConnections.Contains(nodes.Item1))
-			{
+				nodes.Item1.CreateConnection(nodes.Item2);
 				nodes.Item2.CreateConnection(nodes.Item1);
 			}
 		}
@@ -654,6 +680,8 @@ namespace RandoEditor
 
 			if (!nodes.Item1.myConnections.Contains(nodes.Item2))
 			{
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(nodes.Item1));
+
 				nodes.Item1.CreateConnection(nodes.Item2);
 			}
 		}
@@ -662,13 +690,12 @@ namespace RandoEditor
 		{
 			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
 
-			if (nodes.Item1.myConnections.Contains(nodes.Item2))
+			if (nodes.Item1.myConnections.Contains(nodes.Item2) ||
+				nodes.Item2.myConnections.Contains(nodes.Item1))
 			{
-				nodes.Item1.RemoveConnection(nodes.Item2);
-			}
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
 
-			if (nodes.Item2.myConnections.Contains(nodes.Item1))
-			{
+				nodes.Item1.RemoveConnection(nodes.Item2);
 				nodes.Item2.RemoveConnection(nodes.Item1);
 			}
 		}
@@ -693,7 +720,10 @@ namespace RandoEditor
 			SaveManager.New();
 
 			KeyManager.Initialize(SaveManager.Data);
-			InitializeNodes();
+			myNodeCollection.InitializeNodes(SaveManager.Data);
+
+			myMementos.Clear();
+			lockPanelLogic1.ClearMementos();
 		}
 
 		private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -707,7 +737,10 @@ namespace RandoEditor
 				if (SaveManager.Open(dialog.FileName))
 				{
 					KeyManager.Initialize(SaveManager.Data);
-					InitializeNodes();
+					myNodeCollection.InitializeNodes(SaveManager.Data);
+
+					myMementos.Clear();
+					lockPanelLogic1.ClearMementos();
 				}
 				else
 				{
@@ -718,17 +751,11 @@ namespace RandoEditor
 
 		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			SaveNodes();
-			KeyManager.SaveKeys(SaveManager.Data);
-
 			Save();
 		}
 
 		private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			SaveNodes();
-			KeyManager.SaveKeys(SaveManager.Data);
-
 			SaveAs();
 		}
 
