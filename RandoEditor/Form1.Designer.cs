@@ -41,6 +41,7 @@ namespace RandoEditor
 		private void InitializeComponent()
         {
 			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			this.panel1 = new RandoEditor.Form1.MyPanel();
 			this.comboBoxEvent = new System.Windows.Forms.ComboBox();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -266,7 +267,7 @@ namespace RandoEditor
 			// contextMenuStrip
 			// 
 			this.contextMenuStrip.Name = "contextMenuStrip";
-			this.contextMenuStrip.Size = new System.Drawing.Size(181, 26);
+			this.contextMenuStrip.Size = new System.Drawing.Size(61, 4);
 			// 
 			// Form1
 			// 
@@ -284,10 +285,11 @@ namespace RandoEditor
 			this.Controls.Add(this.lockPanelLogic1);
 			this.Controls.Add(this.comboBoxEvent);
 			this.Controls.Add(this.panel1);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MainMenuStrip = this.menuStrip1;
 			this.MinimumSize = new System.Drawing.Size(700, 400);
 			this.Name = "Form1";
-			this.Text = "Form1";
+			this.Text = "Logic Editor";
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.ResumeLayout(false);

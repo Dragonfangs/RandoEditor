@@ -122,6 +122,7 @@ namespace RandoEditor
 
 		public void RefreshNode()
 		{
+			this.SuspendLayout();
 			HideControls(treeView1.Nodes);
 
 			treeView1.Nodes.Clear();
@@ -132,6 +133,8 @@ namespace RandoEditor
 			{
 				ExpandTreeNode(node);
 			}
+
+			this.ResumeLayout();
 		}
 
 		private void ExpandTreeNode(TreeNode node)
