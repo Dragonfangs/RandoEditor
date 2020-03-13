@@ -123,7 +123,7 @@ namespace RandoEditor
 
 			UpdateNodeDeleted();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void UpdateNodeDeleted()
@@ -338,7 +338,7 @@ namespace RandoEditor
 
 			UpdateNodeSettings();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 
 			return newNode;
 		}
@@ -415,7 +415,7 @@ namespace RandoEditor
 				selectedOffset = (mousePos / ZoomScale) - imageBasePos;
 			}
 
-			panel1.Refresh();
+			panel1.Invalidate();
 
 			mouseDownTimeStamp = DateTime.UtcNow;
 		}
@@ -439,7 +439,7 @@ namespace RandoEditor
 
 				carriedMap = false;
 
-				panel1.Refresh();
+				panel1.Invalidate();
 			}
 			else if(e.Button == MouseButtons.Right && myPointerState == PointerState.None)
 			{
@@ -533,7 +533,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_MouseWheel(object sender, MouseEventArgs e)
@@ -547,7 +547,7 @@ namespace RandoEditor
 				var newZoomScale = ZoomScale;
 
 				imageBasePos = imageBasePos + ((mousePos / newZoomScale) - (mousePos / oldZoomScale));
-				panel1.Refresh();
+				panel1.Invalidate();
 			}
 		}
 
@@ -557,7 +557,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void comboBoxEvent_SelectedIndexChanged(object sender, EventArgs e)
@@ -578,7 +578,7 @@ namespace RandoEditor
 
 		private void panel1_SizeChanged(object sender, EventArgs e)
 		{
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_KeyDown(object sender, KeyEventArgs e)
@@ -607,14 +607,14 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_KeyUp(object sender, KeyEventArgs e)
 		{
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void customKeysToolStripMenuItem_Click(object sender, EventArgs e)
@@ -658,7 +658,7 @@ namespace RandoEditor
 			UncheckAllExcept(sender as CheckBox);
 
 			UpdatePointerState();
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void completeConnectionContextMenuItem_Click(object sender, EventArgs e)
