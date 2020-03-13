@@ -1,5 +1,7 @@
-﻿using Common.Key.Requirement;
+﻿using Common.Key;
+using Common.Key.Requirement;
 using Common.Node;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,6 +17,7 @@ namespace Verifier.Key
 		public Inventory(Inventory other)
 		{
 			myNodes = new List<NodeBase>(other.myNodes);
+			myKeys = new List<BaseKey>(other.myKeys);
 		}
 
 		public Inventory Expand(NodeBase key)
@@ -40,12 +43,15 @@ namespace Verifier.Key
 
 			if(req is SimpleRequirement simple)
 			{
-				return myNodes.Count(node => (node as KeyNode).GetKey() == simple.GetKey()) >= simple.myRepeatCount;
+				var targetKey = simple.GetKey();
+				var combinedKeys = myNodes.Select(node => (node as KeyNode).GetKey()).Concat(myKeys);
+				return combinedKeys.Count(key => key == targetKey) >= simple.myRepeatCount;
 			}
 
 			return false;
 		}
 
-		public List<NodeBase> myNodes;
+		public List<NodeBase> myNodes = new List<NodeBase>();
+		public List<BaseKey> myKeys = new List<BaseKey>();
 	}
 }
