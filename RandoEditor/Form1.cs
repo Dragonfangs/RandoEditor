@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using Common.Utils;
 using RandoEditor.Map;
 using Common.Node;
-using Newtonsoft.Json;
 using Common.Key;
 using RandoEditor.SaveData;
 using RandoEditor.Node;
@@ -56,12 +55,32 @@ namespace RandoEditor
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
-			KeyManager.Initialize(SaveManager.Data);
-
-			myNodeCollection.InitializeNodes(SaveManager.Data);
+			LoadData();
 
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
+
+			myMap.GenerateAllLODs();
+		}
+
+		void LoadData()
+		{
+			KeyManager.Initialize(SaveManager.Data);
+			myNodeCollection.InitializeNodes(SaveManager.Data);
+
+			carriedNode = null;
+			selectedNode = null;
+
+			imageBasePos = new Vector2(0, 0);
+			mapPickedUpPos = new Vector2(0, 0);
+			carriedMap = false;
+
+			myMousePos = new Vector2(0, 0);
+
+			selectedOffset = null;
+			mouseDownTimeStamp = DateTime.MinValue;
+
+			baseZoomScale = 0.1f;
 
 			comboBoxEvent.DataSource = KeyManager.GetEventKeys().ToList();
 			comboBoxEvent.DisplayMember = "Name";
@@ -73,8 +92,6 @@ namespace RandoEditor
 
 			lockPanelLogic1.Enabled = false;
 			lockPanelLogic1.Visible = false;
-
-			myMap.GenerateAllLODs();
 		}
 
 		private void UpdateNodeSettings()
@@ -736,8 +753,7 @@ namespace RandoEditor
 			{
 				if (SaveManager.Open(dialog.FileName))
 				{
-					KeyManager.Initialize(SaveManager.Data);
-					myNodeCollection.InitializeNodes(SaveManager.Data);
+					LoadData();
 
 					myMementos.Clear();
 					lockPanelLogic1.ClearMementos();
