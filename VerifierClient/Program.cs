@@ -5,6 +5,7 @@ using Common.SaveData;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Verifier;
@@ -15,12 +16,14 @@ namespace VerifierClient
 	class Program
 	{
 		static string _logMessage = string.Empty;
+		static Stopwatch _Timer = new Stopwatch();
 
 		static void Main(string[] args)
 		{
 			DoTest();
 			Console.WriteLine(_logMessage);
 			File.WriteAllText(Environment.CurrentDirectory + "//verifier.log", _logMessage);
+			Console.WriteLine($"{Environment.NewLine}Time taken: {_Timer.Elapsed}");
 			Console.ReadKey();
 		}
 
@@ -68,13 +71,16 @@ namespace VerifierClient
 
 			var inventory = new Inventory();
 			inventory.myKeys = inventoryKeys;
-
+			
+			_Timer.Start();
 			_logMessage += Environment.NewLine;
 			var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
 			_logMessage += $"100%: {fullCompleteResult}{Environment.NewLine}{traverser.GetWaveLog()}{Environment.NewLine}{Environment.NewLine}";
 
 			var beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(inventory));
 			_logMessage += $"Beatable: {beatableResult}{Environment.NewLine}{traverser.GetWaveLog()}";
+
+			_Timer.Stop();
 		}
 
 		public static string ChooseLogic(List<string> logicFiles)

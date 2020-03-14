@@ -44,8 +44,15 @@ namespace Verifier.Key
 			if(req is SimpleRequirement simple)
 			{
 				var targetKey = simple.GetKey();
-				var combinedKeys = myNodes.Select(node => (node as KeyNode).GetKey()).Concat(myKeys);
-				return combinedKeys.Count(key => key == targetKey) >= simple.myRepeatCount;
+				if (targetKey is ComplexKey cKey)
+				{
+					return Unlocks(cKey.myRequirement);
+				}
+				else
+				{
+					var combinedKeys = myNodes.Select(node => (node as KeyNode).GetKey()).Concat(myKeys);
+					return combinedKeys.Count(key => key == targetKey) >= simple.myRepeatCount;
+				}
 			}
 
 			return false;
