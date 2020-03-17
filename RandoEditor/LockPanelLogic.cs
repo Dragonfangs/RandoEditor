@@ -104,7 +104,10 @@ namespace RandoEditor
 		public LockPanelLogic()
 		{
 			InitializeComponent();
+		}
 
+		public void SetKeys()
+		{
 			listView1.Items.Clear();
 
 			listView1.Items.AddRange(Utility.GenerateKeyList(listView1).ToArray());

@@ -53,9 +53,10 @@ namespace RandoEditor
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
+			InitializeComponent();
+
 			LoadData();
 
-			InitializeComponent();
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
 
@@ -66,6 +67,8 @@ namespace RandoEditor
 		{
 			KeyManager.Initialize(SaveManager.Data);
 			myNodeCollection.InitializeNodes(SaveManager.Data);
+
+			this.lockPanelLogic1.SetKeys();
 
 			carriedNode = null;
 			selectedNode = null;
