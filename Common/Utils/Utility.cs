@@ -1,4 +1,5 @@
 ﻿using Common.Key;
+using Common.Node;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,6 +14,20 @@ namespace Common.Utils
 {
 	public class Utility
 	{
+		public static string GetNodeName(NodeBase node)
+		{
+			if (node is RandomKeyNode randomNode)
+			{
+				return randomNode.myRandomKeyIdentifier;
+			}
+
+			if (node is EventKeyNode eventNode && eventNode.myKeyId.HasValue)
+			{
+				return KeyManager.GetKey(eventNode.myKeyId.Value)?.Name;
+			}
+
+			return string.Empty;
+		}
 		public static List<ListViewItem> GenerateKeyList(ListView listView)
 		{
 			var returnList = new List<ListViewItem>();

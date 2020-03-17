@@ -1,4 +1,4 @@
-﻿using Common.Key;
+﻿using Common.Utils;
 using Common.Node;
 using System;
 using System.Collections.Generic;
@@ -47,7 +47,7 @@ namespace Verifier
 		public string Print(int depth = 0, string prefix = "")
 		{
 			// Change all waves to a list of names of nodes visited
-			var livePrints = liveLog.Select(nodeList => nodeList.Select(node => GetNodeName(node)).Aggregate((i, j) => i + ", " + j));
+			var livePrints = liveLog.Select(nodeList => nodeList.Select(node => Utility.GetNodeName(node)).Aggregate((i, j) => i + ", " + j));
 
 			// Add "Wave" titles
 			var formattedPrints = livePrints.Select((print, i) => $"{new string('\t', depth)}Wave {prefix}{i + 1}: {print}");
@@ -70,21 +70,6 @@ namespace Verifier
 		private string AddDeadEnd(string text)
 		{
 			return text.EndsWith("(Dead End)") ? text : text + " (Dead End)";
-		}
-
-		private string GetNodeName(NodeBase node)
-		{
-			if (node is RandomKeyNode randomNode)
-			{
-				return randomNode.myRandomKeyIdentifier;
-			}
-
-			if (node is EventKeyNode eventNode && eventNode.myKeyId.HasValue)
-			{
-				return KeyManager.GetKey(eventNode.myKeyId.Value)?.Name;
-			}
-
-			return string.Empty;
 		}
 	}
 }

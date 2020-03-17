@@ -1,5 +1,5 @@
-﻿
-using Common.Key;
+﻿using Common.Key;
+using Common.Utils;
 using Common.Node;
 using Common.SaveData;
 using Newtonsoft.Json;
@@ -71,14 +71,23 @@ namespace VerifierClient
 
 			var inventory = new Inventory();
 			inventory.myKeys = inventoryKeys;
-			
-			_Timer.Start();
-			_logMessage += Environment.NewLine;
-			var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
-			_logMessage += $"100%: {fullCompleteResult}{Environment.NewLine}{traverser.GetWaveLog()}{Environment.NewLine}{Environment.NewLine}";
 
-			var beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(inventory));
-			_logMessage += $"Beatable: {beatableResult}{Environment.NewLine}{traverser.GetWaveLog()}";
+			_Timer.Start();
+			//for (int count = 0; count < 100; count++)
+			{ 
+				_logMessage += Environment.NewLine;
+				var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
+				_logMessage += $"100%: {fullCompleteResult}{Environment.NewLine}{traverser.GetWaveLog()}{Environment.NewLine}{Environment.NewLine}";
+
+				var unreachablenodes = traverser.GetUnreachable();
+				if (unreachablenodes.Any())
+				{
+					_logMessage += $"Unreachable: {traverser.GetUnreachable().Select(node => Utility.GetNodeName(node)).Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}{Environment.NewLine}";
+				}
+
+				var beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(inventory));
+				_logMessage += $"Beatable: {beatableResult}{Environment.NewLine}{traverser.GetWaveLog()}";
+			}
 
 			_Timer.Stop();
 		}

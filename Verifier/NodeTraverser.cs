@@ -12,10 +12,16 @@ namespace Verifier
 	{
 		private bool fullComplete;
 		private WaveLog myWaveLog;
+		private List<NodeBase> globalReachable = new List<NodeBase>();
 
 		public string GetWaveLog()
 		{
 			return myWaveLog.Print();
+		}
+
+		public List<NodeBase> GetUnreachable()
+		{
+			return globalReachable;
 		}
 
 		public bool VerifyBeatable(Common.SaveData.SaveData someData, Dictionary<string, Guid> aRandomMap, Inventory aStartInventory = null)
@@ -48,6 +54,11 @@ namespace Verifier
 			var startNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
 			var endNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));
 
+			if(!endNode.myConnections.Contains(startNode))
+			{
+				endNode.CreateConnection(startNode);
+			}
+
 			if (startNode == null || endNode == null)
 			{
 				return (false, new WaveLog());
@@ -55,7 +66,11 @@ namespace Verifier
 
 			aStartInventory = aStartInventory ?? new Inventory();
 
-			return SearchBeatable(startNode, endNode, keyNodes, aStartInventory, new WaveLog()).Result;
+			var result = SearchBeatable(startNode, endNode, keyNodes, aStartInventory, new WaveLog()).Result;
+
+			globalReachable = keyNodes.Except(globalReachable).ToList();
+
+			return result;
 		}
 
 		private async Task<(bool, WaveLog)> SearchBeatable(NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory, WaveLog log)
@@ -66,6 +81,8 @@ namespace Verifier
 					return (true, log);
 
 				var reachableKeys = keyNodes.AsParallel().Where(node => !anInventory.myNodes.Contains(node)).Where(node => PathExists(startNode, node, anInventory)).ToList();
+
+				globalReachable = globalReachable.Union(reachableKeys).ToList();
 
 				var retracableKeys = reachableKeys.AsParallel().Where(node => PathExists(node, startNode, anInventory.Expand(node))).ToList();
 
@@ -81,7 +98,7 @@ namespace Verifier
 					{
 						for (int j = i + 1; j < reachableKeys.Count; j++)
 						{
-							if(PathExists(reachableKeys[i], reachableKeys[j], anInventory) && PathExists(reachableKeys[j], reachableKeys[i], anInventory))
+							if(PathExists(reachableKeys[i], reachableKeys[j], anInventory))
 							{
 								redundantNodes.Add(reachableKeys[j]);
 							}
