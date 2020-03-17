@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using Common.Utils;
 using RandoEditor.Map;
 using Common.Node;
-using Newtonsoft.Json;
 using Common.Key;
 using RandoEditor.SaveData;
 using RandoEditor.Node;
@@ -54,14 +53,33 @@ namespace RandoEditor
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
-			KeyManager.Initialize(SaveManager.Data);
+			LoadData();
 
 			InitializeComponent();
-
-			myNodeCollection.InitializeNodes(SaveManager.Data);
-
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
+
+			myMap.GenerateAllLODs();
+		}
+
+		void LoadData()
+		{
+			KeyManager.Initialize(SaveManager.Data);
+			myNodeCollection.InitializeNodes(SaveManager.Data);
+
+			carriedNode = null;
+			selectedNode = null;
+
+			imageBasePos = new Vector2(0, 0);
+			mapPickedUpPos = new Vector2(0, 0);
+			carriedMap = false;
+
+			myMousePos = new Vector2(0, 0);
+
+			selectedOffset = null;
+			mouseDownTimeStamp = DateTime.MinValue;
+
+			baseZoomScale = 0.1f;
 
 			comboBoxEvent.DataSource = KeyManager.GetEventKeys().ToList();
 			comboBoxEvent.DisplayMember = "Name";
@@ -73,8 +91,6 @@ namespace RandoEditor
 
 			lockPanelLogic1.Enabled = false;
 			lockPanelLogic1.Visible = false;
-
-			myMap.GenerateAllLODs();
 		}
 
 		private void UpdateNodeSettings()
@@ -123,7 +139,7 @@ namespace RandoEditor
 
 			UpdateNodeDeleted();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void UpdateNodeDeleted()
@@ -338,7 +354,7 @@ namespace RandoEditor
 
 			UpdateNodeSettings();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 
 			return newNode;
 		}
@@ -415,7 +431,7 @@ namespace RandoEditor
 				selectedOffset = (mousePos / ZoomScale) - imageBasePos;
 			}
 
-			panel1.Refresh();
+			panel1.Invalidate();
 
 			mouseDownTimeStamp = DateTime.UtcNow;
 		}
@@ -439,7 +455,7 @@ namespace RandoEditor
 
 				carriedMap = false;
 
-				panel1.Refresh();
+				panel1.Invalidate();
 			}
 			else if(e.Button == MouseButtons.Right && myPointerState == PointerState.None)
 			{
@@ -533,7 +549,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_MouseWheel(object sender, MouseEventArgs e)
@@ -547,7 +563,7 @@ namespace RandoEditor
 				var newZoomScale = ZoomScale;
 
 				imageBasePos = imageBasePos + ((mousePos / newZoomScale) - (mousePos / oldZoomScale));
-				panel1.Refresh();
+				panel1.Invalidate();
 			}
 		}
 
@@ -557,7 +573,7 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void comboBoxEvent_SelectedIndexChanged(object sender, EventArgs e)
@@ -578,7 +594,7 @@ namespace RandoEditor
 
 		private void panel1_SizeChanged(object sender, EventArgs e)
 		{
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_KeyDown(object sender, KeyEventArgs e)
@@ -607,14 +623,14 @@ namespace RandoEditor
 
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void panel1_KeyUp(object sender, KeyEventArgs e)
 		{
 			UpdatePointerState();
 
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void customKeysToolStripMenuItem_Click(object sender, EventArgs e)
@@ -658,7 +674,7 @@ namespace RandoEditor
 			UncheckAllExcept(sender as CheckBox);
 
 			UpdatePointerState();
-			panel1.Refresh();
+			panel1.Invalidate();
 		}
 
 		private void completeConnectionContextMenuItem_Click(object sender, EventArgs e)
@@ -736,8 +752,7 @@ namespace RandoEditor
 			{
 				if (SaveManager.Open(dialog.FileName))
 				{
-					KeyManager.Initialize(SaveManager.Data);
-					myNodeCollection.InitializeNodes(SaveManager.Data);
+					LoadData();
 
 					myMementos.Clear();
 					lockPanelLogic1.ClearMementos();
