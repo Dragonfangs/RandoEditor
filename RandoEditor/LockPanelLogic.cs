@@ -7,6 +7,8 @@ using Common.Key.Requirement;
 using Common.Key;
 using System.Collections.Generic;
 using Common.Memento;
+using Common.Utils;
+using System.Drawing;
 
 namespace RandoEditor
 {
@@ -102,6 +104,12 @@ namespace RandoEditor
 		public LockPanelLogic()
 		{
 			InitializeComponent();
+
+			listView1.Items.Clear();
+
+			listView1.Items.AddRange(Utility.GenerateKeyList(listView1).ToArray());
+
+			listView1.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
 		}
 
 		public void SetNode(ComplexRequirement req)
@@ -511,7 +519,9 @@ namespace RandoEditor
 				var keySelector = new KeySelector();
 				if (keySelector.ShowDialog() == DialogResult.OK)
 				{
-					myMementos[myRequirement].Add(myRequirement.CreateMemento());
+					var newMemento = myRequirement.CreateMemento();
+					bool changeOccured = false;
+										
 					foreach (var key in keySelector.SelectedKeys.Distinct())
 					{
 						if (!requirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
@@ -520,12 +530,19 @@ namespace RandoEditor
 							requirement.myRequirements.Add(newReq);
 
 							parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
+
+							changeOccured = true;
 						}
 					}
 
-					HideControls();
-					GenerateSeparators(parentNode);
-					ShowControls();
+					if (changeOccured)
+					{
+						myMementos[myRequirement].Add(newMemento);
+
+						HideControls();
+						GenerateSeparators(parentNode);
+						ShowControls();
+					}
 				}
 			}
 		}
@@ -631,6 +648,126 @@ namespace RandoEditor
 		private void treeView1_KeyPress(object sender, KeyPressEventArgs e)
 		{
 			e.Handled = true;
+		}
+
+		private void listView1_ItemDrag(object sender, ItemDragEventArgs e)
+		{
+			var listItem = (ListViewItem)e.Item;
+			var key = (BaseKey)listItem.Tag;
+			listView1.DoDragDrop(key.Id, DragDropEffects.Copy);
+		}
+
+		private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
+		{
+			if(e.Item is KeyTreeNode || e.Item is DropDownTreeNode)
+				DoDragDrop(e.Item, DragDropEffects.Move);
+		}
+
+		private void treeView1_DragOver(object sender, DragEventArgs e)
+		{
+			// Retrieve the client coordinates of the mouse position.
+			Point targetPoint = treeView1.PointToClient(new Point(e.X, e.Y));
+
+			// Select the node at the mouse position.
+			treeView1.SelectedNode = treeView1.GetNodeAt(targetPoint);
+		}
+
+		private void treeView1_DragEnter(object sender, DragEventArgs e)
+		{
+			if (e.Data.GetDataPresent(typeof(Guid)))
+				e.Effect = DragDropEffects.Copy;
+			else if (e.Data.GetDataPresent(typeof(KeyTreeNode)) || e.Data.GetDataPresent(typeof(DropDownTreeNode)))
+				e.Effect = DragDropEffects.Move;
+			else
+				e.Effect = DragDropEffects.None;
+		}
+
+		private void treeView1_DragDrop(object sender, DragEventArgs e)
+		{
+			// Retrieve the client coordinates of the drop location.  
+			Point targetPoint = treeView1.PointToClient(new Point(e.X, e.Y));
+
+			// Retrieve the node at the drop location.  
+			TreeNode targetNode = treeView1.GetNodeAt(targetPoint);
+
+			TreeNode targetParentNode = targetNode;
+            if (!(targetParentNode is DropDownTreeNode))
+            {
+				targetParentNode = targetNode.Parent;
+            }
+
+            // Dragged from key list
+            if (e.Data.GetDataPresent(typeof(Guid)) && targetParentNode.Tag is ComplexRequirement complexRequirement)
+            {
+                var key = KeyManager.GetKey((Guid)e.Data.GetData(typeof(Guid)));
+
+                if (!complexRequirement.myRequirements.Any(req => req is SimpleRequirement sReq && sReq.GetKey() == key))
+                {
+                    myMementos[myRequirement].Add(myRequirement.CreateMemento());
+
+                    var newReq = new SimpleRequirement(key);
+					complexRequirement.myRequirements.Add(newReq);
+
+					targetParentNode.Nodes.Insert(targetParentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
+
+                    HideControls();
+                    GenerateSeparators(targetParentNode);
+                    ShowControls();
+
+                    return;
+                }
+            }
+
+            TreeNode draggedNode = null;
+
+			if (e.Data.GetDataPresent(typeof(KeyTreeNode)))
+			{
+				draggedNode = (TreeNode)e.Data.GetData(typeof(KeyTreeNode));
+			}
+
+			if (e.Data.GetDataPresent(typeof(DropDownTreeNode)))
+			{
+                draggedNode = (TreeNode)e.Data.GetData(typeof(DropDownTreeNode));
+            }
+
+            // Dragged from within requirement tree
+            if (draggedNode != null && !draggedNode.Parent.Equals(targetParentNode) && !ContainsNode(draggedNode, targetNode) && targetParentNode.Tag is ComplexRequirement requirement)
+            {
+                if (draggedNode is DropDownTreeNode || (draggedNode is KeyTreeNode && draggedNode.Tag is SimpleRequirement simpleReq &&
+														!requirement.myRequirements.Any(req => req is SimpleRequirement existingReq && existingReq.GetKey() == simpleReq.GetKey())))
+                {
+                    myMementos[myRequirement].Add(myRequirement.CreateMemento());
+
+					var draggedReq = draggedNode.Tag as Requirement;
+
+					var parentNode = draggedNode.Parent;
+                    (parentNode.Tag as ComplexRequirement).myRequirements.Remove(draggedReq);
+                    draggedNode.Remove();
+
+                    requirement.myRequirements.Add(draggedReq);
+
+                    targetParentNode.Nodes.Insert(targetParentNode.Nodes.Count - 1, draggedNode);
+
+                    HideControls();
+                    GenerateSeparators(parentNode);
+                    GenerateSeparators(targetParentNode);
+                    ShowControls();
+                }
+            }
+        }
+
+        // Determine whether one node is a parent 
+        // or ancestor of a second node.
+        private bool ContainsNode(TreeNode node1, TreeNode node2)
+		{
+			// Check the parent node of the second node.
+			if (node2.Parent == null) return false;
+			if (node2.Parent.Equals(node1)) return true;
+
+			// If the parent node is not null or equal to the first node, 
+			// call the ContainsNode method recursively using the parent of 
+			// the second node.
+			return ContainsNode(node1, node2.Parent);
 		}
 	}
 }

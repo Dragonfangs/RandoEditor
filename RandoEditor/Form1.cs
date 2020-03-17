@@ -51,12 +51,12 @@ namespace RandoEditor
 
 		public Form1()
 		{
-			InitializeComponent();
-
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
 			KeyManager.Initialize(SaveManager.Data);
+
+			InitializeComponent();
 
 			myNodeCollection.InitializeNodes(SaveManager.Data);
 

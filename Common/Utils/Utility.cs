@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Key;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -6,11 +7,64 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Common.Utils
 {
 	public class Utility
 	{
+		public static List<ListViewItem> GenerateKeyList(ListView listView)
+		{
+			var returnList = new List<ListViewItem>();
+
+			foreach (var key in KeyManager.GetRandomKeys())
+			{
+				var item = new ListViewItem(key.Name);
+				item.Group = GetGroup(listView, "listViewGroupRandom");
+				item.Tag = key;
+				returnList.Add(item);
+			}
+
+			foreach (var key in KeyManager.GetEventKeys())
+			{
+				var item = new ListViewItem(key.Name);
+				item.Group = GetGroup(listView, "listViewGroupEvents");
+				item.Tag = key;
+				returnList.Add(item);
+			}
+
+			foreach (var key in KeyManager.GetSettingKeys())
+			{
+				var item = new ListViewItem(key.Name);
+				item.Group = GetGroup(listView, "listViewGroupSettings");
+				item.Tag = key;
+				returnList.Add(item);
+			}
+
+			foreach (var key in KeyManager.GetCustomKeys())
+			{
+				var item = new ListViewItem(key.Name);
+				item.Group = GetGroup(listView, "listViewGroupCustom");
+				item.Tag = key;
+				returnList.Add(item);
+			}
+
+			return returnList;
+		}
+
+		private static ListViewGroup GetGroup(ListView listView, string name)
+		{
+			foreach (ListViewGroup group in listView.Groups)
+			{
+				if (group.Name == name)
+				{
+					return group;
+				}
+			}
+
+			return null;
+		}
+
 		/// <summary>
 		/// Resize the image to the specified width and height.
 		/// </summary>

@@ -173,7 +173,7 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.lockPanelLogic1.Location = new System.Drawing.Point(626, 28);
 			this.lockPanelLogic1.Name = "lockPanelLogic1";
-			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 658);
+			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 674);
 			this.lockPanelLogic1.TabIndex = 5;
 			// 
 			// chkOneWayConnection
