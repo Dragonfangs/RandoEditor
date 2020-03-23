@@ -1,4 +1,5 @@
 ﻿using Common.Key;
+using RandoEditor.SaveData;
 using System;
 using System.Windows.Forms;
 
@@ -51,6 +52,8 @@ namespace RandoEditor
 		{
 			var newId = Guid.NewGuid();
 			KeyManager.SaveCustomKey(newId, new ComplexKey(newId, GenerateUniqueName()));
+
+			SaveManager.Dirty = true;
 
 			GenerateList();
 		}
@@ -116,6 +119,8 @@ namespace RandoEditor
 			}
 
 			listView1.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
+
+			SaveManager.Dirty = true;
 
 			GenerateList();
 		}

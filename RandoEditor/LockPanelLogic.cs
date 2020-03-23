@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using Common.Memento;
 using Common.Utils;
 using System.Drawing;
+using RandoEditor.SaveData;
 
 namespace RandoEditor
 {
@@ -459,6 +460,8 @@ namespace RandoEditor
 			{
 				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				req.myRepeatCount = (uint)num.Value;
+
+				SaveManager.Dirty = true;
 			}
 		}
 
@@ -468,6 +471,8 @@ namespace RandoEditor
 			{
 				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				req.myType = RequirementTypeConverter.Convert(box.SelectedItem.ToString());
+
+				SaveManager.Dirty = true;
 
 				GenerateSeparators(parentNode);
 			}
@@ -494,6 +499,8 @@ namespace RandoEditor
 
 				var newNode = new DropDownTreeNode(newReq);
 				newNode.Nodes.Add(new AddingTreeNode());
+
+				SaveManager.Dirty = true;
 
 				HideControls();
 				parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, newNode);
@@ -537,6 +544,8 @@ namespace RandoEditor
 
 							parentNode.Nodes.Insert(parentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
 
+							SaveManager.Dirty = true;
+
 							changeOccured = true;
 						}
 					}
@@ -579,6 +588,9 @@ namespace RandoEditor
 				var parentNode = nodeToRemove.Parent;
 				(parentNode.Tag as ComplexRequirement).myRequirements.Remove(nodeToRemove.Tag as Requirement);
 				nodeToRemove.Remove();
+
+				SaveManager.Dirty = true;
+
 				GenerateSeparators(parentNode);
 				ShowControls();
 			}
@@ -716,7 +728,9 @@ namespace RandoEditor
 
 					targetParentNode.Nodes.Insert(targetParentNode.Nodes.Count - 1, GenerateLeafNode(newReq));
 
-                    HideControls();
+					SaveManager.Dirty = true;
+
+					HideControls();
                     GenerateSeparators(targetParentNode);
                     ShowControls();
 
@@ -754,7 +768,9 @@ namespace RandoEditor
 
                     targetParentNode.Nodes.Insert(targetParentNode.Nodes.Count - 1, draggedNode);
 
-                    HideControls();
+					SaveManager.Dirty = true;
+
+					HideControls();
                     GenerateSeparators(parentNode);
                     GenerateSeparators(targetParentNode);
                     ShowControls();

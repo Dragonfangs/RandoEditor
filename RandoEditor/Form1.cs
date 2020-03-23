@@ -10,6 +10,7 @@ using Common.Key;
 using RandoEditor.SaveData;
 using RandoEditor.Node;
 using Common.Memento;
+using System.IO;
 
 namespace RandoEditor
 {
@@ -60,6 +61,8 @@ namespace RandoEditor
 			(panel1 as Control).KeyDown += new KeyEventHandler(panel1_KeyDown);
 			(panel1 as Control).KeyUp += new KeyEventHandler(panel1_KeyUp);
 
+			SaveManager.DirtyChanged += new EventHandler(saveManager_DirtyChanged);
+
 			myMap.GenerateAllLODs();
 		}
 
@@ -68,7 +71,12 @@ namespace RandoEditor
 			KeyManager.Initialize(SaveManager.Data);
 			myNodeCollection.InitializeNodes(SaveManager.Data);
 
-			this.lockPanelLogic1.SetKeys();
+			myMementos.Clear();
+			lockPanelLogic1.ClearMementos();
+
+			UpdateFileDirty();
+
+			lockPanelLogic1.SetKeys();
 
 			carriedNode = null;
 			selectedNode = null;
@@ -94,6 +102,16 @@ namespace RandoEditor
 
 			lockPanelLogic1.Enabled = false;
 			lockPanelLogic1.Visible = false;
+		}
+
+		private void UpdateFileDirty()
+		{
+			this.Text = (SaveManager.Dirty ? "*" : string.Empty) + SaveManager.CurrentFile() + " - Logic Editor";
+		}
+
+		private void saveManager_DirtyChanged(object sender, EventArgs e)
+		{
+			UpdateFileDirty();
 		}
 
 		private void UpdateNodeSettings()
@@ -141,6 +159,8 @@ namespace RandoEditor
 			myMementos.Add(myNodeCollection.RemoveNode(nodeToDelete));
 
 			UpdateNodeDeleted();
+
+			SaveManager.Dirty = true;
 
 			panel1.Invalidate();
 		}
@@ -306,6 +326,8 @@ namespace RandoEditor
 					}
 				}
 
+				SaveManager.Dirty = true;
+
 				UncheckStateBoxes();
 			}
 			else if (myPointerState == PointerState.OneWay && selectedNode != null && selectedNode != newNode)
@@ -319,6 +341,8 @@ namespace RandoEditor
 				{
 					selectedNode.RemoveConnection(newNode);
 				}
+
+				SaveManager.Dirty = true;
 
 				UncheckStateBoxes();
 			}
@@ -353,6 +377,8 @@ namespace RandoEditor
 
 			myMementos.Add(myNodeCollection.AddNode(newNode));
 
+			SaveManager.Dirty = true;
+
 			selectedNode = newNode;
 
 			UpdateNodeSettings();
@@ -380,6 +406,9 @@ namespace RandoEditor
 				if(DateTime.UtcNow - mouseDownTimeStamp > clickTreshold)
 				{
 					myMementos.Add(carriedNode.CreateMemento());
+
+					SaveManager.Dirty = true;
+
 					carriedNode.myPos = myNodeRenderer.CarriedPos;
 				}
 				
@@ -584,6 +613,8 @@ namespace RandoEditor
 			if (selectedNode is EventKeyNode eventNode)
 			{
 				eventNode.SetKey((BaseKey)comboBoxEvent.SelectedItem);
+
+				SaveManager.Dirty = true;
 			}
 		}
 		
@@ -592,6 +623,8 @@ namespace RandoEditor
 			if (selectedNode is RandomKeyNode randomNode)
 			{
 				randomNode.myRandomKeyIdentifier = txtRandomId.Text;
+
+				SaveManager.Dirty = true;
 			}
 		}
 
@@ -612,7 +645,7 @@ namespace RandoEditor
 				DeleteNode(selectedNode);
 			}
 
-			if(ModifierKeys == Keys.Control && e.KeyCode == Keys.Z)
+			if (ModifierKeys == Keys.Control && e.KeyCode == Keys.Z)
 			{
 				if (myMementos.Any())
 				{
@@ -688,6 +721,8 @@ namespace RandoEditor
 			{
 				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
 
+				SaveManager.Dirty = true;
+
 				nodes.Item1.CreateConnection(nodes.Item2);
 				nodes.Item2.CreateConnection(nodes.Item1);
 			}
@@ -701,6 +736,8 @@ namespace RandoEditor
 			{
 				myMementos.Add(myNodeCollection.CreateConnectionMemento(nodes.Item1));
 
+				SaveManager.Dirty = true;
+
 				nodes.Item1.CreateConnection(nodes.Item2);
 			}
 		}
@@ -713,6 +750,8 @@ namespace RandoEditor
 				nodes.Item2.myConnections.Contains(nodes.Item1))
 			{
 				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
+
+				SaveManager.Dirty = true;
 
 				nodes.Item1.RemoveConnection(nodes.Item2);
 				nodes.Item2.RemoveConnection(nodes.Item1);
@@ -738,11 +777,7 @@ namespace RandoEditor
 		{
 			SaveManager.New();
 
-			KeyManager.Initialize(SaveManager.Data);
-			myNodeCollection.InitializeNodes(SaveManager.Data);
-
-			myMementos.Clear();
-			lockPanelLogic1.ClearMementos();
+			LoadData();	
 		}
 
 		private void openToolStripMenuItem_Click(object sender, EventArgs e)
@@ -756,9 +791,6 @@ namespace RandoEditor
 				if (SaveManager.Open(dialog.FileName))
 				{
 					LoadData();
-
-					myMementos.Clear();
-					lockPanelLogic1.ClearMementos();
 				}
 				else
 				{
@@ -777,13 +809,15 @@ namespace RandoEditor
 			SaveAs();
 		}
 
-		private void Save()
+		private bool Save()
 		{
-			if (!SaveManager.Save((string)Properties.Settings.Default["LatestFilePath"]))
-				SaveAs();
+			if (!SaveManager.Save())
+				return SaveAs();
+
+			return true;
 		}
 
-		private void SaveAs()
+		private bool SaveAs()
 		{
 			var dialog = new SaveFileDialog();
 
@@ -791,8 +825,35 @@ namespace RandoEditor
 
 			if(dialog.ShowDialog() == DialogResult.OK)
 			{
-				if(!SaveManager.Save(dialog.FileName))
+				if (SaveManager.Save(dialog.FileName))
+				{
+					return true;
+				}
+				else
+				{
 					MessageBox.Show($"Saving to {dialog.FileName} failed", "Save error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				}
+			}
+
+			return false;
+		}
+
+		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			if (SaveManager.Dirty)
+			{
+				DialogResult dialogResult = MessageBox.Show($"Do you want to save changes to {SaveManager.CurrentFile()}", "Changes not saved", MessageBoxButtons.YesNoCancel);
+				if (dialogResult == DialogResult.Yes)
+				{
+					if(!Save())
+					{
+						e.Cancel = true;
+					}
+				}
+				else if (dialogResult == DialogResult.Cancel)
+				{
+					e.Cancel = true;
+				}
 			}
 		}
 	}
