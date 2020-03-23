@@ -82,7 +82,7 @@ namespace VerifierClient
 				var unreachablenodes = traverser.GetUnreachable();
 				if (unreachablenodes.Any())
 				{
-					_logMessage += $"Unreachable: {traverser.GetUnreachable().Select(node => Utility.GetNodeName(node)).Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}{Environment.NewLine}";
+					_logMessage += $"Unreachable: {traverser.GetUnreachable().Select(node => Utility.GetNodeName(node) + (node is RandomKeyNode keyNode? $"({(keyNode.GetKey() is BaseKey key ? key.Name : "empty")})" : string.Empty)).Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}{Environment.NewLine}";
 				}
 
 				var beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(inventory));

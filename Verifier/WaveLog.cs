@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Common.Key;
 
 namespace Verifier
 {
@@ -47,7 +48,7 @@ namespace Verifier
 		public string Print(int depth = 0, string prefix = "")
 		{
 			// Change all waves to a list of names of nodes visited
-			var livePrints = liveLog.Select(nodeList => nodeList.Select(node => Utility.GetNodeName(node)).Aggregate((i, j) => i + ", " + j));
+			var livePrints = liveLog.Select(nodeList => nodeList.Select(node => Utility.GetNodeName(node) + (node is RandomKeyNode keyNode ? $"({(keyNode.GetKey() is BaseKey key ? key.Name : "empty")})" : string.Empty)).Aggregate((i, j) => i + ", " + j));
 
 			// Add "Wave" titles
 			var formattedPrints = livePrints.Select((print, i) => $"{new string('\t', depth)}Wave {prefix}{i + 1}: {print}");
