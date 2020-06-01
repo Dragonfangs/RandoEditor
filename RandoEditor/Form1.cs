@@ -33,12 +33,14 @@ namespace RandoEditor
 		private List<NodeMemento> myMementos = new List<NodeMemento>();
 		private NodeBase carriedNode = null;
 		private NodeBase selectedNode = null;
+		private Connection selectedConnection = null;
 
 		private Vector2 imageBasePos = new Vector2(0, 0);
 		private Vector2 mapPickedUpPos = new Vector2(0, 0);
 		private bool carriedMap = false;
 
 		private Vector2 myMousePos = new Vector2(0, 0);
+		private Vector2 myNodeCarriedPos = new Vector2(0, 0);
 
 		private Vector2 selectedOffset = null;
 		private DateTime mouseDownTimeStamp = DateTime.MinValue;
@@ -80,6 +82,7 @@ namespace RandoEditor
 
 			carriedNode = null;
 			selectedNode = null;
+			selectedConnection = null;
 
 			imageBasePos = new Vector2(0, 0);
 			mapPickedUpPos = new Vector2(0, 0);
@@ -170,6 +173,7 @@ namespace RandoEditor
 			if (!myNodeCollection.myNodes.Contains(selectedNode))
 			{
 				selectedNode = null;
+				selectedConnection = null;
 				carriedNode = null;
 
 				UpdateNodeSettings();
@@ -205,15 +209,21 @@ namespace RandoEditor
 			var panelRect = new Rectangle(new Point(0, 0), panel1.Size);
 			myMap.Draw(imageBasePos, ZoomScale, graphicsObj, panelRect);
 
-			//DrawDebugMessage($"{myPointerState}", graphicsObj);
+			var highlightedNode = FindClickedNode(myMousePos);
+			var highlightedConnection = highlightedNode == null ? FindClickedConnection(myMousePos) : null;
 
-			myNodeRenderer.BasePos = imageBasePos;
-			myNodeRenderer.Zoom = ZoomScale;
-			myNodeRenderer.carriedNodeId = carriedNode?.id ?? Guid.Empty;
-			myNodeRenderer.selectedNodeId = selectedNode?.id ?? Guid.Empty;
-			myNodeRenderer.panelSize = panel1.Size;
-
-			myNodeRenderer.RenderNodes(myNodeCollection.myNodes, graphicsObj);
+			var renderOptions = new NodeRenderOptions();
+			renderOptions.BasePos = imageBasePos;
+			renderOptions.Zoom = ZoomScale;
+			renderOptions.carriedPos = myNodeCarriedPos;
+			renderOptions.carriedNodeId = carriedNode?.id ?? Guid.Empty;
+			renderOptions.selectedNodeId = selectedNode?.id ?? Guid.Empty;
+			renderOptions.highlightedNodeId = highlightedNode?.id ?? Guid.Empty;
+			renderOptions.selectedConnection = selectedConnection;
+			renderOptions.highlightedConnection = highlightedConnection;
+			renderOptions.panelSize = panel1.Size;
+			
+			myNodeRenderer.RenderNodes(myNodeCollection.myNodes, graphicsObj, renderOptions);
 
 			//Draw cursor
 			if (myPointerState == PointerState.PlaceBlank)
@@ -295,6 +305,26 @@ namespace RandoEditor
 					someMousePos.x < (screenSpaceNodePos.x + width / 2) && someMousePos.y < (screenSpaceNodePos.y + height / 2))
 				{
 					return node;
+				}
+			}
+
+			return null;
+		}
+
+		private Connection FindClickedConnection(Vector2 someMousePos)
+		{
+			foreach (var node in myNodeCollection.myNodes)
+			{
+				var screenSpaceNodePos = TranslateVector(node.myPos);
+
+				foreach (var conn in node.myConnections)
+				{
+					var screenSpaceConnectionPos = TranslateVector(conn.myPos);
+
+					if (Utility.FindDistanceToSegment(someMousePos.ToPoint(), screenSpaceNodePos.ToPoint(), screenSpaceConnectionPos.ToPoint()) < 7)
+					{
+						return new Connection(node, conn);
+					}
 				}
 			}
 
@@ -391,10 +421,11 @@ namespace RandoEditor
 		private void PickUpNode(NodeBase nodeToCarry, Vector2 offset)
 		{
 			carriedNode = nodeToCarry;
-			myNodeRenderer.CarriedPos = carriedNode.myPos;
+			myNodeCarriedPos = carriedNode.myPos;
 
 			selectedOffset = offset;
 			selectedNode = nodeToCarry;
+			selectedConnection = null;
 
 			UpdateNodeSettings();
 		}
@@ -409,7 +440,7 @@ namespace RandoEditor
 
 					SaveManager.Dirty = true;
 
-					carriedNode.myPos = myNodeRenderer.CarriedPos;
+					carriedNode.myPos = myNodeCarriedPos;
 				}
 				
 				carriedNode = null;
@@ -454,8 +485,20 @@ namespace RandoEditor
 				UpdateConnections(mousePos, newNode);
 			}
 
+			Connection clickedConnection = null;
+			if(newNode == null)
+			{
+				clickedConnection = FindClickedConnection(mousePos);
+
+				if (clickedConnection != null)
+				{
+					selectedNode = null;
+					selectedConnection = clickedConnection;
+				}
+			}
+
 			// No node was hit, activate map dragging
-			if (newNode == null)
+			if (newNode == null && clickedConnection == null)
 			{
 				carriedMap = true;
 
@@ -479,6 +522,7 @@ namespace RandoEditor
 					if ((mapPickedUpPos - imageBasePos).Magnitude() < 1)
 					{
 						selectedNode = null;
+						selectedConnection = null;
 						UpdateNodeSettings();
 					}
 				}
@@ -492,14 +536,13 @@ namespace RandoEditor
 			else if(e.Button == MouseButtons.Right && myPointerState == PointerState.None)
 			{
 				NodeBase clickedNode = FindClickedNode(mousePos);
+				Connection clickedConnection = FindClickedConnection(mousePos);
 
 				contextMenuStrip.Tag = mousePos;
 
 				contextMenuStrip.Items.Clear();
 				if (clickedNode != null && selectedNode != null && selectedNode != clickedNode)
 				{
-					contextMenuStrip.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
-
 					var connectionThere = selectedNode.myConnections.Contains(clickedNode);
 					var connectionFrom = clickedNode.myConnections.Contains(selectedNode);
 
@@ -507,7 +550,7 @@ namespace RandoEditor
 					{
 						var item = new ToolStripMenuItem("Complete Two-Way Connection");
 						item.Click += completeConnectionContextMenuItem_Click;
-						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						item.Tag = new Connection(selectedNode, clickedNode);
 						contextMenuStrip.Items.Add(item);
 					}
 
@@ -515,12 +558,12 @@ namespace RandoEditor
 					{
 						var item = new ToolStripMenuItem("Create New One-Way Connection");
 						item.Click += oneWayConnectionContextMenuItem_Click;
-						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						item.Tag = new Connection(selectedNode, clickedNode);
 						contextMenuStrip.Items.Add(item);
 
 						var item2 = new ToolStripMenuItem("Create New Two-Way Connection");
 						item2.Click += completeConnectionContextMenuItem_Click;
-						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						item.Tag = new Connection(selectedNode, clickedNode);
 						contextMenuStrip.Items.Add(item2);
 					}
 
@@ -528,11 +571,32 @@ namespace RandoEditor
 					{
 						var item = new ToolStripMenuItem("Remove Connection");
 						item.Click += removeConnectionContextMenuItem_Click;
-						item.Tag = new Tuple<NodeBase, NodeBase>(selectedNode, clickedNode);
+						item.Tag = new Connection(selectedNode, clickedNode);
 						contextMenuStrip.Items.Add(item);
 					}
 				}
-				
+				else if(clickedConnection != null)
+				{
+					var connectionThere = clickedConnection.node1.myConnections.Contains(clickedConnection.node2);
+					var connectionFrom = clickedConnection.node2.myConnections.Contains(clickedConnection.node1);
+
+					if (connectionThere != connectionFrom)
+					{
+						var item = new ToolStripMenuItem("Complete Two-Way Connection");
+						item.Click += completeConnectionContextMenuItem_Click;
+						item.Tag = clickedConnection;
+						contextMenuStrip.Items.Add(item);
+					}
+
+					if (connectionThere || connectionFrom)
+					{
+						var item = new ToolStripMenuItem("Remove Connection");
+						item.Click += removeConnectionContextMenuItem_Click;
+						item.Tag = clickedConnection;
+						contextMenuStrip.Items.Add(item);
+					}
+				}
+
 				var blankItem = new ToolStripMenuItem("Create New Blank Node");
 				blankItem.Click += placeNewContextMenuItem_Click;
 				blankItem.Tag = NodeType.Blank;
@@ -571,7 +635,7 @@ namespace RandoEditor
 
 			if (carriedNode != null)
 			{
-				myNodeRenderer.CarriedPos = (myMousePos / ZoomScale) - (selectedOffset + imageBasePos);
+				myNodeCarriedPos = (myMousePos / ZoomScale) - (selectedOffset + imageBasePos);
 			}
 
 			if(carriedMap)
@@ -643,6 +707,7 @@ namespace RandoEditor
 			if (e.KeyCode == Keys.Delete)
 			{
 				DeleteNode(selectedNode);
+				DeleteConnection(selectedConnection);
 			}
 
 			if (ModifierKeys == Keys.Control && e.KeyCode == Keys.Z)
@@ -714,47 +779,55 @@ namespace RandoEditor
 		}
 
 		private void completeConnectionContextMenuItem_Click(object sender, EventArgs e)
-		{			
-			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+		{
+			var menuItem = (ToolStripMenuItem)sender;
+			var connection = (Connection)menuItem.Tag;
 
-			if (!nodes.Item1.myConnections.Contains(nodes.Item2) || !nodes.Item2.myConnections.Contains(nodes.Item1))
+			if (!connection.node1.myConnections.Contains(connection.node2) || !connection.node2.myConnections.Contains(connection.node1))
 			{
-				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { connection.node1, connection.node2 }));
 
 				SaveManager.Dirty = true;
 
-				nodes.Item1.CreateConnection(nodes.Item2);
-				nodes.Item2.CreateConnection(nodes.Item1);
+				connection.node1.CreateConnection(connection.node2);
+				connection.node2.CreateConnection(connection.node1);
 			}
 		}
 
 		private void oneWayConnectionContextMenuItem_Click(object sender, EventArgs e)
 		{
-			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+			var menuItem = (ToolStripMenuItem)sender;
+			var connection = (Connection)menuItem.Tag;
 
-			if (!nodes.Item1.myConnections.Contains(nodes.Item2))
+			if (!connection.node1.myConnections.Contains(connection.node2))
 			{
-				myMementos.Add(myNodeCollection.CreateConnectionMemento(nodes.Item1));
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(connection.node1));
 
 				SaveManager.Dirty = true;
 
-				nodes.Item1.CreateConnection(nodes.Item2);
+				connection.node1.CreateConnection(connection.node2);
 			}
 		}
 
 		private void removeConnectionContextMenuItem_Click(object sender, EventArgs e)
 		{
-			var nodes = (Tuple<NodeBase, NodeBase>)contextMenuStrip.Tag;
+			var menuItem = (ToolStripMenuItem)sender;
+			var connection = (Connection)menuItem.Tag;
 
-			if (nodes.Item1.myConnections.Contains(nodes.Item2) ||
-				nodes.Item2.myConnections.Contains(nodes.Item1))
+			DeleteConnection(connection);
+		}
+
+		private void DeleteConnection(Connection connection)
+		{
+			if (connection.node1.myConnections.Contains(connection.node2) ||
+				connection.node2.myConnections.Contains(connection.node1))
 			{
-				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { nodes.Item1, nodes.Item2 }));
+				myMementos.Add(myNodeCollection.CreateConnectionMemento(new List<NodeBase> { connection.node1, connection.node2 }));
 
 				SaveManager.Dirty = true;
 
-				nodes.Item1.RemoveConnection(nodes.Item2);
-				nodes.Item2.RemoveConnection(nodes.Item1);
+				connection.node1.RemoveConnection(connection.node2);
+				connection.node2.RemoveConnection(connection.node1);
 			}
 		}
 

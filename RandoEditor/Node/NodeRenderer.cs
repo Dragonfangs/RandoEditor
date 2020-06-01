@@ -8,65 +8,95 @@ namespace RandoEditor.Node
 {
 	public class NodeRenderer
 	{
-		// This ain't pretty but better than passing a bunch of values around right now
-		// Fix when it becomes a problem lol
-		public Vector2 BasePos;
-		public Vector2 CarriedPos;
-		public float Zoom;
-		public Guid carriedNodeId;
-		public Guid selectedNodeId;
-		public Size panelSize;
-		
+		private NodeRenderOptions myRenderOptions;
+
 		public static int nodeSize = 25;
 
 		private NodeImageFactory myNodeImageFactory = new NodeImageFactory(nodeSize);
 
 		private int TranslateX(float x)
 		{
-			return (int)((BasePos.x + x) * Zoom);
+			return (int)((myRenderOptions.BasePos.x + x) * myRenderOptions.Zoom);
 		}
 
 		private int TranslateY(float y)
 		{
-			return (int)((BasePos.y + y) * Zoom);
+			return (int)((myRenderOptions.BasePos.y + y) * myRenderOptions.Zoom);
 		}
 
-		public void RenderNodes(List<NodeBase> nodes, Graphics graphicsObj)
+		public void RenderNodes(List<NodeBase> nodes, Graphics graphicsObj, NodeRenderOptions renderOptions)
 		{
-			var connections = new List<Connection>();
+			myRenderOptions = renderOptions;
 
-			NodeBase selected = null;
+			NodeBase selectedNode = null;
+			NodeBase highlightedNode = null;
+
+			List<Connection> highlightedConnections = new List<Connection>();
+			List<Connection> selectedConnections = new List<Connection>();
 
 			foreach (var node in nodes)
 			{
-				//Draw selectednode last (on top)
-				if (node.id == selectedNodeId)
+				foreach (var conn in node.myConnections)
 				{
-					selected = node;
+					var connection = new Connection(node, conn);
+
+					if (connection.Equals(myRenderOptions.highlightedConnection))
+					{
+						highlightedConnections.Add(connection);
+					}
+					else if (connection.Equals(myRenderOptions.selectedConnection))
+					{
+						selectedConnections.Add(connection);
+					}
+					else if (node.id != myRenderOptions.selectedNodeId)
+					{
+						DrawConnection(connection, Color.HotPink, graphicsObj);
+					}
+				}
+
+				//Draw selectednode and highlighted node last (on top)
+				if (node.id == myRenderOptions.selectedNodeId)
+				{
+					selectedNode = node;
 					continue;
 				}
 
-				foreach (var conn in node.myConnections)
+				if (node.id == myRenderOptions.highlightedNodeId)
 				{
-					connections.Add(new Connection(node, conn));
+					highlightedNode = node;
+					continue;
 				}
 
 				DrawNode(node, graphicsObj);
 			}
 
-			foreach (var connection in connections)
+			foreach (var connection in highlightedConnections)
 			{
-				DrawConnection(connection, Color.HotPink, graphicsObj);
+				DrawConnection(connection, Color.DodgerBlue, graphicsObj);
 			}
 
-			if (selected != null)
+			foreach (var connection in selectedConnections)
 			{
-				DrawNode(selected, graphicsObj);
+				DrawConnection(connection, Color.Crimson, graphicsObj);
+			}
 
-				foreach (var conn in selected.myConnections)
+			if (selectedNode != null)
+			{
+				DrawNode(selectedNode, graphicsObj);
+
+				foreach (var conn in selectedNode.myConnections)
 				{
-					DrawConnection(new Connection(selected, conn), Color.Yellow, graphicsObj);
+					var connection = new Connection(selectedNode, conn);
+					if (myRenderOptions.highlightedConnection == null || !connection.Equals(myRenderOptions.highlightedConnection))
+					{
+						DrawConnection(connection, Color.Yellow, graphicsObj);
+					}
 				}
+			}
+
+			if (highlightedNode != null)
+			{
+				DrawNode(highlightedNode, graphicsObj);
 			}
 		}
 
@@ -77,7 +107,7 @@ namespace RandoEditor.Node
 
 			var nodeRectangle = new Rectangle((int)aPos.x - width / 2, (int)aPos.y - height / 2, width, height);
 
-			var panelRect = new Rectangle(new Point(0, 0), panelSize);
+			var panelRect = new Rectangle(new Point(0, 0), myRenderOptions.panelSize);
 			var img = myNodeImageFactory.GetNodeImage(new NodeImageFactory.NodeInfo()
 			{
 				type = aType,
@@ -95,11 +125,12 @@ namespace RandoEditor.Node
 			{
 				type = aNode.myNodeType,
 
-				selected = aNode.id == selectedNodeId,
-				carried = aNode.id == carriedNodeId,
+				selected = aNode.id == myRenderOptions.selectedNodeId,
+				carried = aNode.id == myRenderOptions.carriedNodeId,
+				highlighted = aNode.id == myRenderOptions.highlightedNodeId,
 			};
 
-			var renderPos = nodeInfo.carried ? CarriedPos : aNode.myPos;
+			var renderPos = nodeInfo.carried ? myRenderOptions.carriedPos : aNode.myPos;
 
 			var x = TranslateX(renderPos.x);
 			var y = TranslateY(renderPos.y);
@@ -108,7 +139,7 @@ namespace RandoEditor.Node
 
 			var nodeRectangle = new Rectangle(x - width / 2, y - height / 2, width, height);
 
-			var panelRect = new Rectangle(new Point(0, 0), panelSize);
+			var panelRect = new Rectangle(new Point(0, 0), myRenderOptions.panelSize);
 			if (Utility.RectIntersect(nodeRectangle, panelRect))
 			{
 				if ((bool)Properties.Settings.Default["SimpleNodeGraphics"])
@@ -170,7 +201,7 @@ namespace RandoEditor.Node
 
 		private void DrawConnection(Vector2 startPoint, Vector2 endPoint, Color aColor, Graphics aGraphicsObj)
 		{
-			var panelRect = new Rectangle(new Point(0, 0), panelSize);
+			var panelRect = new Rectangle(new Point(0, 0), myRenderOptions.panelSize);
 			if (Utility.LineInRect(panelRect, startPoint.ToPoint(), endPoint.ToPoint()))
 			{
 				var myPen = new Pen(aColor, nodeSize / 16);
@@ -195,8 +226,8 @@ namespace RandoEditor.Node
 
 		private void DrawConnection(Connection aConnection, Color aColor, Graphics aGraphicsObj)
 		{
-			var startPos = aConnection.node1.id == carriedNodeId ? CarriedPos : aConnection.node1.myPos;
-			var endPos = aConnection.node2.id == carriedNodeId ? CarriedPos : aConnection.node2.myPos;
+			var startPos = aConnection.node1.id == myRenderOptions.carriedNodeId ? myRenderOptions.carriedPos : aConnection.node1.myPos;
+			var endPos = aConnection.node2.id == myRenderOptions.carriedNodeId ? myRenderOptions.carriedPos : aConnection.node2.myPos;
 
 			var startPoint = new Vector2(TranslateX(startPos.x), TranslateY(startPos.y));
 			var endPoint = new Vector2(TranslateX(endPos.x), TranslateY(endPos.y));

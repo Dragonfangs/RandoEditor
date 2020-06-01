@@ -17,8 +17,11 @@ namespace RandoEditor.Node
 
 		public bool Equals(Connection other)
 		{
-			return ((node1 == other.node1 && node2 == other.node2) ||
-					(node1 == other.node2 && node2 == other.node1));
+			if (other == null)
+				return false;
+
+			return (node1 == other.node1 && node2 == other.node2) ||
+					(node1 == other.node2 && node2 == other.node1);
 		}
 
 		public override int GetHashCode()

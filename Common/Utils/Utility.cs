@@ -133,6 +133,47 @@ namespace Common.Utils
 			return true;
 		}
 
+		// Calculate the distance between
+		// point pt and the segment p1 --> p2.
+		public static double FindDistanceToSegment(
+			PointF pt, PointF p1, PointF p2)
+		{
+			float dx = p2.X - p1.X;
+			float dy = p2.Y - p1.Y;
+			if ((dx == 0) && (dy == 0))
+			{
+				// It's a point not a line segment.
+				dx = pt.X - p1.X;
+				dy = pt.Y - p1.Y;
+				return Math.Sqrt(dx * dx + dy * dy);
+			}
+
+			// Calculate the t that minimizes the distance.
+			float t = ((pt.X - p1.X) * dx + (pt.Y - p1.Y) * dy) /
+				(dx * dx + dy * dy);
+
+			// See if this represents one of the segment's
+			// end points or a point in the middle.
+			if (t < 0)
+			{
+				dx = pt.X - p1.X;
+				dy = pt.Y - p1.Y;
+			}
+			else if (t > 1)
+			{
+				dx = pt.X - p2.X;
+				dy = pt.Y - p2.Y;
+			}
+			else
+			{
+				var closest = new PointF(p1.X + t * dx, p1.Y + t * dy);
+				dx = pt.X - closest.X;
+				dy = pt.Y - closest.Y;
+			}
+
+			return Math.Sqrt(dx * dx + dy * dy);
+		}
+
 		// Find the point of intersection between
 		// the lines p1 --> p2 and p3 --> p4.
 		private static bool FindIntersection(

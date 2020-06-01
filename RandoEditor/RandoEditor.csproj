@@ -80,6 +80,7 @@
     <Compile Include="Node\Connection.cs" />
     <Compile Include="Node\NodeImageFactory.cs" />
     <Compile Include="Node\NodeRenderer.cs" />
+    <Compile Include="Node\NodeRenderOptions.cs" />
     <Compile Include="SaveData\SaveManager.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>

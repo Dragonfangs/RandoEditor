@@ -16,6 +16,7 @@ namespace RandoEditor.Node
 			public NodeType type;
 			public bool carried;
 			public bool selected;
+			public bool highlighted;
 		}
 
 		public Bitmap blankStandard;
@@ -62,7 +63,7 @@ namespace RandoEditor.Node
 		{
 			if (info.type == NodeType.Blank)
 			{
-				if (info.carried)
+				if (info.carried || info.highlighted)
 					return blankCarried;
 				if (info.selected)
 					return blankSelected;
@@ -72,7 +73,7 @@ namespace RandoEditor.Node
 
 			if (info.type == NodeType.RandomKey)
 			{
-				if (info.carried)
+				if (info.carried || info.highlighted)
 					return randomCarried;
 				if (info.selected)
 					return randomSelected;
@@ -82,7 +83,7 @@ namespace RandoEditor.Node
 
 			if (info.type == NodeType.EventKey)
 			{
-				if (info.carried)
+				if (info.carried || info.highlighted)
 					return eventCarried;
 				if (info.selected)
 					return eventSelected;
@@ -92,7 +93,7 @@ namespace RandoEditor.Node
 
 			if (info.type == NodeType.Lock)
 			{
-				if (info.carried)
+				if (info.carried || info.highlighted)
 					return lockCarried;
 				if (info.selected)
 					return lockSelected;
@@ -105,7 +106,7 @@ namespace RandoEditor.Node
 
 		public Color GetNodeColor(NodeInfo info)
 		{
-			if (info.carried)
+			if (info.carried || info.highlighted)
 				return Color.Black;
 			if (info.selected)
 				return Color.Yellow;
