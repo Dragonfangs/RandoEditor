@@ -63,7 +63,12 @@ namespace RandoEditor
 			this.chkNewRandomNode = new System.Windows.Forms.CheckBox();
 			this.chkNewEventNode = new System.Windows.Forms.CheckBox();
 			this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+			this.splitContainer1 = new System.Windows.Forms.SplitContainer();
 			this.menuStrip1.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+			this.splitContainer1.Panel1.SuspendLayout();
+			this.splitContainer1.Panel2.SuspendLayout();
+			this.splitContainer1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// panel1
@@ -72,9 +77,9 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.panel1.BackColor = System.Drawing.Color.Black;
-			this.panel1.Location = new System.Drawing.Point(48, 27);
+			this.panel1.Location = new System.Drawing.Point(-2, -2);
 			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(572, 672);
+			this.panel1.Size = new System.Drawing.Size(747, 646);
 			this.panel1.TabIndex = 0;
 			this.panel1.SizeChanged += new System.EventHandler(this.panel1_SizeChanged);
 			this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
@@ -86,12 +91,13 @@ namespace RandoEditor
 			// 
 			// comboBoxEvent
 			// 
-			this.comboBoxEvent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.comboBoxEvent.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.comboBoxEvent.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.comboBoxEvent.FormattingEnabled = true;
-			this.comboBoxEvent.Location = new System.Drawing.Point(626, 27);
+			this.comboBoxEvent.Location = new System.Drawing.Point(1, 3);
 			this.comboBoxEvent.Name = "comboBoxEvent";
-			this.comboBoxEvent.Size = new System.Drawing.Size(189, 21);
+			this.comboBoxEvent.Size = new System.Drawing.Size(170, 21);
 			this.comboBoxEvent.TabIndex = 3;
 			this.comboBoxEvent.SelectedIndexChanged += new System.EventHandler(this.comboBoxEvent_SelectedIndexChanged);
 			// 
@@ -103,7 +109,7 @@ namespace RandoEditor
             this.settingsToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(822, 24);
+			this.menuStrip1.Size = new System.Drawing.Size(979, 24);
 			this.menuStrip1.TabIndex = 4;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
@@ -122,7 +128,7 @@ namespace RandoEditor
 			// 
 			this.newToolStripMenuItem.Name = "newToolStripMenuItem";
 			this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
-			this.newToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.newToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
 			this.newToolStripMenuItem.Text = "New";
 			this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
 			// 
@@ -130,7 +136,7 @@ namespace RandoEditor
 			// 
 			this.openToolStripMenuItem.Name = "openToolStripMenuItem";
 			this.openToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-			this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.openToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
 			this.openToolStripMenuItem.Text = "Open...";
 			this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
 			// 
@@ -139,14 +145,14 @@ namespace RandoEditor
 			this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
 			this.saveToolStripMenuItem.ShortcutKeyDisplayString = "";
 			this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-			this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.saveToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
 			this.saveToolStripMenuItem.Text = "Save";
 			this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
 			// 
 			// saveAsToolStripMenuItem
 			// 
 			this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-			this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
 			this.saveAsToolStripMenuItem.Text = "Save As...";
 			this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
 			// 
@@ -174,11 +180,12 @@ namespace RandoEditor
 			// 
 			// lockPanelLogic1
 			// 
-			this.lockPanelLogic1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+			this.lockPanelLogic1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.lockPanelLogic1.Location = new System.Drawing.Point(626, 28);
+			this.lockPanelLogic1.Location = new System.Drawing.Point(-2, -1);
 			this.lockPanelLogic1.Name = "lockPanelLogic1";
-			this.lockPanelLogic1.Size = new System.Drawing.Size(189, 674);
+			this.lockPanelLogic1.Size = new System.Drawing.Size(176, 640);
 			this.lockPanelLogic1.TabIndex = 5;
 			// 
 			// chkOneWayConnection
@@ -209,10 +216,11 @@ namespace RandoEditor
 			// 
 			// txtRandomId
 			// 
-			this.txtRandomId.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.txtRandomId.Location = new System.Drawing.Point(626, 28);
+			this.txtRandomId.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.txtRandomId.Location = new System.Drawing.Point(1, 3);
 			this.txtRandomId.Name = "txtRandomId";
-			this.txtRandomId.Size = new System.Drawing.Size(189, 20);
+			this.txtRandomId.Size = new System.Drawing.Size(170, 20);
 			this.txtRandomId.TabIndex = 9;
 			this.txtRandomId.TextChanged += new System.EventHandler(this.txtRandomId_TextChanged);
 			// 
@@ -273,22 +281,42 @@ namespace RandoEditor
 			this.contextMenuStrip.Name = "contextMenuStrip";
 			this.contextMenuStrip.Size = new System.Drawing.Size(61, 4);
 			// 
+			// splitContainer1
+			// 
+			this.splitContainer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+			this.splitContainer1.Location = new System.Drawing.Point(48, 27);
+			this.splitContainer1.Name = "splitContainer1";
+			// 
+			// splitContainer1.Panel1
+			// 
+			this.splitContainer1.Panel1.Controls.Add(this.panel1);
+			// 
+			// splitContainer1.Panel2
+			// 
+			this.splitContainer1.Panel2.Controls.Add(this.comboBoxEvent);
+			this.splitContainer1.Panel2.Controls.Add(this.txtRandomId);
+			this.splitContainer1.Panel2.Controls.Add(this.lockPanelLogic1);
+			this.splitContainer1.Size = new System.Drawing.Size(931, 646);
+			this.splitContainer1.SplitterDistance = 748;
+			this.splitContainer1.SplitterWidth = 5;
+			this.splitContainer1.TabIndex = 13;
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(822, 711);
+			this.ClientSize = new System.Drawing.Size(979, 685);
+			this.Controls.Add(this.splitContainer1);
 			this.Controls.Add(this.chkNewEventNode);
 			this.Controls.Add(this.chkNewRandomNode);
 			this.Controls.Add(this.chkNewLockNode);
 			this.Controls.Add(this.menuStrip1);
-			this.Controls.Add(this.txtRandomId);
 			this.Controls.Add(this.chkTwoWayConnection);
 			this.Controls.Add(this.chkOneWayConnection);
 			this.Controls.Add(this.chkNewBlankNode);
-			this.Controls.Add(this.lockPanelLogic1);
-			this.Controls.Add(this.comboBoxEvent);
-			this.Controls.Add(this.panel1);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MainMenuStrip = this.menuStrip1;
 			this.MinimumSize = new System.Drawing.Size(700, 400);
@@ -297,6 +325,11 @@ namespace RandoEditor
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
+			this.splitContainer1.Panel1.ResumeLayout(false);
+			this.splitContainer1.Panel2.ResumeLayout(false);
+			this.splitContainer1.Panel2.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+			this.splitContainer1.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -325,6 +358,7 @@ namespace RandoEditor
 		private CheckBox chkNewRandomNode;
 		private CheckBox chkNewEventNode;
 		private ContextMenuStrip contextMenuStrip;
+		private SplitContainer splitContainer1;
 	}
 }
 
