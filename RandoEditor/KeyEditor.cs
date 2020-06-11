@@ -29,6 +29,8 @@ namespace RandoEditor
 			}
 
 			listView1.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
+
+			lockPanelLogic1.SetKeys();
 		}
 
 		private void listView1_SelectedIndexChanged(object sender, EventArgs e)

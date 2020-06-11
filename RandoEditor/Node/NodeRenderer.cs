@@ -77,7 +77,7 @@ namespace RandoEditor.Node
 
 			foreach (var connection in selectedConnections)
 			{
-				DrawConnection(connection, Color.Crimson, graphicsObj);
+				DrawConnection(connection, Color.DarkSeaGreen, graphicsObj);
 			}
 
 			if (selectedNode != null)

@@ -485,20 +485,8 @@ namespace RandoEditor
 				UpdateConnections(mousePos, newNode);
 			}
 
-			Connection clickedConnection = null;
-			if(newNode == null)
-			{
-				clickedConnection = FindClickedConnection(mousePos);
-
-				if (clickedConnection != null)
-				{
-					selectedNode = null;
-					selectedConnection = clickedConnection;
-				}
-			}
-
 			// No node was hit, activate map dragging
-			if (newNode == null && clickedConnection == null)
+			if (newNode == null)
 			{
 				carriedMap = true;
 
@@ -522,7 +510,18 @@ namespace RandoEditor
 					if ((mapPickedUpPos - imageBasePos).Magnitude() < 1)
 					{
 						selectedNode = null;
-						selectedConnection = null;
+
+						var clickedConnection = FindClickedConnection(mousePos);
+
+						if (clickedConnection != null)
+						{
+							selectedConnection = clickedConnection;
+						}
+						else
+						{
+							selectedConnection = null;
+						}
+
 						UpdateNodeSettings();
 					}
 				}
@@ -819,6 +818,9 @@ namespace RandoEditor
 
 		private void DeleteConnection(Connection connection)
 		{
+			if (connection == null)
+				return;
+
 			if (connection.node1.myConnections.Contains(connection.node2) ||
 				connection.node2.myConnections.Contains(connection.node1))
 			{
