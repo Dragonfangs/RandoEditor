@@ -54,11 +54,6 @@ namespace Verifier
 			var startNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
 			var endNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));
 
-			if(!endNode.myConnections.Contains(startNode))
-			{
-				endNode.CreateConnection(startNode);
-			}
-
 			if (startNode == null || endNode == null)
 			{
 				return (false, new WaveLog());
@@ -66,25 +61,31 @@ namespace Verifier
 
 			aStartInventory = aStartInventory ?? new Inventory();
 
-			var result = SearchBeatable(startNode, endNode, keyNodes, aStartInventory, new WaveLog()).Result;
+			var result = SearchBeatable(startNode, endNode, keyNodes, aStartInventory);
 
 			globalReachable = keyNodes.Except(globalReachable).ToList();
 
-			return result;
+			return (result.Item1 != null, result.Item2);
 		}
 
-		private async Task<(bool, WaveLog)> SearchBeatable(NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory, WaveLog log)
+		private (Inventory, WaveLog) SearchBeatable(NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
 		{
+			return SearchBeatable(null, startNode, endNode, keyNodes, anInventory);
+		}
+
+		private (Inventory, WaveLog) SearchBeatable(NodeBase baseNode, NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
+		{
+			var log = new WaveLog();
 			while (true)
 			{
-				if (VerifyGoal(endNode, keyNodes, anInventory))
-					return (true, log);
+				if (VerifyGoal(endNode, keyNodes, anInventory) || (baseNode != null && PathExists(startNode, baseNode, anInventory)))
+					return (anInventory, log);
 
 				var reachableKeys = keyNodes.AsParallel().Where(node => !anInventory.myNodes.Contains(node)).Where(node => PathExists(startNode, node, anInventory)).ToList();
 
 				globalReachable = globalReachable.Union(reachableKeys).ToList();
 
-				var retracableKeys = reachableKeys.AsParallel().Where(node => PathExists(node, startNode, anInventory.Expand(node))).ToList();
+				var retracableKeys = reachableKeys.AsParallel().Where(node => node == endNode || PathExists(node, startNode, anInventory.Expand(node))).ToList();
 
 				if (retracableKeys.Any())
 				{
@@ -94,40 +95,46 @@ namespace Verifier
 				else
 				{
 					var redundantNodes = new List<NodeBase>();
-					for(int i=0;i<reachableKeys.Count();i++)
+					for(int i = 0; i < reachableKeys.Count(); i++)
 					{
-						for (int j = i + 1; j < reachableKeys.Count; j++)
+						for (int j = 0; j < reachableKeys.Count; j++)
 						{
-							if(PathExists(reachableKeys[i], reachableKeys[j], anInventory))
+							if(reachableKeys[i] != reachableKeys[j] &&
+								!redundantNodes.Contains(reachableKeys[i]) &&
+								!redundantNodes.Contains(reachableKeys[j]) &&
+								PathExists(reachableKeys[i], reachableKeys[j], anInventory))
 							{
 								redundantNodes.Add(reachableKeys[j]);
 							}
 						}
 					}
 
-					redundantNodes = redundantNodes.Distinct().ToList();
 					reachableKeys.RemoveAll(node => redundantNodes.Contains(node));
 
-					var searchResults = await Task.WhenAll(reachableKeys.Select(node => Task.Run(async () =>
+					bool continuation = false;
+					foreach (var key in reachableKeys)
 					{
-						return (await SearchBeatable(node, endNode, keyNodes, new Inventory(anInventory), new WaveLog()));
-					})));
-
-					foreach (var result in searchResults)
-					{
-						if(result.Item1)
+						var (newInv, newLog) = SearchBeatable(baseNode ?? startNode, key, endNode, keyNodes, new Inventory(anInventory));
+						if (newInv != null)
 						{
-							log.AddLive(result.Item2);
+							log.AddLive(newLog);
 							log.ClearDead();
-							return (true, log);
+
+							anInventory = newInv;
+							
+							continuation = true;
+							break;
 						}
 						else
 						{
-							log.AddDead(result.Item2);
+							log.AddDead(newLog);
 						}
 					}
 
-					return (false, log);
+					if (!continuation)
+					{
+						return (null, log);
+					}
 				}
 			}
 		}

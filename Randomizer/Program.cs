@@ -60,7 +60,7 @@ namespace Randomizer
 			
 			var random = new Random();
 			var seed = random.Next();
-			//var seed = 1564243983;
+			//var seed = 669144804;
 
 			var count = 0;
 			_Timer.Start();
@@ -73,12 +73,12 @@ namespace Randomizer
 
 				var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 
-				/*var morphKey = Guid.Parse("905940c7-fcef-4e24-b662-1cb2bc9e3eee");
+				var morphKey = Guid.Parse("905940c7-fcef-4e24-b662-1cb2bc9e3eee");
 				var morphItem = randomMap.FirstOrDefault(x => x.Value.Equals(morphKey));
-				var morphLocation = randomMap.FirstOrDefault(x => x.Key.Equals("Bmorph"));
+				var morphLocation = randomMap.FirstOrDefault(x => x.Key.Equals("BrinstarMorph"));
 
 				randomMap[morphItem.Key] = morphLocation.Value;
-				randomMap[morphLocation.Key] = morphKey;*/
+				randomMap[morphLocation.Key] = morphKey;
 
 				//_logMessage += Environment.NewLine;
 				//var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
@@ -95,15 +95,21 @@ namespace Randomizer
 
 				if(beatableResult)
 				{
-					Console.WriteLine($"woop {count} - {seed}");
+					Console.WriteLine($"Maybeeeee {count} - {seed}");
+					var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
+					if (!fullCompleteResult)
+					{
+						Console.WriteLine($"woop {count} - {seed}");
 
-					_Timer.Stop();
+						_Timer.Stop();
 
-					return randomMap;
+						return randomMap;
+					}
+					count++;
 				}
 				else
 				{
-					if (count % 500 == 0)
+					if (count % 50 == 0)
 					{
 						Console.WriteLine($"nope {count}");
 					}

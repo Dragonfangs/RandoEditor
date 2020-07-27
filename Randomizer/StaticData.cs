@@ -10,13 +10,13 @@ namespace Randomizer
 	{
 		public static List<string> Locations = new List<string>
 		{
-			"Bmorph",
+			"BrinstarMorph",
 "B1stmissile",
-"Bballcannonmissile",
-"BceilingE",
+"BrinstarBallCannon",
+"BrinstarCeilingEtank",
 "Long",
-"BmissileaboveBS",
-"Bsuper",
+"BrinstarAboveSuper",
+"BrinstarSuper",
 "Bshortcutmissile",
 "Bbeamst",
 "Bdoublerippermissile",

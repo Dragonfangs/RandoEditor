@@ -57,7 +57,7 @@ namespace Verifier
 			var fullPrint = formattedPrints.Any() ? formattedPrints.Aggregate((i, j) => i + Environment.NewLine + j) : "";
 
 			// Recursively print out paths that led to a dead end
-			var deadPrints = deadLogs.Select((log, i) => AddDeadEnd(log.Print(depth + 1,$"{prefix}{formattedPrints.Count() + i + 1}.")));
+			var deadPrints = deadLogs.Select((log, i) => AddDeadEnd(log.Print(depth + 1,$"{prefix}{formattedPrints.Count() + i}.")));
 
 			// If any dead ends, add to printed string
 			if (deadPrints.Any())
