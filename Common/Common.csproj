@@ -68,6 +68,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="SaveData\SaveData.cs" />
+    <Compile Include="Utils\BinaryTextEncoder.cs" />
     <Compile Include="Utils\Utility.cs" />
     <Compile Include="Utils\Vector2.cs" />
   </ItemGroup>

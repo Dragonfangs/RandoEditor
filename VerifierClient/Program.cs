@@ -39,7 +39,7 @@ namespace VerifierClient
 				return;
 			}
 
-			var itemFile = ChooseItems(fileNames.Where(x => Path.GetExtension(x) == ".txt").ToList());
+			var itemFile = ChooseItems(fileNames.Where(x => Path.GetExtension(x) == ".txt" || Path.GetExtension(x) == ".log").ToList());
 			if (itemFile == null)
 			{
 				// Log issue
@@ -150,6 +150,11 @@ namespace VerifierClient
 		{
 			var text = File.ReadAllText(itemFileName);
 
+			if (text.StartsWith("Seed:"))
+			{
+				return ParseItemLogInventory(data, text);
+			}
+
 			text = text.Replace(Environment.NewLine, "").Replace(" ", "");
 
 			var bigSplit = text.Split(';');
@@ -187,6 +192,11 @@ namespace VerifierClient
 		public static Dictionary<string, Guid> ParseItemMap(SaveData data, string itemFileName)
 		{
 			var text = File.ReadAllText(itemFileName);
+
+			if (text.StartsWith("Seed:"))
+			{
+				return ParseItemLogItems(data, text);
+			}
 
 			text = text.Replace(Environment.NewLine, "").Replace(" ", "");
 
@@ -241,6 +251,53 @@ namespace VerifierClient
 			}
 
 			return itemData.ToDictionary(item => item.Key, item => item.Value.Id);
+		}
+
+		public static List<BaseKey> ParseItemLogInventory(SaveData data, String logText)
+		{
+			string[] lines = logText.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+			var inventory = new List<BaseKey>();
+			var settingsLine = lines.FirstOrDefault(line => line.StartsWith("Settings:"));
+			if (!String.IsNullOrEmpty(settingsLine))
+			{
+				var settings = new Settings(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
+				if (settings.iceNotRequired)
+				{
+					inventory.Add(TranslateKey(data, "IceBeamNotRequired"));
+				}
+
+				if (settings.plasmaNotRequired)
+				{
+					inventory.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+				}
+
+				if (settings.infiniteBombJump)
+				{
+					inventory.Add(TranslateKey(data, "CanInfiniteBombJump"));
+				}
+
+				if (settings.wallJumping)
+				{
+					inventory.Add(TranslateKey(data, "CanWallJump"));
+				}
+
+				if (settings.obtainUnkItems)
+				{
+					inventory.Add(TranslateKey(data, "ObtainUnknownItems"));
+				}
+			}
+
+			return inventory;
+		}
+
+		public static Dictionary<string, Guid> ParseItemLogItems(SaveData data, String logText)
+		{
+			string[] lines = logText.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+			var itemLines = lines.Where(line => line.Length > 0 && char.IsDigit(line[0]));
+			var items = itemLines.ToDictionary(line => StaticData.Locations[int.Parse(line.Substring(0, 2))], line => TranslateKey(data, StaticData.Items[line.Substring(line.LastIndexOf(')') + 1).Replace(" ", "")]).Id);
+
+			return items;
 		}
 
 		public static BaseKey TranslateKey(SaveData data, string keyName)
