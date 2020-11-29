@@ -23,12 +23,13 @@ namespace Randomizer
 		{
 			List<string> settings = new List<string>
 			{
-				/*"ObtainUnknownItems",
+				"ObtainUnknownItems",
 				"CanWalljump",
-				"CanInfiniteBombJump",*/
+				"CanInfiniteBombJump",
+				"PlasmaBeamNotRequired",
 			};
 			var result = Randomize(settings);
-			var map = result.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value).Name}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
+			var map = result.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value)?.Name ?? "None"}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
 			Console.WriteLine(map);
 			File.WriteAllText(Environment.CurrentDirectory + "//itemMap.txt", map);
 			Console.WriteLine($"{Environment.NewLine}Time taken: {_Timer.Elapsed}");
@@ -71,10 +72,19 @@ namespace Randomizer
 
 				random = new Random(seed);
 
+				pool.RemoveRandomItems(92, random);
+
 				var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 
 				var morphKey = Guid.Parse("905940c7-fcef-4e24-b662-1cb2bc9e3eee");
 				var morphItem = randomMap.FirstOrDefault(x => x.Value.Equals(morphKey));
+
+				if (string.IsNullOrWhiteSpace(morphItem.Key))
+				{
+					seed = random.Next();
+					continue;
+				}
+				
 				var morphLocation = randomMap.FirstOrDefault(x => x.Key.Equals("BrinstarMorph"));
 
 				randomMap[morphItem.Key] = morphLocation.Value;
@@ -97,7 +107,7 @@ namespace Randomizer
 				{
 					Console.WriteLine($"Maybeeeee {count} - {seed}");
 					var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
-					if (!fullCompleteResult)
+					if (fullCompleteResult)
 					{
 						Console.WriteLine($"woop {count} - {seed}");
 

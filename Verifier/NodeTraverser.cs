@@ -49,7 +49,7 @@ namespace Verifier
 			var nodeCollection = new NodeCollection();
 			nodeCollection.InitializeNodes(someData);
 
-			var keyNodes = nodeCollection.myNodes.Where(node => node is KeyNode).ToList();
+			var keyNodes = nodeCollection.myNodes.Where(node => node is KeyNode && (node as KeyNode).GetKey() != null).ToList();
 			var eventNodes = keyNodes.Where(node => node is EventKeyNode).Select(node => node as EventKeyNode);
 			var startNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Start", StringComparison.InvariantCultureIgnoreCase));
 			var endNode = eventNodes.FirstOrDefault(x => string.Equals(x.GetKey().Name, "Game Finish", StringComparison.InvariantCultureIgnoreCase));

@@ -47,8 +47,25 @@ namespace Randomizer
 		{
 			var index = random.Next(myAvailableItems.Count-1);
 			var item = myAvailableItems.ElementAt(index);
-			myAvailableItems.Remove(item);
+			myAvailableItems.RemoveAt(index);
+
+			if (item == null)
+				return Guid.Empty;
+
 			return item.Id;
+		}
+
+		public void RemoveRandomItems(int count, Random random)
+		{
+			for(int i=0; i < count; i++)
+			{
+				Pull(random);
+			}
+
+			for (int i = 0; i < count; i++)
+			{
+				myAvailableItems.Add(null);
+			}
 		}
 	}
 }

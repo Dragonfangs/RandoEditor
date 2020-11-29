@@ -294,8 +294,9 @@ namespace VerifierClient
 		public static Dictionary<string, Guid> ParseItemLogItems(SaveData data, String logText)
 		{
 			string[] lines = logText.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-			var itemLines = lines.Where(line => line.Length > 0 && char.IsDigit(line[0]));
-			var items = itemLines.ToDictionary(line => StaticData.Locations[int.Parse(line.Substring(0, 2))], line => TranslateKey(data, StaticData.Items[line.Substring(line.LastIndexOf(')') + 1).Replace(" ", "")]).Id);
+			var itemLines = lines.Where(line => line.Length > 3 && char.IsDigit(line[0]) && char.IsWhiteSpace(line[2]));
+			var realItemLines = itemLines.Where(line => !line.Substring(line.LastIndexOf(')') + 1).Replace(" ", "").Equals("None"));
+			var items = realItemLines.ToDictionary(line => StaticData.Locations[int.Parse(line.Substring(0, 2))], line => TranslateKey(data, StaticData.Items[line.Substring(line.LastIndexOf(')') + 1).Replace(" ", "")]).Id);
 
 			return items;
 		}
