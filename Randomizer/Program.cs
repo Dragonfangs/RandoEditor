@@ -27,6 +27,7 @@ namespace Randomizer
 				"CanWalljump",
 				"CanInfiniteBombJump",
 				"PlasmaBeamNotRequired",
+				"IceBeamNotRequired",
 			};
 			var result = Randomize(settings);
 			var map = result.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value)?.Name ?? "None"}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
@@ -72,7 +73,7 @@ namespace Randomizer
 
 				random = new Random(seed);
 
-				pool.RemoveRandomItems(92, random);
+				//pool.RemoveRandomItems(92, random);
 
 				var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 

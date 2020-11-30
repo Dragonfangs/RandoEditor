@@ -13,6 +13,7 @@ namespace Common.Key
 
 		public Guid Id { get; set; }
 		public string Name { get; set; }
+		public bool Static { get; set; }
 		public bool Repeatable { get; set; }
 	}
 }

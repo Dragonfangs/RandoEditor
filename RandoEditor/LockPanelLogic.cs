@@ -146,6 +146,8 @@ namespace RandoEditor
 				ExpandTreeNode(node);
 			}
 
+			SetKeys();
+
 			this.ResumeLayout();
 		}
 
@@ -530,6 +532,7 @@ namespace RandoEditor
 			if (parentNode.Tag is ComplexRequirement requirement)
 			{
 				var keySelector = new KeySelector();
+				keySelector.StartPosition = FormStartPosition.CenterParent;
 				if (keySelector.ShowDialog() == DialogResult.OK)
 				{
 					var newMemento = myRequirement.CreateMemento();

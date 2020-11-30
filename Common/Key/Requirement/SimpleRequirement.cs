@@ -40,6 +40,28 @@ namespace Common.Key.Requirement
 			}
 		}
 
+		public override bool ContainsKey(Guid id)
+		{
+			return myKeyId == id;
+		}
+
+		public override bool RemoveKey(Guid id)
+		{
+			if (myKeyId != id)
+				return false;
+
+			myKeyId = Guid.Empty;
+			return true;
+		}
+
+		public override void ReplaceKey(Guid id, Guid otherId)
+		{
+			if (myKeyId != id)
+				return;
+
+			myKeyId = otherId;
+		}
+
 		public uint myRepeatCount = 1;
 
 		public Guid myKeyId;

@@ -250,6 +250,9 @@ namespace RandoEditor
 			{
 				myNodeRenderer.DrawCursorTwoWayConnection(selectedNode, myMousePos, graphicsObj);
 			}
+
+			// var mopusepos = (myMousePos / ZoomScale) - imageBasePos;
+			// DrawDebugMessage($"{mopusepos.x}, {mopusepos.y}", graphicsObj);
 		}
 
 		private void UpdatePointerState()
@@ -735,10 +738,14 @@ namespace RandoEditor
 
 		private void customKeysToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			new KeyEditor().ShowDialog();
+			var keyEditor = new KeyEditor();
+			keyEditor.StartPosition = FormStartPosition.CenterParent;
+			keyEditor.ShowDialog();
 
 			if(lockPanelLogic1.Visible)
 				lockPanelLogic1.RefreshNode();
+
+			comboBoxEvent.DataSource = KeyManager.GetEventKeys().ToList();
 		}
 
 		private void settingsToolStripMenuItem_Click(object sender, EventArgs e)

@@ -66,19 +66,37 @@ namespace Common.Key
 			return instance.myCustomKeys.Values;
 		}
 
-		static public void DeleteCustomKey(Guid id)
+		static public void DeleteKey(Guid id)
 		{
-			if(!instance.myCustomKeys.ContainsKey(id))
+			if (instance.myCustomKeys.ContainsKey(id))
 			{
+				instance.myCustomKeys.Remove(id);
 				return;
 			}
 
-			instance.myCustomKeys.Remove(id);
+			foreach (var collection in instance.myBasicKeys.Values)
+			{
+				if (collection.ContainsKey(id))
+				{
+					collection.Remove(id);
+					return;
+				}
+			}
 		}
 
 		static public void SaveCustomKey(Guid id, ComplexKey key)
 		{
 			instance.myCustomKeys[id] = key;
+		}
+
+		static public void SaveEventKey(Guid id, BaseKey key)
+		{
+			instance.myBasicKeys["Event"][id] = key;
+		}
+
+		static public void SaveSettingKey(Guid id, BaseKey key)
+		{
+			instance.myBasicKeys["Setting"][id] = key;
 		}
 
 		static public BaseKey GetKey(Guid id)

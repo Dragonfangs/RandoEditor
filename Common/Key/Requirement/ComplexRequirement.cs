@@ -63,6 +63,43 @@ namespace Common.Key.Requirement
 			myRequirements.Clear();
 		}
 
+		public override bool ContainsKey(Guid id)
+		{
+			return myRequirements.Any(req => req.ContainsKey(id));
+		}
+
+		// Returns true if Requirement became obsolete because of the removal
+		public override bool RemoveKey(Guid id)
+		{
+			if (!myRequirements.Any())
+				return false;
+
+			var reqsToRemove = new List<Requirement>();
+			foreach (var req in myRequirements)
+			{
+				if(req.RemoveKey(id))
+				{
+					// TODO: Somehow collapse a Complex Req that has been reduced to containing a single other req to just be the contained req instead
+					reqsToRemove.Add(req);
+				}
+			}
+
+			myRequirements.RemoveAll(req => reqsToRemove.Contains(req));
+
+			if (myRequirements.Any())
+				return false;
+
+			return true;
+		}
+
+		public override void ReplaceKey(Guid id, Guid otherId)
+		{
+			foreach (var req in myRequirements)
+			{
+				req.ReplaceKey(id, otherId);
+			}
+		}
+
 		public override RequirementMemento CreateMemento()
 		{
 			var memento = new ComplexRequirementMemento();

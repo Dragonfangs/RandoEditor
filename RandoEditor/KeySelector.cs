@@ -27,6 +27,11 @@ namespace RandoEditor
 		}
 
 		public List<BaseKey> SelectedKeys { get; set; } = new List<BaseKey>();
+		public bool MultiSelect
+		{
+			get { return listView1.MultiSelect; }
+			set { listView1.MultiSelect = value; }
+		}
 
 		private void btnSelect_Click(object sender, EventArgs e)
 		{
