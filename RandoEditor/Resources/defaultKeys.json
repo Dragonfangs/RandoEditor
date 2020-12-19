@@ -95,12 +95,14 @@
       "e49b2720-00a8-4fa0-9036-bebfe971f73f": {
         "Id": "e49b2720-00a8-4fa0-9036-bebfe971f73f",
         "Name": "Game start",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       },
       "6d247e3c-7bae-4609-8655-794868537ec3": {
         "Id": "6d247e3c-7bae-4609-8655-794868537ec3",
         "Name": "Game finish",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       },
       "faa52ab0-3c39-4b19-be23-f48f4b844278": {
         "Id": "faa52ab0-3c39-4b19-be23-f48f4b844278",
@@ -142,12 +144,14 @@
       "0ba7dceb-ef55-4063-8132-6e4bea5114e7": {
         "Id": "0ba7dceb-ef55-4063-8132-6e4bea5114e7",
         "Name": "Ice Beam Not Required",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       },
       "d734910e-a0eb-4f29-b81d-c129c4085355": {
         "Id": "d734910e-a0eb-4f29-b81d-c129c4085355",
         "Name": "Plasma Beam Not Required",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       },
       "f4e387f0-6780-4da8-857e-dbea447c566d": {
         "Id": "f4e387f0-6780-4da8-857e-dbea447c566d",
@@ -162,12 +166,14 @@
       "ed4a621c-0703-4ed8-af77-40b8d74facb5": {
         "Id": "ed4a621c-0703-4ed8-af77-40b8d74facb5",
         "Name": "Obtain unknown items",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       },
       "a481a280-1897-4528-8aea-41655851fd75": {
         "Id": "a481a280-1897-4528-8aea-41655851fd75",
         "Name": "Chozo Statue hints",
-        "Repeatable": false
+        "Repeatable": false,
+        "Static": true
       }
     }
   }

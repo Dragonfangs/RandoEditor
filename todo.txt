@@ -1,0 +1,32 @@
+
+implement optional randomization using logic files into mzmr
+
+------------MUST HAVE FOR PREVIEW------------------
+
+optimize item placements before verifying during randomization
+
+node search
+node info
+
+item depth requirements
+custom logic settings in randomizer
+choosing logic file in ui
+
+visual verifier
+	- Ability to pathfind between two arbitrary nodes with user-defined inventory
+	- import log files and show intended path
+	- something for the case: "Why can't it go this way?"
+
+
+------------MUST HAVE FOR OFFICIAL------------------
+
+fix scroll visual glitching
+
+statement optimizer
+
+basic logic verification
+visible error/warning indicators in editor
+
+search and replace for keys
+
+------------NICE TO HAVE EVENTUALLY------------------

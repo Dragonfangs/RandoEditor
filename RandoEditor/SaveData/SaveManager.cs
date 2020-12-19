@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Common.Key;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,8 @@ namespace RandoEditor.SaveData
 	public class SaveManager
 	{
 		public static Common.SaveData.SaveData Data { get; set; } = new Common.SaveData.SaveData();
+
+		public static Version CurrentVersion { get; set; } = new Version(0, 2, 0, 0);
 
 		private static SaveManager instance = new SaveManager();
 
@@ -55,8 +58,7 @@ namespace RandoEditor.SaveData
 
 			Dirty = false;
 
-			// Current version
-			Data.version = new Version(0, 1, 0, 0);
+			Data.version = CurrentVersion;
 		}
 
 		public static bool Open(string fileName)
@@ -66,12 +68,12 @@ namespace RandoEditor.SaveData
 				if (File.Exists(fileName))
 				{
 					Data = JsonConvert.DeserializeObject<Common.SaveData.SaveData>(System.IO.File.ReadAllText(fileName));
-					HandleVersionUpdate();
+					var versionUpdated = HandleVersionUpdate();
 
 					Properties.Settings.Default["LatestFilePath"] = fileName;
 					Properties.Settings.Default.Save();
 
-					Dirty = false;
+					Dirty = versionUpdated;
 
 					return true;
 				}
@@ -108,10 +110,51 @@ namespace RandoEditor.SaveData
 			return false;
 		}
 
-		private static void HandleVersionUpdate()
+		private static bool HandleVersionUpdate()
 		{
-			//Do stuff in the future
+			var change = false;
+			if(Data.version < new Version(0,2,0,0))
+			{
+				Handle0200Update();
+				change = true;
+			}
+
+			Data.version = CurrentVersion;
+
+			return change;
 		}
 
+		private static void Handle0200Update()
+		{
+			// Set specified keys to static
+			var staticKeys = new List<Guid>
+			{
+				new Guid("e49b2720-00a8-4fa0-9036-bebfe971f73f"), // Game Start
+				new Guid("6d247e3c-7bae-4609-8655-794868537ec3"), // Game Finish
+				new Guid("0ba7dceb-ef55-4063-8132-6e4bea5114e7"), // Ice Beam Not Required
+				new Guid("d734910e-a0eb-4f29-b81d-c129c4085355"), // Plasma Beam Not Required
+				new Guid("ed4a621c-0703-4ed8-af77-40b8d74facb5"), // Obtain Unknown Items
+				new Guid("a481a280-1897-4528-8aea-41655851fd75"), // Chozo Statue Hints
+			};
+
+			var basicKeys = Data.BasicKeys.Values.SelectMany(collection => collection.Values);
+			var keysToUpdate = basicKeys.Where(key => staticKeys.Contains(key.Id));
+			foreach (var key in keysToUpdate)
+			{
+				key.Static = true;
+			}
+
+			// Update name of power grip event
+			var powerGripKey = basicKeys.FirstOrDefault(key => key.Id == new Guid("a434f9c0-fa1f-4154-9094-5da245776db9"));
+			if(powerGripKey != null)
+			{
+				powerGripKey.Name = "Power Grip (Event)";
+			}
+
+			// Add Enemy Randomization Key
+			var enemyRandomizationKey = new BaseKey(new Guid("784c6b79-e1a3-4ad8-a3fa-1b2495171d39"), "Randomize Enemies");
+			enemyRandomizationKey.Static = true;
+			Data.BasicKeys["Setting"][enemyRandomizationKey.Id] = enemyRandomizationKey;
+		}
 	}
 }
