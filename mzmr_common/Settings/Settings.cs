@@ -1,9 +1,9 @@
-﻿using Common.Utils;
-using mzmr.Items;
+﻿using mzmr_common.Items;
+using mzmr_common.Utils;
 using System;
 using System.Collections.Generic;
 
-namespace VerifierClient
+namespace mzmr_common
 {
 	public enum Swap { Unchanged, LocalPool, GlobalPool }
 	public enum Change { Unchanged, Shuffle, Random }

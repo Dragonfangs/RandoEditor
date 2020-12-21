@@ -1,8 +1,9 @@
-﻿using System;
+﻿using mzmr_common.Utils;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace VerifierClient
+namespace mzmr_common
 {
 	public class Settings_Old
 	{
@@ -45,10 +46,10 @@ namespace VerifierClient
 				return;
 			}
 
-			Common.Utils.BinaryTextReader btr;
+			BinaryTextReader btr;
 			try
 			{
-				btr = new Common.Utils.BinaryTextReader(str);
+				btr = new BinaryTextReader(str);
 			}
 			catch (FormatException)
 			{
@@ -79,7 +80,7 @@ namespace VerifierClient
 			}
 		}
 
-		private void LoadSettings(Common.Utils.BinaryTextReader btr)
+		private void LoadSettings(BinaryTextReader btr)
 		{
 			// items
 			randomAbilities = btr.ReadBool();
@@ -122,7 +123,7 @@ namespace VerifierClient
 			skipSuitless = btr.ReadBool();
 		}
 
-		private void LoadSettings110(Common.Utils.BinaryTextReader btr)
+		private void LoadSettings110(BinaryTextReader btr)
 		{
 			// items
 			randomAbilities = btr.ReadBool();
@@ -162,7 +163,7 @@ namespace VerifierClient
 			skipSuitless = btr.ReadBool();
 		}
 
-		private void LoadSettings100(Common.Utils.BinaryTextReader btr)
+		private void LoadSettings100(BinaryTextReader btr)
 		{
 			// items
 			randomAbilities = btr.ReadBool();
@@ -249,7 +250,7 @@ namespace VerifierClient
 
 		public byte[] ConvertToStringBytes()
 		{
-			Common.Utils.BinaryTextWriter btw = new Common.Utils.BinaryTextWriter();
+			BinaryTextWriter btw = new BinaryTextWriter();
 
 			// version
 			btw.AddNumber(version, 10);

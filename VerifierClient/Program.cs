@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using Verifier;
 using Verifier.Key;
+using mzmr_common;
 
 namespace VerifierClient
 {

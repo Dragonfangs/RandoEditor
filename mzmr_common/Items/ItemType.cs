@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace mzmr.Items
+namespace mzmr_common.Items
 {
 	public enum ItemType
 	{

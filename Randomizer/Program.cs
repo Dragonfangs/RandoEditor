@@ -1,6 +1,7 @@
 ﻿using Common.Key;
 using Common.SaveData;
 using Common.Utils;
+using mzmr_common;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -17,27 +18,36 @@ namespace Randomizer
 	class Program
 	{
 		static string _logMessage = string.Empty;
+		static Dictionary<string, Guid> resultItemMap = new Dictionary<string, Guid>();
+		static Inventory startingInventory = new Inventory();
 		static Stopwatch _Timer = new Stopwatch();
 
 		static void Main(string[] args)
 		{
-			List<string> settings = new List<string>
+			Randomize();
+
+			var fileText = "";
+
+			var inventoryText = "";
+			if (startingInventory.myKeys.Any())
 			{
-				"ObtainUnknownItems",
-				"CanWalljump",
-				"CanInfiniteBombJump",
-				"PlasmaBeamNotRequired",
-				"IceBeamNotRequired",
-			};
-			var result = Randomize(settings);
-			var map = result.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value)?.Name ?? "None"}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
+				inventoryText = startingInventory.myKeys.Select(key => key.Name).Aggregate((i, j) => i + "," + j) + $";{Environment.NewLine}";
+				Console.WriteLine(inventoryText);
+
+				fileText = inventoryText;
+			}
+
+			var map = resultItemMap.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value)?.Name ?? "None"}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
 			Console.WriteLine(map);
-			File.WriteAllText(Environment.CurrentDirectory + "//itemMap.txt", map);
+
+			fileText += map;
+
+			File.WriteAllText(Environment.CurrentDirectory + "//itemMap.txt", fileText);
 			Console.WriteLine($"{Environment.NewLine}Time taken: {_Timer.Elapsed}");
 			Console.ReadKey();
 		}
 
-		public static Dictionary<string, Guid> Randomize(List<string> settingKeys)
+		public static void Randomize()
 		{
 			var fileNames = new List<string>(Directory.GetFiles(Environment.CurrentDirectory));
 
@@ -46,7 +56,6 @@ namespace Randomizer
 			{
 				// Log issue
 				_logMessage += $"No logic file chosen{Environment.NewLine}";
-				return new Dictionary<string, Guid>();
 			}
 
 			var data = JsonConvert.DeserializeObject<SaveData>(File.ReadAllText(logicFile));
@@ -57,9 +66,21 @@ namespace Randomizer
 
 			var traverser = new NodeTraverser();
 
-			var inventory = new Inventory();
-			inventory.myKeys = settingKeys.Select(key => TranslateKey(data, key)).ToList();
+			var settingsFile = ChooseSettings(fileNames.Where(x => Path.GetExtension(x) == ".txt" || Path.GetExtension(x) == ".log").ToList());
+			if (settingsFile == null)
+			{
+				// Log issue
+				_logMessage += $"No settings chosen{Environment.NewLine}";
+			}
+
+			if (!TryParseSettingsFile(data, startingInventory, settingsFile))
+			{
+				// Log issue
+				_logMessage += "Failed to parse settings";
+			}
 			
+			var gameCompletion = ChooseGameCompletion();
+
 			var random = new Random();
 			var seed = random.Next();
 			//var seed = 669144804;
@@ -72,8 +93,6 @@ namespace Randomizer
 				pool.CreatePool(data);
 
 				random = new Random(seed);
-
-				//pool.RemoveRandomItems(92, random);
 
 				var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 
@@ -91,38 +110,30 @@ namespace Randomizer
 				randomMap[morphItem.Key] = morphLocation.Value;
 				randomMap[morphLocation.Key] = morphKey;
 
-				//_logMessage += Environment.NewLine;
-				//var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
-				//_logMessage += $"100%: {fullCompleteResult}{Environment.NewLine}{traverser.GetWaveLog()}{Environment.NewLine}{Environment.NewLine}";
-
-				/*var unreachablenodes = traverser.GetUnreachable();
-				if (unreachablenodes.Any())
+				var beatableResult = false;
+				if (gameCompletion == 1)
 				{
-					_logMessage += $"Unreachable: {traverser.GetUnreachable().Select(node => Utility.GetNodeName(node)).Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}{Environment.NewLine}";
-				}*/
-
-				var beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(inventory));
-				//_logMessage += $"Beatable: {beatableResult}{Environment.NewLine}{traverser.GetWaveLog()}";
-
-				if(beatableResult)
+					beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
+				}
+				else if (gameCompletion == 2)
 				{
-					Console.WriteLine($"Maybeeeee {count} - {seed}");
-					var fullCompleteResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(inventory));
-					if (fullCompleteResult)
-					{
-						Console.WriteLine($"woop {count} - {seed}");
+					beatableResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
+				}
 
-						_Timer.Stop();
+				if (beatableResult)
+				{
+					Console.WriteLine($"Randomization complete after {count} attempts - Successful seed: {seed}");
 
-						return randomMap;
-					}
-					count++;
+					_Timer.Stop();
+
+					resultItemMap = randomMap;
+					return;
 				}
 				else
 				{
 					if (count % 50 == 0)
 					{
-						Console.WriteLine($"nope {count}");
+						Console.WriteLine($"Attempts {count}");
 					}
 					count++;
 				}
@@ -135,6 +146,25 @@ namespace Randomizer
 		{
 			var allKeys = data.BasicKeys.Values.SelectMany(keylist => keylist.Values);
 			return allKeys.FirstOrDefault(key => key.Name.Replace(" ", "").Equals(keyName, StringComparison.InvariantCultureIgnoreCase));
+		}
+
+		public static int ChooseGameCompletion()
+		{
+			Console.WriteLine($"Game Completion?");
+			Console.WriteLine($"1. Beatable (default)");
+			Console.WriteLine($"2. 100%");
+
+			var response = Console.ReadLine();
+
+			if (int.TryParse(response, out var result))
+			{
+				if (result > 0 && result < 3)
+				{
+					return result;
+				}
+			}
+
+			return 1;
 		}
 
 		public static string ChooseLogic(List<string> logicFiles)
@@ -162,6 +192,193 @@ namespace Randomizer
 
 			_logMessage += $"{response} is not a number{Environment.NewLine}";
 			return null;
+		}
+
+		public static string ChooseSettings(List<string> logicFiles)
+		{
+			Console.WriteLine($"Choose a logic file or enter setting string:");
+			Console.WriteLine(logicFiles
+				.Select((file, i) => $"{i + 1}: {Path.GetFileName(file)}")
+				.Aggregate((i, j) => i + Environment.NewLine + j));
+
+			var response = Console.ReadLine();
+
+			if (int.TryParse(response, out var result))
+			{
+				if (result < 1 || result > logicFiles.Count() + 1)
+				{
+					_logMessage += $"{result} is not a valid index{Environment.NewLine}";
+					return null;
+				}
+
+				return logicFiles[result - 1];
+			}
+
+			return response;
+		}
+
+		public static bool TryParseSettingsFile(SaveData data, Inventory inventory, string settingsLine)
+		{
+			if (!File.Exists(settingsLine))
+				return false;
+
+			var text = File.ReadAllText(settingsLine);
+
+			if (text.StartsWith("Seed:"))
+			{
+				return ParseItemLogInventory(data, inventory, text);
+			}
+
+			text = text.Replace(Environment.NewLine, "").Replace(" ", "");
+
+			var bigSplit = text.Split(';');
+
+			if (!bigSplit.Any())
+			{
+				return false;
+			}
+
+			if (bigSplit.Count() > 2)
+			{
+				// Incorrect format (too many semicolons)
+				return false;
+			}
+
+			if(bigSplit[0].Any(c => c == ':'))
+			{
+				// Incorrect format (no colons allowed)
+				return false;
+			}
+
+			var inventoryItems = bigSplit[0].Split(',');
+
+			var itemData = inventoryItems.ToDictionary(item => item, item => TranslateKey(data, item));
+
+			var incorrectItems = itemData.Where(item => item.Value == null);
+			if (incorrectItems.Any())
+			{
+				_logMessage += incorrectItems
+					.Select(item => $"ParseInventory - Key named {item.Key} not found{Environment.NewLine}")
+					.Aggregate((i, j) => i + j) + Environment.NewLine;
+
+				return false;
+			}
+
+			_logMessage += $"Starting Inventory: {itemData.Keys.Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}";
+
+			inventory.myKeys.AddRange(itemData.Values.Select(item => item).ToList());
+			return true;
+		}
+
+		public static bool ParseItemLogInventory(SaveData data, Inventory inventory, String logText)
+		{
+			string[] lines = logText.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+
+			var settingsLine = lines.FirstOrDefault(line => line.StartsWith("Settings:"));
+			if (!String.IsNullOrEmpty(settingsLine))
+			{
+				if (TryParseSettings(data, inventory, settingsLine))
+				{
+					return true;
+				}
+
+				if(TryParseOldSettings(data, inventory, settingsLine))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public static bool TryParseSettings(SaveData data, Inventory inventory, string settingsLine)
+		{
+			try
+			{
+				var settings = new Settings(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
+				if (settings.IceNotRequired)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "IceBeamNotRequired"));
+				}
+
+				if (settings.PlasmaNotRequired)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+				}
+
+				if (settings.InfiniteBombJump)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "CanInfiniteBombJump"));
+				}
+
+				if (settings.WallJumping)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "CanWallJump"));
+				}
+
+				if (settings.ObtainUnkItems)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "ObtainUnknownItems"));
+				}
+
+				if (settings.ChozoStatueHints)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "ChozoStatueHints"));
+				}
+
+				if (settings.RandoEnemies)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "RandomizeEnemies"));
+				}
+
+				return true;
+			}
+			catch (Exception)
+			{
+
+			}
+
+			return false;
+		}
+
+		public static bool TryParseOldSettings(SaveData data, Inventory inventory, string settingsLine)
+		{
+			try
+			{
+				var settings = new Settings_Old(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
+				if (settings.iceNotRequired)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "IceBeamNotRequired"));
+				}
+
+				if (settings.plasmaNotRequired)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+				}
+
+				if (settings.infiniteBombJump)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "CanInfiniteBombJump"));
+				}
+
+				if (settings.wallJumping)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "CanWallJump"));
+				}
+
+				if (settings.obtainUnkItems)
+				{
+					inventory.myKeys.Add(TranslateKey(data, "ObtainUnknownItems"));
+				}
+
+				return true;
+			}
+			catch (Exception)
+			{
+
+			}
+
+			return false;
 		}
 	}
 }
