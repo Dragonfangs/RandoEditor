@@ -14,6 +14,10 @@ namespace Common.Key.Requirement
 			:this()
 		{
 			myKeyId = keyId;
+
+			// Only setting keys are allowed to be inverted
+			if (!KeyManager.IsSetting(myKeyId))
+				isInverted = false;
 		}
 
 		public SimpleRequirement(BaseKey key)
@@ -26,6 +30,7 @@ namespace Common.Key.Requirement
 			var memento = new SimpleRequirementMemento();
 
 			memento.myRepeatCount = myRepeatCount;
+			memento.isInverted = isInverted;
 			memento.myKeyId = myKeyId;
 
 			return memento;
@@ -36,6 +41,7 @@ namespace Common.Key.Requirement
 			if (memento is SimpleRequirementMemento simpleMemento)
 			{
 				myRepeatCount = simpleMemento.myRepeatCount;
+				isInverted = simpleMemento.isInverted;
 				myKeyId = simpleMemento.myKeyId;
 			}
 		}
@@ -60,9 +66,15 @@ namespace Common.Key.Requirement
 				return;
 
 			myKeyId = otherId;
+
+			// Only setting keys are allowed to be inverted
+			if (!KeyManager.IsSetting(myKeyId))
+				isInverted = false;
 		}
 
 		public uint myRepeatCount = 1;
+
+		public bool isInverted = false;
 
 		public Guid myKeyId;
 

@@ -18,6 +18,7 @@ namespace Common.Memento
 	public class SimpleRequirementMemento : RequirementMemento
 	{
 		public uint myRepeatCount = 1;
+		public bool isInverted = false;
 		public Guid myKeyId;
 	}
 }

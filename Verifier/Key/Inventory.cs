@@ -51,6 +51,10 @@ namespace Verifier.Key
 				else
 				{
 					var combinedKeys = myNodes.Select(node => (node as KeyNode).GetKey()).Concat(myKeys);
+
+					if (simple.isInverted)
+						return !combinedKeys.Any(key => key == targetKey);
+
 					return combinedKeys.Count(key => key == targetKey) >= simple.myRepeatCount;
 				}
 			}

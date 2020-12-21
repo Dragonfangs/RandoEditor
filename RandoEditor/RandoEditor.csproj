@@ -226,5 +226,8 @@
   <ItemGroup>
     <None Include="Resources\WarningIcon.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\NotEquals.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

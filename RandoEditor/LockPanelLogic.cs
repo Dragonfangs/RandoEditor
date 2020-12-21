@@ -71,8 +71,6 @@ namespace RandoEditor
 
 				if (req.GetKey().Repeatable == true)
 				{
-					Text = $"          {req.GetKey().Name}";
-
 					NumericUpDown.Tag = this;
 
 					NumericUpDown.Minimum = 1;
@@ -80,6 +78,14 @@ namespace RandoEditor
 					NumericUpDown.Increment = 1;
 
 					NumericUpDown.Value = req.myRepeatCount;
+				}
+
+				if(KeyManager.IsSetting(req.myKeyId))
+				{
+					InvertButton.Tag = this;
+
+					InvertButton.BackgroundImage = Properties.Resources.NotEquals;
+					InvertButton.BackgroundImageLayout = ImageLayout.Zoom;
 				}
 			}
 
@@ -89,8 +95,9 @@ namespace RandoEditor
 				Tag = req;
 			}
 
-			public bool Deletable { get; set; } = true;
+			public bool ReadOnly { get; set; } = false;
 			public NumericUpDown NumericUpDown { get; } = new NumericUpDown();
+			public Button InvertButton { get; } = new Button();
 		}
 
 		public class SeparatorTreeNode : TreeNode
@@ -190,7 +197,7 @@ namespace RandoEditor
 					var childReqs = cKey.myRequirement.myRequirements.Select(req => GenerateLeafNode(req)).ToList();
 					foreach (var child in childReqs)
 					{
-						child.Deletable = false;
+						child.ReadOnly = true;
 						parent.Nodes.Add(child);
 					}
 				}
@@ -206,7 +213,7 @@ namespace RandoEditor
 				var childReqs = cReq.myRequirements.Select(req => GenerateLeafNode(req)).ToList();
 				foreach (var child in childReqs)
 				{
-					child.Deletable = false;
+					child.ReadOnly = true;
 					parent.Nodes.Add(child);
 				}
 
@@ -275,6 +282,75 @@ namespace RandoEditor
 			}
 		}
 
+		private void treeView1_DrawNode(object sender, DrawTreeNodeEventArgs e)
+		{
+			var inverted = false;
+			var indentSize = 0;
+			uint repeatCount = 0;
+			if (e.Node is KeyTreeNode keyNode)
+			{
+				var nodeTag = keyNode.Tag;
+				if (nodeTag is SimpleRequirement reqTag)
+				{
+					inverted = reqTag.isInverted;
+
+					if (keyNode.ReadOnly && reqTag.GetKey()?.Repeatable == true)
+					{
+						repeatCount = reqTag.myRepeatCount;
+					}
+
+					if(!keyNode.ReadOnly)
+					{
+						if(reqTag.GetKey()?.Repeatable == true)
+						{
+							indentSize = keyNode.NumericUpDown.Bounds.Width + 5;
+						}
+						else if(KeyManager.IsSetting(reqTag.myKeyId))
+						{
+							indentSize = keyNode.InvertButton.Bounds.Width + 5;
+						}
+					}
+				}
+			}
+
+			using (Font font = new Font(this.Font, FontStyle.Regular))
+			{
+				if (inverted)
+				{
+					using (Brush brush = new SolidBrush(Color.Red))
+					{
+						e.Graphics.DrawString("NOT ", font, brush, e.Bounds.Left + indentSize, e.Bounds.Top + 5);
+					}
+
+					using (Brush brush = new SolidBrush(Color.Black))
+					{
+						SizeF s = e.Graphics.MeasureString("NOT ", font);
+						e.Graphics.DrawString(e.Node.Text, font, brush, e.Bounds.Left + indentSize + (int)s.Width, e.Bounds.Top + 5);
+					}
+				}
+				else if(repeatCount > 0)
+				{
+					using (Brush brush = new SolidBrush(Color.Blue))
+					{
+						e.Graphics.DrawString($"{repeatCount} ", font, brush, e.Bounds.Left + indentSize, e.Bounds.Top + 5);
+					}
+
+					using (Brush brush = new SolidBrush(Color.Black))
+					{
+						SizeF s = e.Graphics.MeasureString($"{repeatCount} ", font);
+						e.Graphics.DrawString(e.Node.Text, font, brush, e.Bounds.Left + indentSize + (int)s.Width, e.Bounds.Top + 5);
+					}
+				}
+				else
+				{
+					using (Brush brush = new SolidBrush(Color.Black))
+					{
+						e.Graphics.DrawString(e.Node.Text, font, brush, e.Bounds.Left + indentSize, e.Bounds.Top + 5);
+					}
+				}
+			}
+		}
+
 		private void ShowControls()
 		{
 			ShowControls(treeView1.Nodes);
@@ -284,15 +360,26 @@ namespace RandoEditor
 		{
 			foreach (TreeNode node in collection)
 			{
-				if (node is KeyTreeNode keyTreeNode)
+				if (node is KeyTreeNode keyTreeNode && !keyTreeNode.ReadOnly)
 				{
-					if (keyTreeNode.Tag is SimpleRequirement req && req.GetKey()?.Repeatable == true)
+					if (keyTreeNode.Tag is SimpleRequirement req)
 					{
-						treeView1.Controls.Add(keyTreeNode.NumericUpDown);
+						if(req.GetKey()?.Repeatable == true)
+						{ 
+							treeView1.Controls.Add(keyTreeNode.NumericUpDown);
 
-						keyTreeNode.NumericUpDown.ValueChanged += new EventHandler(NumericUpDown_ValueChanged);
+							keyTreeNode.NumericUpDown.ValueChanged += new EventHandler(NumericUpDown_ValueChanged);
 
-						keyTreeNode.NumericUpDown.Show();
+							keyTreeNode.NumericUpDown.Show();
+						}
+						else if (KeyManager.IsSetting(req.myKeyId))
+						{
+							treeView1.Controls.Add(keyTreeNode.InvertButton);
+
+							keyTreeNode.InvertButton.Click += new EventHandler(InvertButton_Click);
+
+							keyTreeNode.InvertButton.Show();
+						}
 					}
 				}
 
@@ -345,7 +432,12 @@ namespace RandoEditor
 					
 					keyTreeNode.NumericUpDown.Hide();
 
+					keyTreeNode.InvertButton.Click -= InvertButton_Click;
+
+					keyTreeNode.InvertButton.Hide();
+
 					treeView1.Controls.Remove(keyTreeNode.NumericUpDown);
+					treeView1.Controls.Remove(keyTreeNode.InvertButton);
 				}
 
 				if (node is DropDownTreeNode dropDownNode)
@@ -391,6 +483,12 @@ namespace RandoEditor
 						keyTreeNode.Bounds.X,
 						keyTreeNode.Bounds.Y,
 						30,
+						keyTreeNode.Bounds.Height);
+
+					keyTreeNode.InvertButton.SetBounds(
+						keyTreeNode.Bounds.X,
+						keyTreeNode.Bounds.Y,
+						keyTreeNode.Bounds.Height,
 						keyTreeNode.Bounds.Height);
 				}
 
@@ -462,6 +560,22 @@ namespace RandoEditor
 			{
 				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 				req.myRepeatCount = (uint)num.Value;
+
+				SaveManager.Dirty = true;
+			}
+		}
+
+		void InvertButton_Click(object sender, EventArgs e)
+		{
+			if (sender is Button but &&
+				but.Tag is TreeNode parentNode &&
+				parentNode.Tag is SimpleRequirement req &&
+				KeyManager.IsSetting(req.myKeyId))
+			{
+				myMementos[myRequirement].Add(myRequirement.CreateMemento());
+				req.isInverted = !req.isInverted;
+
+				treeView1.Invalidate();
 
 				SaveManager.Dirty = true;
 			}
@@ -583,7 +697,7 @@ namespace RandoEditor
 
 		void DeleteNode(TreeNode nodeToRemove)
 		{
-			if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && keyNode.Deletable) || nodeToRemove is DropDownTreeNode))
+			if (nodeToRemove.Parent != null && ((nodeToRemove is KeyTreeNode keyNode && !keyNode.ReadOnly) || nodeToRemove is DropDownTreeNode))
 			{
 				myMementos[myRequirement].Add(myRequirement.CreateMemento());
 
@@ -660,7 +774,7 @@ namespace RandoEditor
 
 				GenerateContextMenu(contextMenuStrip, e.Node,
 					e.Node is DropDownTreeNode parentNode,
-					(e.Node.Parent != null && ((e.Node is KeyTreeNode keyNode && keyNode.Deletable) || e.Node is DropDownTreeNode)));
+					(e.Node.Parent != null && ((e.Node is KeyTreeNode keyNode && !keyNode.ReadOnly) || e.Node is DropDownTreeNode)));
 
 				contextMenuStrip.Show(treeView1.PointToScreen(e.Location));
 			}

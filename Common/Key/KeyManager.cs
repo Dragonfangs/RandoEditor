@@ -61,6 +61,11 @@ namespace Common.Key
 			return instance.myBasicKeys["Setting"].Values;
 		}
 
+		static public bool IsSetting(Guid keyId)
+		{
+			return instance.myBasicKeys["Setting"].ContainsKey(keyId);
+		}
+
 		static public ICollection<ComplexKey> GetCustomKeys()
 		{
 			return instance.myCustomKeys.Values;
