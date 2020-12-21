@@ -261,7 +261,70 @@ namespace VerifierClient
 			var settingsLine = lines.FirstOrDefault(line => line.StartsWith("Settings:"));
 			if (!String.IsNullOrEmpty(settingsLine))
 			{
+				if(!TryParseSettings(data, inventory, settingsLine))
+				{
+					TryParseOldSettings(data, inventory, settingsLine);
+				}
+			}
+
+			return inventory;
+		}
+
+		public static bool TryParseSettings(SaveData data, List<BaseKey> inventory, string settingsLine)
+		{
+			try
+			{
 				var settings = new Settings(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
+				if (settings.IceNotRequired)
+				{
+					inventory.Add(TranslateKey(data, "IceBeamNotRequired"));
+				}
+
+				if (settings.PlasmaNotRequired)
+				{
+					inventory.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+				}
+
+				if (settings.InfiniteBombJump)
+				{
+					inventory.Add(TranslateKey(data, "CanInfiniteBombJump"));
+				}
+
+				if (settings.WallJumping)
+				{
+					inventory.Add(TranslateKey(data, "CanWallJump"));
+				}
+
+				if (settings.ObtainUnkItems)
+				{
+					inventory.Add(TranslateKey(data, "ObtainUnknownItems"));
+				}
+
+				if (settings.ChozoStatueHints)
+				{
+					inventory.Add(TranslateKey(data, "ChozoStatueHints"));
+				}
+
+				if (settings.RandoEnemies)
+				{
+					inventory.Add(TranslateKey(data, "RandomizeEnemies"));
+				}
+
+				return true;
+			}
+			catch (Exception)
+			{
+
+			}
+
+			return false;
+		}
+
+		public static bool TryParseOldSettings(SaveData data, List<BaseKey> inventory, string settingsLine)
+		{
+			try
+			{
+				var settings = new Settings_Old(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
 				if (settings.iceNotRequired)
 				{
 					inventory.Add(TranslateKey(data, "IceBeamNotRequired"));
@@ -286,9 +349,15 @@ namespace VerifierClient
 				{
 					inventory.Add(TranslateKey(data, "ObtainUnknownItems"));
 				}
+
+				return true;
+			}
+			catch(Exception)
+			{
+
 			}
 
-			return inventory;
+			return false;
 		}
 
 		public static Dictionary<string, Guid> ParseItemLogItems(SaveData data, String logText)

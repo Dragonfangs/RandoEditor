@@ -1,56 +1,92 @@
-﻿using System;
+﻿using Common.Utils;
+using mzmr.Items;
+using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace VerifierClient
 {
-	public enum GameCompletion { Unchanged, Beatable, AllItems }
+	public enum Swap { Unchanged, LocalPool, GlobalPool }
+	public enum Change { Unchanged, Shuffle, Random }
+	public enum GameCompletion { NoLogic, Beatable, AllItems }
 
 	public class Settings
 	{
-		private const int version = 121;  // 1.2.1
+		public bool SwapOrRemoveItems
+		{
+			get
+			{
+				return AbilitySwap > Swap.Unchanged ||
+					TankSwap > Swap.Unchanged ||
+					NumItemsRemoved > 0;
+			}
+		}
+		public int NumTanksRemoved
+		{
+			get { return NumItemsRemoved - NumAbilitiesRemoved.Value; }
+		}
+		public bool RemoveSpecificItems => NumAbilitiesRemoved != null;
+		public bool RandomPalettes
+		{
+			get
+			{
+				return TilesetPalettes ||
+				  EnemyPalettes || SamusPalettes || BeamPalettes;
+			}
+		}
 
 		// items
-		public bool randomAbilities;
-		public bool randomTanks;
-		public List<int> excludedItems;
-		public GameCompletion gameCompletion;
-		public bool iceNotRequired;
-		public bool plasmaNotRequired;
-		public bool noPBsBeforeChozodia;
-		public bool chozoStatueHints;
-		public bool infiniteBombJump;
-		public bool wallJumping;
+		public Swap AbilitySwap;
+		public Swap TankSwap;
+		public int NumItemsRemoved;
+		public int? NumAbilitiesRemoved;
+		public GameCompletion Completion;
+		public bool IceNotRequired;
+		public bool PlasmaNotRequired;
+		public bool NoPBsBeforeChozodia;
+		public bool ChozoStatueHints;
+		public bool InfiniteBombJump;
+		public bool WallJumping;
+
+		// locations
+		public Dictionary<int, ItemType> CustomAssignments;
+
+		// enemies
+		public bool RandoEnemies;
 
 		// palettes
-		public bool tilesetPalettes;
-		public bool enemyPalettes;
-		public bool beamPalettes;
-		public int hueMinimum;
-		public int hueMaximum;
+		public bool TilesetPalettes;
+		public bool EnemyPalettes;
+		public bool SamusPalettes;
+		public bool BeamPalettes;
+		public int HueMinimum;
+		public int HueMaximum;
+
+		// music
+		public Change MusicChange;
+		public Swap MusicRooms;
+		public Swap MusicBosses;
+		public Swap MusicOthers;
+
 		// tweaks
-		public bool enableItemToggle;
-		public bool obtainUnkItems;
-		public bool hardModeAvailable;
-		public bool pauseScreenInfo;
-		public bool removeCutscenes;
-		public bool removeNorfairVine;
-		public bool removeVariaAnimation;
-		public bool skipSuitless;
+		public bool EnableItemToggle;
+		public bool ObtainUnkItems;
+		public bool HardModeAvailable;
+		public bool PauseScreenInfo;
+		public bool RemoveCutscenes;
+		public bool SkipSuitless;
+		public bool SkipDoorTransitions;
 
 		// constructor
-		public Settings(string str = null)
+		public Settings(string config = null)
 		{
-			if (string.IsNullOrEmpty(str))
-			{
-				SetDefaults();
-				return;
-			}
+			SetDefaults();
 
-			Common.Utils.BinaryTextReader btr;
+			if (string.IsNullOrEmpty(config)) { return; }
+
+			BinaryTextReader btr;
 			try
 			{
-				btr = new Common.Utils.BinaryTextReader(str);
+				btr = new BinaryTextReader(config);
 			}
 			catch (FormatException)
 			{
@@ -58,242 +94,207 @@ namespace VerifierClient
 			}
 
 			// check version
-			int configVer = btr.ReadNumber(10);
-			if (configVer != version)
+			int major = btr.ReadNumber(4);
+			int minor = btr.ReadNumber(4);
+			int patch = btr.ReadNumber(4);
+			string configVer = $"{major}.{minor}.{patch}";
+			// convert settings
+			switch (configVer)
 			{
-				// convert settings
-				SetDefaults();
-				switch (configVer)
-				{
-					case 100:
-						LoadSettings100(btr);
-						break;
-					case 110:
-						LoadSettings110(btr);
-						break;
-					default:
-						throw new FormatException("Config string is not valid.");
-				}
-			}
-			else
-			{
-				LoadSettings(btr);
+				case "1.4.0":
+					LoadSettings(btr);
+					break;
+				case "1.3.0":
+				case "1.3.1":
+				case "1.3.2":
+					LoadSettings_1_3_2(btr);
+					break;
+				default:
+					throw new FormatException("Config string is not valid.");
 			}
 		}
 
-		private void LoadSettings(Common.Utils.BinaryTextReader btr)
+		private void LoadSettings(BinaryTextReader btr)
 		{
 			// items
-			randomAbilities = btr.ReadBool();
-			randomTanks = btr.ReadBool();
-
-			// excluded items
-			excludedItems = new List<int>();
-			for (int i = 0; i < 100; i++)
+			AbilitySwap = (Swap)btr.ReadNumber(2);
+			TankSwap = (Swap)btr.ReadNumber(2);
+			if (btr.ReadBool())
 			{
-				bool excluded = btr.ReadBool();
-				if (excluded)
+				NumItemsRemoved = btr.ReadNumber(7);
+				if (btr.ReadBool())
+					NumAbilitiesRemoved = btr.ReadNumber(4);
+			}
+			if (SwapOrRemoveItems)
+			{
+				Completion = (GameCompletion)btr.ReadNumber(2);
+				IceNotRequired = btr.ReadBool();
+				PlasmaNotRequired = btr.ReadBool();
+				NoPBsBeforeChozodia = btr.ReadBool();
+				ChozoStatueHints = btr.ReadBool();
+				InfiniteBombJump = btr.ReadBool();
+				WallJumping = btr.ReadBool();
+			}
+
+			// locations
+			if (btr.ReadBool())
+			{
+				int count = btr.ReadNumber(7);
+				for (int i = 0; i < count; i++)
 				{
-					excludedItems.Add(i);
+					int locNum = btr.ReadNumber(7);
+					ItemType item = (ItemType)btr.ReadNumber(5);
+					CustomAssignments[locNum] = item;
 				}
 			}
 
-			gameCompletion = (GameCompletion)btr.ReadNumber(2);
-			iceNotRequired = btr.ReadBool();
-			plasmaNotRequired = btr.ReadBool();
-			noPBsBeforeChozodia = btr.ReadBool();
-			chozoStatueHints = btr.ReadBool();
-			infiniteBombJump = btr.ReadBool();
-			wallJumping = btr.ReadBool();
+			// enemies
+			RandoEnemies = btr.ReadBool();
 
 			// palettes
-			tilesetPalettes = btr.ReadBool();
-			enemyPalettes = btr.ReadBool();
-			beamPalettes = btr.ReadBool();
-			hueMinimum = btr.ReadNumber(8);
-			hueMaximum = btr.ReadNumber(8);
+			TilesetPalettes = btr.ReadBool();
+			EnemyPalettes = btr.ReadBool();
+			SamusPalettes = btr.ReadBool();
+			BeamPalettes = btr.ReadBool();
+			if (RandomPalettes)
+			{
+				if (btr.ReadBool())
+					HueMinimum = btr.ReadNumber(8);
+				if (btr.ReadBool())
+					HueMaximum = btr.ReadNumber(8);
+			}
+
+			// music
+			MusicChange = (Change)btr.ReadNumber(2);
+			if (MusicChange != Change.Unchanged)
+			{
+				MusicRooms = (Swap)btr.ReadNumber(2);
+				MusicBosses = (Swap)btr.ReadNumber(2);
+				MusicOthers = (Swap)btr.ReadNumber(2);
+			}
 
 			// misc
-			enableItemToggle = btr.ReadBool();
-			obtainUnkItems = btr.ReadBool();
-			hardModeAvailable = btr.ReadBool();
-			pauseScreenInfo = btr.ReadBool();
-			removeCutscenes = btr.ReadBool();
-			removeNorfairVine = btr.ReadBool();
-			removeVariaAnimation = btr.ReadBool();
-			skipSuitless = btr.ReadBool();
+			EnableItemToggle = btr.ReadBool();
+			ObtainUnkItems = btr.ReadBool();
+			HardModeAvailable = btr.ReadBool();
+			PauseScreenInfo = btr.ReadBool();
+			RemoveCutscenes = btr.ReadBool();
+			SkipSuitless = btr.ReadBool();
+			SkipDoorTransitions = btr.ReadBool();
 		}
 
-		private void LoadSettings110(Common.Utils.BinaryTextReader btr)
+		private void LoadSettings_1_3_2(BinaryTextReader btr)
 		{
 			// items
-			randomAbilities = btr.ReadBool();
-			randomTanks = btr.ReadBool();
-
-			// excluded items
-			excludedItems = new List<int>();
-			for (int i = 0; i < 100; i++)
+			bool randAbilities = btr.ReadBool();
+			bool randTanks = btr.ReadBool();
+			if (randAbilities && randTanks)
 			{
-				bool excluded = btr.ReadBool();
-				if (excluded)
+				AbilitySwap = Swap.GlobalPool;
+				TankSwap = Swap.GlobalPool;
+			}
+			else if (randAbilities) AbilitySwap = Swap.LocalPool;
+			else if (randTanks) TankSwap = Swap.LocalPool;
+
+			if (btr.ReadBool())
+			{
+				NumItemsRemoved = btr.ReadNumber(7);
+			}
+			if (SwapOrRemoveItems)
+			{
+				Completion = (GameCompletion)btr.ReadNumber(2);
+				IceNotRequired = btr.ReadBool();
+				PlasmaNotRequired = btr.ReadBool();
+				NoPBsBeforeChozodia = btr.ReadBool();
+				ChozoStatueHints = btr.ReadBool();
+				InfiniteBombJump = btr.ReadBool();
+				WallJumping = btr.ReadBool();
+			}
+
+			// locations
+			if (btr.ReadBool())
+			{
+				int count = btr.ReadNumber(7);
+				for (int i = 0; i < count; i++)
 				{
-					excludedItems.Add(i);
+					int locNum = btr.ReadNumber(7);
+					ItemType item = (ItemType)btr.ReadNumber(5);
+					CustomAssignments[locNum] = item;
 				}
 			}
 
-			iceNotRequired = btr.ReadBool();
-			plasmaNotRequired = btr.ReadBool();
-			gameCompletion = (GameCompletion)btr.ReadNumber(2);
-			noPBsBeforeChozodia = (btr.ReadNumber(2) == 2);
+			// enemies
+			RandoEnemies = btr.ReadBool();
 
 			// palettes
-			tilesetPalettes = btr.ReadBool();
-			enemyPalettes = btr.ReadBool();
-			beamPalettes = btr.ReadBool();
-			hueMinimum = btr.ReadNumber(8);
-			hueMaximum = btr.ReadNumber(8);
-
-			// misc
-			enableItemToggle = btr.ReadBool();
-			obtainUnkItems = btr.ReadBool();
-			hardModeAvailable = btr.ReadBool();
-			pauseScreenInfo = btr.ReadBool();
-			removeCutscenes = btr.ReadBool();
-			removeNorfairVine = btr.ReadBool();
-			removeVariaAnimation = btr.ReadBool();
-			skipSuitless = btr.ReadBool();
-		}
-
-		private void LoadSettings100(Common.Utils.BinaryTextReader btr)
-		{
-			// items
-			randomAbilities = btr.ReadBool();
-			randomTanks = btr.ReadBool();
-
-			// excluded items
-			excludedItems = new List<int>();
-			for (int i = 0; i < 100; i++)
+			TilesetPalettes = btr.ReadBool();
+			EnemyPalettes = btr.ReadBool();
+			BeamPalettes = btr.ReadBool();
+			if (RandomPalettes)
 			{
-				bool excluded = btr.ReadBool();
-				if (excluded)
+				if (btr.ReadBool())
 				{
-					excludedItems.Add(i);
+					HueMinimum = btr.ReadNumber(8);
+				}
+				if (btr.ReadBool())
+				{
+					HueMaximum = btr.ReadNumber(8);
 				}
 			}
 
-			iceNotRequired = btr.ReadBool();
-			plasmaNotRequired = btr.ReadBool();
-			gameCompletion = (GameCompletion)btr.ReadNumber(2);
-			noPBsBeforeChozodia = (btr.ReadNumber(2) == 2);
-
-			// palettes
-			tilesetPalettes = btr.ReadBool();
-			enemyPalettes = btr.ReadBool();
-			beamPalettes = btr.ReadBool();
-			hueMinimum = btr.ReadNumber(8);
-			hueMaximum = btr.ReadNumber(8);
-
 			// misc
-			enableItemToggle = btr.ReadBool();
-			obtainUnkItems = btr.ReadBool();
-			hardModeAvailable = btr.ReadBool();
-			pauseScreenInfo = btr.ReadBool();
-			removeCutscenes = btr.ReadBool();
-			removeNorfairVine = btr.ReadBool();
-			removeVariaAnimation = btr.ReadBool();
+			EnableItemToggle = btr.ReadBool();
+			ObtainUnkItems = btr.ReadBool();
+			HardModeAvailable = btr.ReadBool();
+			PauseScreenInfo = btr.ReadBool();
+			RemoveCutscenes = btr.ReadBool();
+			SkipSuitless = btr.ReadBool();
+			SkipDoorTransitions = btr.ReadBool();
 		}
 
 		private void SetDefaults()
 		{
 			// items
-			randomAbilities = false;
-			randomTanks = false;
-			excludedItems = new List<int>();
-			gameCompletion = GameCompletion.Beatable;
-			iceNotRequired = false;
-			plasmaNotRequired = false;
-			noPBsBeforeChozodia = false;
-			chozoStatueHints = false;
-			infiniteBombJump = true;
-			wallJumping = true;
+			AbilitySwap = Swap.Unchanged;
+			TankSwap = Swap.Unchanged;
+			NumItemsRemoved = 0;
+			NumAbilitiesRemoved = null;
+			Completion = GameCompletion.Beatable;
+			IceNotRequired = false;
+			PlasmaNotRequired = false;
+			NoPBsBeforeChozodia = false;
+			ChozoStatueHints = false;
+			InfiniteBombJump = true;
+			WallJumping = true;
+
+			// locations
+			CustomAssignments = new Dictionary<int, ItemType>();
+
+			// enemies
+			RandoEnemies = false;
 
 			// palettes
-			tilesetPalettes = false;
-			enemyPalettes = false;
-			beamPalettes = false;
-			hueMinimum = 0;
-			hueMaximum = 180;
+			TilesetPalettes = false;
+			EnemyPalettes = false;
+			SamusPalettes = false;
+			BeamPalettes = false;
+			HueMinimum = 0;
+			HueMaximum = 180;
+
+			// music
+			MusicChange = Change.Unchanged;
+			MusicRooms = Swap.Unchanged;
+			MusicBosses = Swap.Unchanged;
+			MusicOthers = Swap.Unchanged;
 
 			// misc
-			enableItemToggle = true;
-			obtainUnkItems = false;
-			hardModeAvailable = true;
-			pauseScreenInfo = false;
-			removeCutscenes = false;
-			removeNorfairVine = true;
-			removeVariaAnimation = false;
-			skipSuitless = false;
+			EnableItemToggle = true;
+			ObtainUnkItems = false;
+			HardModeAvailable = true;
+			PauseScreenInfo = false;
+			RemoveCutscenes = true;
+			SkipSuitless = false;
+			SkipDoorTransitions = false;
 		}
-
-		private string VersionToString(int ver)
-		{
-			int major = ver / 100;
-			int minor = (ver % 100) / 10;
-			int revision = ver % 10;
-			return major + "." + minor + "." + revision;
-		}
-
-		public string ConvertToString()
-		{
-			byte[] temp = ConvertToStringBytes();
-			return Encoding.ASCII.GetString(temp);
-		}
-
-		public byte[] ConvertToStringBytes()
-		{
-			Common.Utils.BinaryTextWriter btw = new Common.Utils.BinaryTextWriter();
-
-			// version
-			btw.AddNumber(version, 10);
-
-			// items
-			btw.AddBool(randomAbilities);
-			btw.AddBool(randomTanks);
-
-			// excluded items
-			for (int i = 0; i < 100; i++)
-			{
-				bool excluded = excludedItems.Contains(i);
-				btw.AddBool(excluded);
-			}
-			btw.AddNumber((int)gameCompletion, 2);
-			btw.AddBool(iceNotRequired);
-			btw.AddBool(plasmaNotRequired);
-			btw.AddBool(noPBsBeforeChozodia);
-			btw.AddBool(chozoStatueHints);
-			btw.AddBool(infiniteBombJump);
-			btw.AddBool(wallJumping);
-
-			// palettes
-			btw.AddBool(tilesetPalettes);
-			btw.AddBool(enemyPalettes);
-			btw.AddBool(beamPalettes);
-			btw.AddNumber(hueMinimum, 8);
-			btw.AddNumber(hueMaximum, 8);
-
-			// misc
-			btw.AddBool(enableItemToggle);
-			btw.AddBool(obtainUnkItems);
-			btw.AddBool(hardModeAvailable);
-			btw.AddBool(pauseScreenInfo);
-			btw.AddBool(removeCutscenes);
-			btw.AddBool(removeNorfairVine);
-			btw.AddBool(removeVariaAnimation);
-			btw.AddBool(skipSuitless);
-
-			return btw.GetOutputString();
-		}
-
-
 	}
 }
