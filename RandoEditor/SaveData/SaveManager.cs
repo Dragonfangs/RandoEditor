@@ -134,7 +134,6 @@ namespace RandoEditor.SaveData
 				new Guid("0ba7dceb-ef55-4063-8132-6e4bea5114e7"), // Ice Beam Not Required
 				new Guid("d734910e-a0eb-4f29-b81d-c129c4085355"), // Plasma Beam Not Required
 				new Guid("ed4a621c-0703-4ed8-af77-40b8d74facb5"), // Obtain Unknown Items
-				new Guid("a481a280-1897-4528-8aea-41655851fd75"), // Chozo Statue Hints
 			};
 
 			var basicKeys = Data.BasicKeys.Values.SelectMany(collection => collection.Values);
@@ -151,10 +150,14 @@ namespace RandoEditor.SaveData
 				powerGripKey.Name = "Power Grip (Event)";
 			}
 
-			// Add Enemy Randomization Key
+			// Add New Keys
 			var enemyRandomizationKey = new BaseKey(new Guid("784c6b79-e1a3-4ad8-a3fa-1b2495171d39"), "Randomize Enemies");
 			enemyRandomizationKey.Static = true;
 			Data.BasicKeys["Setting"][enemyRandomizationKey.Id] = enemyRandomizationKey;
+
+			var chozoStatuesHintsKey = new BaseKey(new Guid("399e6355-c2d2-42e5-bc89-33175c5bb3a9"), "Chozo Statue Hints");
+			chozoStatuesHintsKey.Static = true;
+			Data.BasicKeys["Setting"][chozoStatuesHintsKey.Id] = chozoStatuesHintsKey;
 		}
 	}
 }

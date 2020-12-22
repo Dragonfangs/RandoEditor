@@ -194,24 +194,31 @@ namespace Randomizer
 			return null;
 		}
 
-		public static string ChooseSettings(List<string> logicFiles)
+		public static string ChooseSettings(List<string> settingFiles)
 		{
-			Console.WriteLine($"Choose a logic file or enter setting string:");
-			Console.WriteLine(logicFiles
-				.Select((file, i) => $"{i + 1}: {Path.GetFileName(file)}")
-				.Aggregate((i, j) => i + Environment.NewLine + j));
+			if(settingFiles.Any())
+			{ 
+				Console.WriteLine($"Choose a setting file or enter setting string(optional):");
+				Console.WriteLine(settingFiles
+					.Select((file, i) => $"{i + 1}: {Path.GetFileName(file)}")
+					.Aggregate((i, j) => i + Environment.NewLine + j));
+			}
+			else
+			{
+				Console.WriteLine($"Enter setting string(optional):");
+			}
 
 			var response = Console.ReadLine();
 
 			if (int.TryParse(response, out var result))
 			{
-				if (result < 1 || result > logicFiles.Count() + 1)
+				if (result < 1 || result > settingFiles.Count() + 1)
 				{
 					_logMessage += $"{result} is not a valid index{Environment.NewLine}";
 					return null;
 				}
 
-				return logicFiles[result - 1];
+				return settingFiles[result - 1];
 			}
 
 			return response;
