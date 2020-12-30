@@ -10,49 +10,121 @@ namespace Randomizer
 {
 	public class ItemPool
 	{
-		List<BaseKey> myAvailableItems = new List<BaseKey>();
-
+		List<Guid> myAvailableItems = new List<Guid>();
+		
 		public void CreatePool(SaveData someData)
 		{
 			myAvailableItems.Clear();
 
-			myAvailableItems.AddRange(KeyManager.GetRandomKeys());
+			myAvailableItems.AddRange(KeyManager.GetRandomKeys().Select(key => key.Id));
 
 			// Missiles
 			for (int i = 0; i < 49; i++)
 			{
-				myAvailableItems.Add(KeyManager.GetKey(Guid.Parse("71c295d4-ba02-410b-8e4d-a53f8cec36fa")));
+				myAvailableItems.Add(StaticKeys.Missile);
 			}
 
 			// Supers
 			for (int i = 0; i < 14; i++)
 			{
-				myAvailableItems.Add(KeyManager.GetKey(Guid.Parse("ca562190-3a28-4a6a-b65a-9b3df94b6501")));
+				myAvailableItems.Add(StaticKeys.SuperMissile);
 			}
 
 			// Power Bombs
 			for (int i = 0; i < 8; i++)
 			{
-				myAvailableItems.Add(KeyManager.GetKey(Guid.Parse("fde4a9a5-1b38-4c4a-a918-8556a55e8e98")));
+				myAvailableItems.Add(StaticKeys.PowerBombs);
 			}
 
 			// E-Tank
 			for (int i = 0; i < 11; i++)
 			{
-				myAvailableItems.Add(KeyManager.GetKey(Guid.Parse("54d8e47c-b29b-440d-9a8b-bab7bc995f1d")));
+				myAvailableItems.Add(StaticKeys.ETank);
 			}
 		}
 
-		public Guid Pull(Random random)
+		public void SetItems(List<Guid> someItems)
 		{
-			var index = random.Next(myAvailableItems.Count-1);
-			var item = myAvailableItems.ElementAt(index);
-			myAvailableItems.RemoveAt(index);
+			myAvailableItems = new List<Guid>(someItems);
+		}
 
-			if (item == null)
+		public List<Guid> AvailableItems()
+		{
+			return new List<Guid>(myAvailableItems);
+		}
+
+		// Get a random item from the pool without removing it
+		public Guid PeekExcept(List<Guid> itemList, Random random)
+		{
+			var filteredItems = myAvailableItems.Where(item => !itemList.Contains(item));
+
+			if (!filteredItems.Any())
 				return Guid.Empty;
 
-			return item.Id;
+			var index = random.Next(filteredItems.Count());
+			var returnItem = filteredItems.ElementAt(index);
+
+			return returnItem;
+		}
+
+		// Get a random item from the pool without removing it
+		public Guid PeekAmong(List<Guid> itemList, Random random)
+		{
+			var filteredItems = myAvailableItems.Where(item => itemList.Contains(item));
+
+			if (!filteredItems.Any())
+				return Peek(random);
+
+			var index = random.Next(filteredItems.Count());
+			var returnItem = filteredItems.ElementAt(index);
+
+			return returnItem;
+		}
+
+		// Get a random item from the pool without removing it
+		public Guid Peek(Random random)
+		{
+			if (myAvailableItems.Count < 1)
+				return Guid.Empty;
+
+			var index = random.Next(myAvailableItems.Count);
+			var item = myAvailableItems.ElementAt(index);
+
+			return item;
+		}
+
+		// Remove specific item out of pool
+		public bool Pull(Guid id)
+		{
+			var item = myAvailableItems.FirstOrDefault(key => key == id);
+			return myAvailableItems.Remove(item);
+		}
+
+		// Get random item from the pool and remove it
+		public Guid PullExcept(List<Guid> itemList, Random random)
+		{
+			var item = PeekExcept(itemList, random);
+			Pull(item);
+
+			return item;
+		}
+
+		// Get random item from the pool and remove it
+		public Guid PullAmong(List<Guid> itemList, Random random)
+		{
+			var item = PeekAmong(itemList,random);
+			Pull(item);
+
+			return item;
+		}
+
+		// Get random item from the pool and remove it
+		public Guid Pull(Random random)
+		{
+			var item = Peek(random);
+			Pull(item);
+
+			return item;
 		}
 
 		public void RemoveRandomItems(int count, Random random)
@@ -64,7 +136,7 @@ namespace Randomizer
 
 			for (int i = 0; i < count; i++)
 			{
-				myAvailableItems.Add(null);
+				myAvailableItems.Add(Guid.Empty);
 			}
 		}
 	}

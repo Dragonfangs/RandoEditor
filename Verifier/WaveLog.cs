@@ -47,8 +47,12 @@ namespace Verifier
 
 		public string Print(int depth = 0, string prefix = "")
 		{
+			// Filter out any empty nodes
+			var filledLog = liveLog.Select(nodelist => nodelist.Where(node => !(node is RandomKeyNode keyNode) || (keyNode.GetKey() is BaseKey))).Where(nodeList => nodeList.Any());
+
 			// Change all waves to a list of names of nodes visited
-			var livePrints = liveLog.Select(nodeList => nodeList.Select(node => Utility.GetNodeName(node) + (node is RandomKeyNode keyNode ? $"({(keyNode.GetKey() is BaseKey key ? key.Name : "empty")})" : string.Empty)).Aggregate((i, j) => i + ", " + j));
+			// (Still prints "empty" as name for missing keys as a redundant precaution)
+			var livePrints = filledLog.Select(nodeList => nodeList.Select(node => Utility.GetNodeName(node) + (node is RandomKeyNode keyNode ? $"({(keyNode.GetKey() is BaseKey key ? key.Name : "empty")})" : string.Empty)).Aggregate((i, j) => i + ", " + j));
 
 			// Add "Wave" titles
 			var formattedPrints = livePrints.Select((print, i) => $"{new string('\t', depth)}Wave {prefix}{i + 1}: {print}");

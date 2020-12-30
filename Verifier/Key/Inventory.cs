@@ -20,10 +20,27 @@ namespace Verifier.Key
 			myKeys = new List<BaseKey>(other.myKeys);
 		}
 
+		public IEnumerable<BaseKey> GetCombinedKeys()
+		{
+			return myNodes.Select(node => (node as KeyNode).GetKey()).Where(key => key != null).Concat(myKeys);
+		}
+
+		public bool ContainsKey(Guid keyId)
+		{
+			return GetCombinedKeys().Any(key => key.Id == keyId);
+		}
+
 		public Inventory Expand(NodeBase key)
 		{
 			var newInv = new Inventory(this);
 			newInv.myNodes.Add(key);
+			return newInv;
+		}
+
+		public Inventory Expand(BaseKey key)
+		{
+			var newInv = new Inventory(this);
+			newInv.myKeys.Add(key);
 			return newInv;
 		}
 
@@ -50,7 +67,7 @@ namespace Verifier.Key
 				}
 				else
 				{
-					var combinedKeys = myNodes.Select(node => (node as KeyNode).GetKey()).Concat(myKeys);
+					var combinedKeys = GetCombinedKeys();
 
 					if (simple.isInverted)
 						return !combinedKeys.Any(key => key == targetKey);

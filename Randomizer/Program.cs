@@ -31,14 +31,14 @@ namespace Randomizer
 			var inventoryText = "";
 			if (startingInventory.myKeys.Any())
 			{
-				inventoryText = startingInventory.myKeys.Select(key => key.Name).Aggregate((i, j) => i + "," + j) + $";{Environment.NewLine}";
-				Console.WriteLine(inventoryText);
+				inventoryText = startingInventory.myKeys.Select(key => key.Name).Aggregate((i, j) => i + "," + j) + ";";
+				Console.WriteLine($"{Environment.NewLine}{inventoryText}");
 
 				fileText = inventoryText;
 			}
 
 			var map = resultItemMap.Select(pair => $"{pair.Key}:{KeyManager.GetKey(pair.Value)?.Name ?? "None"}").Aggregate((i, j) => i + $",{Environment.NewLine}" + j);
-			Console.WriteLine(map);
+			Console.WriteLine($"{Environment.NewLine}{map}");
 
 			fileText += map;
 
@@ -78,7 +78,8 @@ namespace Randomizer
 				// Log issue
 				_logMessage += "Failed to parse settings";
 			}
-			
+
+			var randomizationType = ChooseRandomization();
 			var gameCompletion = ChooseGameCompletion();
 
 			var random = new Random();
@@ -89,54 +90,98 @@ namespace Randomizer
 			_Timer.Start();
 			while(true)
 			{
-				var pool = new ItemPool();
-				pool.CreatePool(data);
-
-				random = new Random(seed);
-
-				var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
-
-				var morphKey = Guid.Parse("905940c7-fcef-4e24-b662-1cb2bc9e3eee");
-				var morphItem = randomMap.FirstOrDefault(x => x.Value.Equals(morphKey));
-
-				if (string.IsNullOrWhiteSpace(morphItem.Key))
+				if (randomizationType == 1)
 				{
-					seed = random.Next();
-					continue;
+					var placer = new ItemPlacer();
+					var options = new FillOptions();
+					options.GameCompletion = gameCompletion;
+					options.noEarlyPbs = true;
+					var result = false;
+
+					ItemPool pool = null;
+					while (true)
+					{
+						pool = new ItemPool();
+						
+						pool.CreatePool(data);
+						//pool.RemoveRandomItems(85, random);
+
+						var testInventory = new Inventory(startingInventory);
+
+						testInventory.myKeys.AddRange(pool.AvailableItems().Where(key => key != Guid.Empty && (!options.noEarlyPbs || key != StaticKeys.PowerBombs)).Select(id => KeyManager.GetKey(id)));
+
+						if (traverser.VerifyBeatable(data, new Dictionary<string, Guid>(), testInventory))
+						{
+							break;
+						}
+					}
+
+					var randomMap = placer.FillLocations(data, options, pool, startingInventory, random);
+
+					if (gameCompletion == 1)
+						result = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
+					else if (gameCompletion == 2)
+						result = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
+
+					if (result)
+					{
+						Console.WriteLine($"{Environment.NewLine}Randomization complete after {count} attempts - Successful seed: {seed}");
+
+						Console.WriteLine(traverser.GetWaveLog());
+
+						_Timer.Stop();
+
+						resultItemMap = randomMap;
+						return;
+					}
+
+					Console.WriteLine($"Attempts {count}");
 				}
-				
-				var morphLocation = randomMap.FirstOrDefault(x => x.Key.Equals("BrinstarMorph"));
-
-				randomMap[morphItem.Key] = morphLocation.Value;
-				randomMap[morphLocation.Key] = morphKey;
-
-				var beatableResult = false;
-				if (gameCompletion == 1)
+				else if (randomizationType == 2)
 				{
-					beatableResult = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
-				}
-				else if (gameCompletion == 2)
-				{
-					beatableResult = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
-				}
+					var pool = new ItemPool();
+					pool.CreatePool(data);
 
-				if (beatableResult)
-				{
-					Console.WriteLine($"Randomization complete after {count} attempts - Successful seed: {seed}");
+					random = new Random(seed);
 
-					_Timer.Stop();
+					var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 
-					resultItemMap = randomMap;
-					return;
-				}
-				else
-				{
+					var morphItem = randomMap.FirstOrDefault(x => x.Value.Equals(StaticKeys.Morph));
+
+					if (string.IsNullOrWhiteSpace(morphItem.Key))
+					{
+						seed = random.Next();
+						continue;
+					}
+
+					var morphLocation = randomMap.FirstOrDefault(x => x.Key.Equals("BrinstarMorph"));
+
+					randomMap[morphItem.Key] = morphLocation.Value;
+					randomMap[morphLocation.Key] = StaticKeys.Morph;
+
+					var result = false;
+					if (gameCompletion == 1)
+						result = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
+					else if (gameCompletion == 2)
+						result = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
+
+					if (result)
+					{
+						Console.WriteLine($"Randomization complete after {count} attempts - Successful seed: {seed}");
+
+						_Timer.Stop();
+
+						resultItemMap = randomMap;
+						return;
+					}
+
 					if (count % 50 == 0)
 					{
 						Console.WriteLine($"Attempts {count}");
 					}
-					count++;
 				}
+
+				count++;
 
 				seed = random.Next();
 			}
@@ -146,6 +191,25 @@ namespace Randomizer
 		{
 			var allKeys = data.BasicKeys.Values.SelectMany(keylist => keylist.Values);
 			return allKeys.FirstOrDefault(key => key.Name.Replace(" ", "").Equals(keyName, StringComparison.InvariantCultureIgnoreCase));
+		}
+
+		public static int ChooseRandomization()
+		{
+			Console.WriteLine($"Randomization type?");
+			Console.WriteLine($"1. Smart placement (default)");
+			Console.WriteLine($"2. Chaos");
+
+			var response = Console.ReadLine();
+
+			if (int.TryParse(response, out var result))
+			{
+				if (result > 0 && result < 3)
+				{
+					return result;
+				}
+			}
+
+			return 1;
 		}
 
 		public static int ChooseGameCompletion()

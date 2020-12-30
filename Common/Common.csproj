@@ -51,6 +51,7 @@
     <Compile Include="Key\Requirement\ComplexRequirement.cs" />
     <Compile Include="Key\Requirement\Requirement.cs" />
     <Compile Include="Key\Requirement\SimpleRequirement.cs" />
+    <Compile Include="Key\StaticKeys.cs" />
     <Compile Include="Memento\Memento.cs" />
     <Compile Include="Memento\NodeMemento.cs" />
     <Compile Include="Memento\RequirementMemento.cs" />

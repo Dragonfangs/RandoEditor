@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FillSearcher.cs" />
     <Compile Include="Key\Inventory.cs" />
     <Compile Include="NodeTraverser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

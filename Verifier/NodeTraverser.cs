@@ -76,12 +76,18 @@ namespace Verifier
 		private (Inventory, WaveLog) SearchBeatable(NodeBase baseNode, NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
 		{
 			var log = new WaveLog();
+			
+			var currentSearcher = new FillSearcher();
+
+			var reachableKeys = new List<NodeBase>();
+
 			while (true)
 			{
 				if (VerifyGoal(endNode, keyNodes, anInventory) || (baseNode != null && PathExists(startNode, baseNode, anInventory)))
 					return (anInventory, log);
-
-				var reachableKeys = keyNodes.AsParallel().Where(node => !anInventory.myNodes.Contains(node)).Where(node => PathExists(startNode, node, anInventory)).ToList();
+				
+				reachableKeys.RemoveAll(node => anInventory.myNodes.Contains(node));
+				reachableKeys.AddRange(currentSearcher.ContinueSearch(startNode, anInventory, node => (node is KeyNode) && !anInventory.myNodes.Contains(node)));
 
 				globalReachable = globalReachable.Union(reachableKeys).ToList();
 
@@ -109,10 +115,8 @@ namespace Verifier
 						}
 					}
 
-					reachableKeys.RemoveAll(node => redundantNodes.Contains(node));
-
 					bool continuation = false;
-					foreach (var key in reachableKeys)
+					foreach (var key in reachableKeys.Where(node => !redundantNodes.Contains(node)))
 					{
 						var (newInv, newLog) = SearchBeatable(baseNode ?? startNode, key, endNode, keyNodes, new Inventory(anInventory));
 						if (newInv != null)
@@ -123,6 +127,7 @@ namespace Verifier
 							anInventory = newInv;
 							
 							continuation = true;
+
 							break;
 						}
 						else
@@ -143,7 +148,8 @@ namespace Verifier
 		{
 			if (fullComplete)
 			{
-				return keyNodes.All(key => anInventory.myNodes.Contains(key));
+				var nodesWithItem = keyNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).Where(node => node.GetKey() != null);
+				return nodesWithItem.All(node => anInventory.myNodes.Contains(node)) && anInventory.myNodes.Contains(endNode);
 			}
 			else
 			{
@@ -151,22 +157,22 @@ namespace Verifier
 			}
 		}
 
-		private bool PathExists(NodeBase currentNode, NodeBase endNode, Inventory anInventory, List<NodeBase> visitedNodes = null)
+		public static bool PathExists(NodeBase startNode, NodeBase endNode, Inventory anInventory, List<NodeBase> visitedNodes = null)
 		{
-			if (currentNode == endNode)
+			if (startNode == endNode)
 				return true;
 
 			if (visitedNodes == null)
 				visitedNodes = new List<NodeBase>();
 			
-			if (visitedNodes.Contains(currentNode))
+			if (visitedNodes.Contains(startNode))
 				return false;
 			
-			if (currentNode is LockNode lockNode && !anInventory.Unlocks(lockNode.myRequirement))
+			if (startNode is LockNode lockNode && !anInventory.Unlocks(lockNode.myRequirement))
 				return false;
 
-			visitedNodes.Add(currentNode);
-			foreach(var connection in currentNode.myConnections)
+			visitedNodes.Add(startNode);
+			foreach(var connection in startNode.myConnections)
 			{
 				if (PathExists(connection, endNode, anInventory, visitedNodes))
 					return true;
