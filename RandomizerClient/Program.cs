@@ -3,6 +3,7 @@ using Common.SaveData;
 using Common.Utils;
 using mzmr_common;
 using Newtonsoft.Json;
+using Randomizer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 using Verifier;
 using Verifier.Key;
 
-namespace Randomizer
+namespace RandomizerClient
 {
 	class Program
 	{
@@ -60,8 +61,6 @@ namespace Randomizer
 
 			var data = JsonConvert.DeserializeObject<SaveData>(File.ReadAllText(logicFile));
 
-			Console.WriteLine();
-
 			KeyManager.Initialize(data);
 
 			var traverser = new NodeTraverser();
@@ -73,7 +72,7 @@ namespace Randomizer
 				_logMessage += $"No settings chosen{Environment.NewLine}";
 			}
 
-			if (!TryParseSettingsFile(data, startingInventory, settingsFile))
+			if (!TryParseSettingsFile(startingInventory, settingsFile))
 			{
 				// Log issue
 				_logMessage += "Failed to parse settings";
@@ -84,43 +83,60 @@ namespace Randomizer
 
 			var random = new Random();
 			var seed = random.Next();
-			//var seed = 669144804;
+            // var seed = 1865013982;
 
-			var count = 0;
+            var count = 0;
 			_Timer.Start();
 			while(true)
-			{
-				if (randomizationType == 1)
+            {
+                if (randomizationType == 1)
 				{
-					var placer = new ItemPlacer();
+                    var placer = new ItemPlacer();
 					var options = new FillOptions();
-					options.GameCompletion = gameCompletion;
+					options.gameCompletion = gameCompletion;
 					options.noEarlyPbs = true;
 					var result = false;
 
-					ItemPool pool = null;
-					while (true)
-					{
-						pool = new ItemPool();
-						
-						pool.CreatePool(data);
-						//pool.RemoveRandomItems(85, random);
+                    var itemMap = new Dictionary<string, Guid>();
+
+                    ItemPool pool = new ItemPool();
+                    pool.CreatePool(data);
+                    foreach (var item in itemMap.Values)
+                    {
+                        pool.Pull(item);
+                    }
+
+                    while (true)
+                    {
+                        random = new Random(seed);
+
+						//pool.RemoveRandomItems(70, random);
 
 						var testInventory = new Inventory(startingInventory);
 
 						testInventory.myKeys.AddRange(pool.AvailableItems().Where(key => key != Guid.Empty && (!options.noEarlyPbs || key != StaticKeys.PowerBombs)).Select(id => KeyManager.GetKey(id)));
 
-						if (traverser.VerifyBeatable(data, new Dictionary<string, Guid>(), testInventory))
+						if (traverser.VerifyBeatable(data, itemMap, testInventory))
 						{
 							break;
 						}
-					}
 
-					var randomMap = placer.FillLocations(data, options, pool, startingInventory, random);
+                        seed = random.Next();
 
-					if (gameCompletion == 1)
+                        pool.CreatePool(data);
+                        foreach(var item in itemMap.Values)
+                        {
+                            pool.Pull(item);
+                        }
+                    }
+                    
+                    random = new Random(seed);
+
+                    var randomMap = placer.FillLocations(data, options, pool, startingInventory, random, itemMap);
+
+					if (gameCompletion == FillOptions.GameCompletion.Beatable)
 						result = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
-					else if (gameCompletion == 2)
+					else if (gameCompletion == FillOptions.GameCompletion.AllItems)
 						result = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
 
 					if (result)
@@ -135,16 +151,18 @@ namespace Randomizer
 						return;
 					}
 
-					Console.WriteLine($"Attempts {count}");
+                    seed = random.Next();
+
+                    Console.WriteLine($"Attempts {count}");
 				}
 				else if (randomizationType == 2)
 				{
 					var pool = new ItemPool();
 					pool.CreatePool(data);
 
-					random = new Random(seed);
+                    random = new Random(seed);
 
-					var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
+                    var randomMap = StaticData.Locations.ToDictionary(location => location, location => pool.Pull(random));
 
 					var morphItem = randomMap.FirstOrDefault(x => x.Value.Equals(StaticKeys.Morph));
 
@@ -160,9 +178,9 @@ namespace Randomizer
 					randomMap[morphLocation.Key] = StaticKeys.Morph;
 
 					var result = false;
-					if (gameCompletion == 1)
+					if (gameCompletion == FillOptions.GameCompletion.Beatable)
 						result = traverser.VerifyBeatable(data, randomMap, new Inventory(startingInventory));
-					else if (gameCompletion == 2)
+					else if (gameCompletion == FillOptions.GameCompletion.AllItems)
 						result = traverser.VerifyFullCompletable(data, randomMap, new Inventory(startingInventory));
 
 					if (result)
@@ -187,12 +205,6 @@ namespace Randomizer
 			}
 		}
 
-		public static BaseKey TranslateKey(SaveData data, string keyName)
-		{
-			var allKeys = data.BasicKeys.Values.SelectMany(keylist => keylist.Values);
-			return allKeys.FirstOrDefault(key => key.Name.Replace(" ", "").Equals(keyName, StringComparison.InvariantCultureIgnoreCase));
-		}
-
 		public static int ChooseRandomization()
 		{
 			Console.WriteLine($"Randomization type?");
@@ -212,23 +224,29 @@ namespace Randomizer
 			return 1;
 		}
 
-		public static int ChooseGameCompletion()
+		public static FillOptions.GameCompletion ChooseGameCompletion()
 		{
 			Console.WriteLine($"Game Completion?");
-			Console.WriteLine($"1. Beatable (default)");
-			Console.WriteLine($"2. 100%");
+            Console.WriteLine($"1. Unchanged");
+            Console.WriteLine($"2. Beatable (default)");
+			Console.WriteLine($"3. 100%");
 
 			var response = Console.ReadLine();
 
 			if (int.TryParse(response, out var result))
 			{
-				if (result > 0 && result < 3)
+				switch (result)
 				{
-					return result;
-				}
+                    case 1:
+                        return FillOptions.GameCompletion.Unchanged;
+                    case 2:
+                        return FillOptions.GameCompletion.Beatable;
+                    case 3:
+                        return FillOptions.GameCompletion.AllItems;
+                }
 			}
 
-			return 1;
+			return FillOptions.GameCompletion.Beatable;
 		}
 
 		public static string ChooseLogic(List<string> logicFiles)
@@ -288,7 +306,7 @@ namespace Randomizer
 			return response;
 		}
 
-		public static bool TryParseSettingsFile(SaveData data, Inventory inventory, string settingsLine)
+		public static bool TryParseSettingsFile(Inventory inventory, string settingsLine)
 		{
 			if (!File.Exists(settingsLine))
 				return false;
@@ -297,7 +315,7 @@ namespace Randomizer
 
 			if (text.StartsWith("Seed:"))
 			{
-				return ParseItemLogInventory(data, inventory, text);
+				return ParseItemLogInventory(inventory, text);
 			}
 
 			text = text.Replace(Environment.NewLine, "").Replace(" ", "");
@@ -323,7 +341,7 @@ namespace Randomizer
 
 			var inventoryItems = bigSplit[0].Split(',');
 
-			var itemData = inventoryItems.ToDictionary(item => item, item => TranslateKey(data, item));
+			var itemData = inventoryItems.ToDictionary(item => item, item => KeyManager.GetKeyFromName(item));
 
 			var incorrectItems = itemData.Where(item => item.Value == null);
 			if (incorrectItems.Any())
@@ -341,19 +359,19 @@ namespace Randomizer
 			return true;
 		}
 
-		public static bool ParseItemLogInventory(SaveData data, Inventory inventory, String logText)
+		public static bool ParseItemLogInventory(Inventory inventory, String logText)
 		{
 			string[] lines = logText.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
 			var settingsLine = lines.FirstOrDefault(line => line.StartsWith("Settings:"));
 			if (!String.IsNullOrEmpty(settingsLine))
 			{
-				if (TryParseSettings(data, inventory, settingsLine))
+				if (TryParseSettings(inventory, settingsLine))
 				{
 					return true;
 				}
 
-				if(TryParseOldSettings(data, inventory, settingsLine))
+				if(TryParseOldSettings(inventory, settingsLine))
 				{
 					return true;
 				}
@@ -362,44 +380,44 @@ namespace Randomizer
 			return false;
 		}
 
-		public static bool TryParseSettings(SaveData data, Inventory inventory, string settingsLine)
+		public static bool TryParseSettings(Inventory inventory, string settingsLine)
 		{
 			try
 			{
 				var settings = new Settings(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
 				if (settings.IceNotRequired)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "IceBeamNotRequired"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("IceBeamNotRequired"));
 				}
 
 				if (settings.PlasmaNotRequired)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("PlasmaBeamNotRequired"));
 				}
 
 				if (settings.InfiniteBombJump)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "CanInfiniteBombJump"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("CanInfiniteBombJump"));
 				}
 
 				if (settings.WallJumping)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "CanWallJump"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("CanWallJump"));
 				}
 
 				if (settings.ObtainUnkItems)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "ObtainUnknownItems"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("ObtainUnknownItems"));
 				}
 
 				if (settings.ChozoStatueHints)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "ChozoStatueHints"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("ChozoStatueHints"));
 				}
 
 				if (settings.RandoEnemies)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "RandomizeEnemies"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("RandomizeEnemies"));
 				}
 
 				return true;
@@ -412,34 +430,34 @@ namespace Randomizer
 			return false;
 		}
 
-		public static bool TryParseOldSettings(SaveData data, Inventory inventory, string settingsLine)
+		public static bool TryParseOldSettings(Inventory inventory, string settingsLine)
 		{
 			try
 			{
 				var settings = new Settings_Old(settingsLine.Substring(settingsLine.LastIndexOf(' ') + 1));
 				if (settings.iceNotRequired)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "IceBeamNotRequired"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("IceBeamNotRequired"));
 				}
 
 				if (settings.plasmaNotRequired)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "PlasmaBeamNotRequired"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("PlasmaBeamNotRequired"));
 				}
 
 				if (settings.infiniteBombJump)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "CanInfiniteBombJump"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("CanInfiniteBombJump"));
 				}
 
 				if (settings.wallJumping)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "CanWallJump"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("CanWallJump"));
 				}
 
 				if (settings.obtainUnkItems)
 				{
-					inventory.myKeys.Add(TranslateKey(data, "ObtainUnknownItems"));
+					inventory.myKeys.Add(KeyManager.GetKeyFromName("ObtainUnknownItems"));
 				}
 
 				return true;

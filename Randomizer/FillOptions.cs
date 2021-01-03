@@ -8,7 +8,9 @@ namespace Randomizer
 {
 	public class FillOptions
 	{
-		public int GameCompletion;
+        public enum GameCompletion { Unchanged, Beatable, AllItems }
+
+        public GameCompletion gameCompletion;
 		public bool noEarlyPbs = false;
 		public Dictionary<Guid, int> maximumBatchRestrictions = new Dictionary<Guid, int>();
 		public Dictionary<Guid, int> minimumBatchRestrictions = new Dictionary<Guid, int>();
