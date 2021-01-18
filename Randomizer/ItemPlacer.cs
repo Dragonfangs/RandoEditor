@@ -200,7 +200,7 @@ namespace Randomizer
 					continue;
 				}
 
-                var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).ToList();
+                var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
 
                 // Pick up any items already filled in on the map and update search before placing any items
                 var preFilledLocations = randomizedLocations.Where(loc => loc.GetKey() != null);
@@ -213,7 +213,7 @@ namespace Randomizer
 
                 // Find which possible keys would expand number of retracable nodes
                 var relevantKeys = FindRelevantKeys(inventory, restrictedItems, reachableKeys.Except(retracableKeys), pool);
-				// var relevantNames = relevantKeys.Select(key => KeyManager.GetKey(key).Name).ToList();
+				var relevantNames = relevantKeys.Select(key => KeyManager.GetKey(key).Name).ToList();
 				if (!relevantKeys.Any())
 					break;
 
@@ -257,7 +257,7 @@ namespace Randomizer
             FillRandomly(restrictedItems, inventory, itemMap, pool, random);
 
             // Fill all remaining (unreachable) locations with any remaining items
-            var remainingNodes = keyNodes.AsParallel().Where(node => node is RandomKeyNode randomNode && !itemMap.ContainsKey(randomNode.myRandomKeyIdentifier)).Select(key => key as RandomKeyNode).ToList();
+            var remainingNodes = keyNodes.AsParallel().Where(node => node is RandomKeyNode randomNode && !itemMap.ContainsKey(randomNode.myRandomKeyIdentifier)).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
 
 			foreach (var node in remainingNodes)
 			{
@@ -288,7 +288,7 @@ namespace Randomizer
                     continue;
                 }
 
-                var reachableRandomNodes = reachableNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode);
+                var reachableRandomNodes = reachableNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).OrderBy(x => x.id);
 
                 if (!reachableRandomNodes.Any())
                     return;

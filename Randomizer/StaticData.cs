@@ -93,7 +93,7 @@ namespace Randomizer
 			"CrateriaPowerBomb",
 			"CrateriaGrip",
 			"CrateriaMoat",
-			"CateriaStatueWater",
+			"CrateriaStatueWater",
 			"CrateriaPlasma",
 			"CrateriaBallSpark",
 			"CrateriaSuper",

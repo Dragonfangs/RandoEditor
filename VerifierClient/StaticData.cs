@@ -93,7 +93,7 @@ namespace VerifierClient
 			"CrateriaPowerBomb",
 			"CrateriaGrip",
 			"CrateriaMoat",
-			"CateriaStatueWater",
+			"CrateriaStatueWater",
 			"CrateriaPlasma",
 			"CrateriaBallSpark",
 			"CrateriaSuper",
