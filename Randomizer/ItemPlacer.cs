@@ -1,6 +1,7 @@
 ﻿using Common.Key;
 using Common.Node;
 using Common.SaveData;
+using Randomizer.ItemRules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,10 @@ namespace Randomizer
 	{
 		private List<NodeBase> keyNodes = null;
 
-		private EventKeyNode startNode = null;
+        private ILookup<Guid, string> itemBlockedLocationRules = null;
+        private ILookup<Guid, string> itemRequiredLocationRules = null;
+
+        private EventKeyNode startNode = null;
 		private EventKeyNode endNode = null;
 
 		private FillSearcher searcher = null;
@@ -142,12 +146,18 @@ namespace Randomizer
 			startNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameStart);
 			endNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameFinish);
 
-			searcher = new FillSearcher();
+            itemRequiredLocationRules = options.itemRules.Where(rest => rest is ItemRuleInLocation).Select(rest => rest as ItemRuleInLocation).ToLookup(rest => rest.ItemId, rest => rest.LocationIdentifier);
+            itemBlockedLocationRules = options.itemRules.Where(rest => rest is ItemRuleNotInLocation).Select(rest => rest as ItemRuleNotInLocation).ToLookup(rest => rest.ItemId, rest => rest.LocationIdentifier);
+            
+            searcher = new FillSearcher();
 
 			var reachableKeys = new List<NodeBase>();
 			var retracableKeys = new List<NodeBase>();
             var restrictedItems = new List<Guid>();
-            while (true)
+
+            var searchDepth = 0;
+
+            while(true)
 			{
                 // Beatable conditional
                 if (options.gameCompletion == FillOptions.GameCompletion.Beatable && inventory.myNodes.Contains(endNode))
@@ -159,6 +169,12 @@ namespace Randomizer
 				{
 					restrictedItems.Add(StaticKeys.PowerBombs);
 				}
+
+                var itemDepthRestrictions = options.itemRules.Where(rest => rest is ItemRuleRestrictedBeforeDepth depthRest && depthRest.SearchDepth > searchDepth);
+                if (itemDepthRestrictions.Any())
+                {
+                    restrictedItems.AddRange(itemDepthRestrictions.Select(rest => rest.ItemId));
+                }
 
                 // Find all nodes that can be reached with current inventory
 				reachableKeys.RemoveAll(node => inventory.myNodes.Contains(node));
@@ -192,8 +208,8 @@ namespace Randomizer
 				if (!retracableKeys.Any())
 					break;
 
-				// If any events can be reached, add to inventory and update search before continuing
-				var retracableEvents = retracableKeys.Where(node => node is EventKeyNode).ToList();
+                // If any events can be reached, add to inventory and update search before continuing
+                var retracableEvents = retracableKeys.Where(node => node is EventKeyNode).ToList();
 				if (retracableEvents.Any())
 				{
 					inventory.myNodes.AddRange(retracableEvents);
@@ -201,6 +217,7 @@ namespace Randomizer
 				}
 
                 var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
+                var randomizedLocationNames = randomizedLocations.Select(loc => loc.myRandomKeyIdentifier);
 
                 // Pick up any items already filled in on the map and update search before placing any items
                 var preFilledLocations = randomizedLocations.Where(loc => loc.GetKey() != null);
@@ -213,22 +230,88 @@ namespace Randomizer
 
                 // Find which possible keys would expand number of retracable nodes
                 var relevantKeys = FindRelevantKeys(inventory, restrictedItems, reachableKeys.Except(retracableKeys), pool);
-				var relevantNames = relevantKeys.Select(key => KeyManager.GetKey(key).Name).ToList();
-				if (!relevantKeys.Any())
+
+                // Filter out any keys that by rules cannot be placed in any available location
+                var filteredKeys = relevantKeys.Where(key => !itemBlockedLocationRules.Contains(key) || randomizedLocationNames.Any(loc => !itemBlockedLocationRules[key].Contains(loc)))
+                    .Where(key => !itemRequiredLocationRules.Contains(key) || pool.CountKey(key) > 1 || randomizedLocationNames.Any(loc => itemRequiredLocationRules[key].Contains(loc)))
+                    .ToList();
+
+				var relevantNames = filteredKeys.Select(key => KeyManager.GetKey(key).Name).ToList();
+				if (!filteredKeys.Any())
 					break;
 
-				// Pick out one random accessible location, place one random of the relevant keys there and add that item to inventory
-				var relevantLocation = randomizedLocations.ElementAt(random.Next(randomizedLocations.Count));
+                // Get items that are prioritized according to item rules
+                var prioritizedItems = options.itemRules.Where(rest => rest is ItemRulePrioritizedAfterDepth depthRest && depthRest.SearchDepth <= searchDepth)
+                    .Select(rest => rest.ItemId)
+                    .Where(item => !restrictedItems.Contains(item) && !inventory.ContainsKey(item))
+                    .ToList();
+
+                // Correlate prioritized and relevant keys to select a relevant key to place
+                var prioritizedRelevantKeys = filteredKeys.Intersect(prioritizedItems);
+                var selectedRelevantKey = prioritizedRelevantKeys.Any() ? pool.PullAmong(prioritizedRelevantKeys, random) : pool.PullAmong(filteredKeys, random);
+
+                // Filter out available locations where selected key cannot be placed
+                var filteredLocations = randomizedLocations;
+
+                if(itemRequiredLocationRules.Contains(selectedRelevantKey) && pool.CountKey(selectedRelevantKey) == 1)
+                {
+                    filteredLocations = filteredLocations.Where(loc => itemRequiredLocationRules[selectedRelevantKey].Contains(loc.myRandomKeyIdentifier)).OrderBy(x => x.id).ToList();
+                }
+
+                if(itemBlockedLocationRules.Contains(selectedRelevantKey))
+                {
+                    filteredLocations = filteredLocations.Where(loc => !itemBlockedLocationRules[selectedRelevantKey].Contains(loc.myRandomKeyIdentifier)).OrderBy(x => x.id).ToList();
+                }
+
+                // Pick out one random accessible location, place the selected key there and add that item to inventory
+                var relevantLocation = filteredLocations.ElementAt(random.Next(filteredLocations.Count));
 				randomizedLocations.Remove(relevantLocation);
-				itemMap.Add(relevantLocation.myRandomKeyIdentifier, pool.PullAmong(relevantKeys, random));
+				itemMap.Add(relevantLocation.myRandomKeyIdentifier, selectedRelevantKey);
 				inventory.myNodes.Add(relevantLocation);
 
-				// Fill remaining accessible locations with random items
-				foreach (var node in randomizedLocations)
+                prioritizedItems.Remove(selectedRelevantKey);
+
+                // Only increase searchDepth if an actual item is placed (debatable if this is the correct approach)
+                searchDepth++;
+
+                FulfillRequiredLocationRules(inventory, itemMap, pool, random);
+
+                // Fill remaining accessible locations with random items
+                foreach (var node in randomizedLocations)
 				{
-					itemMap.Add(node.myRandomKeyIdentifier, pool.PullExcept(restrictedItems, random));
-					inventory.myNodes.Add(node);
-				}
+                    // This is possible through Required Location Rules
+                    if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
+                    {
+                        inventory.myNodes.Add(node);
+                        continue;
+                    }
+
+                    var filteredPrioritizedItems = prioritizedItems.Where(key => !itemBlockedLocationRules.Contains(key) || !itemBlockedLocationRules[key].Contains(node.myRandomKeyIdentifier))
+                        .Where(key => !itemRequiredLocationRules.Contains(key) || pool.CountKey(key) > 1 || itemRequiredLocationRules[key].Contains(node.myRandomKeyIdentifier));
+
+                    if (filteredPrioritizedItems.Any())
+                    {                        
+                        var randomKey = pool.PullAmong(filteredPrioritizedItems, random);
+                        prioritizedItems.Remove(randomKey);
+                        itemMap.Add(node.myRandomKeyIdentifier, randomKey);
+                        inventory.myNodes.Add(node);
+                    }
+                    else
+                    {
+                        // Add all items that cannot be in this location to restrictedItems
+                        var locationRestrictedItems = restrictedItems.Union(itemBlockedLocationRules.Where(grouping => grouping.Contains(node.myRandomKeyIdentifier)).Select(grouping => grouping.Key))
+                            .Union(itemRequiredLocationRules.Where(grouping => !grouping.Contains(node.myRandomKeyIdentifier)).Select(grouping => grouping.Key).Where(key => pool.CountKey(key) <= 1));
+
+                        var selectedKey = pool.PullExcept(locationRestrictedItems, random);
+                        if (selectedKey != Guid.Empty)
+                        {
+                            itemMap.Add(node.myRandomKeyIdentifier, selectedKey);
+                            inventory.myNodes.Add(node);
+                        }
+                    }
+
+                    FulfillRequiredLocationRules(inventory, itemMap, pool, random);
+                }
 
 				// Go back to start of loop to continue search with updated inventory
 			}
@@ -248,7 +331,7 @@ namespace Randomizer
 			{
                 // Prioritize filling in non-empty items
                 var restrictedAndEmpty = new List<Guid>(restrictedItems);
-                restrictedAndEmpty.Add(Guid.Empty);
+                restrictedAndEmpty.Add(StaticKeys.Nothing);
 
                 FillRandomly(restrictedAndEmpty, inventory, itemMap, pool, random);
             }
@@ -261,11 +344,44 @@ namespace Randomizer
 
 			foreach (var node in remainingNodes)
 			{
+                if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
+                {
+                    continue;
+                }
+
                 itemMap.Add(node.myRandomKeyIdentifier, pool.Pull(random));
-			}
+
+                FulfillRequiredLocationRules(inventory, itemMap, pool, random);
+            }
 
 			return itemMap;
 		}
+
+        private void FulfillRequiredLocationRules(Inventory inventory, Dictionary<string, Guid> itemMap, ItemPool pool, Random random)
+        {
+            var itemsWithOpenLocationRule = itemRequiredLocationRules.Where(group => !group.Where(loc => itemMap.ContainsKey(loc) && itemMap[loc] == group.Key).Any());
+            var itemsInPool = itemsWithOpenLocationRule.Where(item => pool.AvailableItems().Contains(item.Key)).ToList();
+
+            while(itemsInPool.Any())
+            {
+                var curItem = itemsInPool.FirstOrDefault();
+                var relatedItems = itemsInPool.Where(grouping => grouping.Intersect(curItem).Any()).OrderBy(x => x.Key).ToList();
+
+                var availableLocations = curItem.Where(loc => !itemMap.ContainsKey(loc)).OrderBy(x => x);
+                if(availableLocations.Count() == relatedItems.Count())
+                {
+                    foreach(var location in availableLocations)
+                    {
+                        var item = relatedItems.ElementAt(random.Next(relatedItems.Count()));
+                        itemMap.Add(location, item.Key);
+                        pool.Pull(item.Key);
+                        relatedItems.Remove(item);
+                    }
+                }
+
+                itemsInPool.RemoveAll(item => relatedItems.Contains(item));
+            }
+        }
 
         private void FillRandomly(List<Guid> restrictedItems, Inventory inventory, Dictionary<string, Guid> itemMap, ItemPool pool, Random random)
         {
@@ -290,21 +406,38 @@ namespace Randomizer
 
                 var reachableRandomNodes = reachableNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).OrderBy(x => x.id);
 
-                if (!reachableRandomNodes.Any())
-                    return;
+                var nodesToAdd = new List<NodeBase>();
 
                 foreach (var node in reachableRandomNodes)
                 {
-                    if (!itemMap.ContainsKey(node.myRandomKeyIdentifier))
+                    if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
                     {
-                        if (!pool.AvailableItems().Except(restrictedItems).Any())
+                        nodesToAdd.Add(node);
+                    }
+                    else
+                    { 
+                        // Add all items that cannot be in this location to restrictedItems
+                        var locationRestrictedItems = restrictedItems.Union(itemBlockedLocationRules.Where(grouping => grouping.Contains(node.myRandomKeyIdentifier)).Select(grouping => grouping.Key))
+                            .Union(itemRequiredLocationRules.Where(grouping => !grouping.Contains(node.myRandomKeyIdentifier)).Select(grouping => grouping.Key).Where(key => pool.CountKey(key) <= 1));
+                        
+                        if (!pool.AvailableItems().Except(locationRestrictedItems).Any())
                             return;
 
-                        itemMap.Add(node.myRandomKeyIdentifier, pool.PullExcept(restrictedItems, random));
-                    }
+                        var selectedKey = pool.PullExcept(locationRestrictedItems, random);
+                        if (selectedKey != Guid.Empty)
+                        {
+                            itemMap.Add(node.myRandomKeyIdentifier, selectedKey);
+                            nodesToAdd.Add(node);
+                        }
 
-                    inventory.myNodes.Add(node);
+                        FulfillRequiredLocationRules(inventory, itemMap, pool, random);
+                    }
                 }
+
+                if (!nodesToAdd.Any())
+                    break;
+
+                inventory.myNodes.AddRange(nodesToAdd);
             }
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Randomizer.ItemRules;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,7 @@ namespace Randomizer
 
         public GameCompletion gameCompletion;
 		public bool noEarlyPbs = false;
-		public Dictionary<Guid, int> maximumBatchRestrictions = new Dictionary<Guid, int>();
-		public Dictionary<Guid, int> minimumBatchRestrictions = new Dictionary<Guid, int>();
+
+        public List<ItemRuleBase> itemRules = new List<ItemRuleBase>();
 	}
 }

@@ -53,8 +53,13 @@ namespace Randomizer
 			return new List<Guid>(myAvailableItems);
 		}
 
+        public int CountKey(Guid key)
+        {
+            return myAvailableItems.Count(x => x == key);
+        }
+
 		// Get a random item from the pool without removing it
-		public Guid PeekExcept(List<Guid> itemList, Random random)
+		public Guid PeekExcept(IEnumerable<Guid> itemList, Random random)
 		{
 			var filteredItems = myAvailableItems.Where(item => !itemList.Contains(item));
 
@@ -68,7 +73,7 @@ namespace Randomizer
 		}
 
 		// Get a random item from the pool without removing it
-		public Guid PeekAmong(List<Guid> itemList, Random random)
+		public Guid PeekAmong(IEnumerable<Guid> itemList, Random random)
 		{
 			var filteredItems = myAvailableItems.Where(item => itemList.Contains(item));
 
@@ -101,7 +106,7 @@ namespace Randomizer
 		}
 
 		// Get random item from the pool and remove it
-		public Guid PullExcept(List<Guid> itemList, Random random)
+		public Guid PullExcept(IEnumerable<Guid> itemList, Random random)
 		{
 			var item = PeekExcept(itemList, random);
 			Pull(item);
@@ -110,7 +115,7 @@ namespace Randomizer
 		}
 
 		// Get random item from the pool and remove it
-		public Guid PullAmong(List<Guid> itemList, Random random)
+		public Guid PullAmong(IEnumerable<Guid> itemList, Random random)
 		{
 			var item = PeekAmong(itemList,random);
 			Pull(item);
@@ -129,15 +134,30 @@ namespace Randomizer
 
 		public void RemoveRandomItems(int count, Random random)
 		{
-			for(int i=0; i < count; i++)
-			{
-				Pull(random);
-			}
-
-			for (int i = 0; i < count; i++)
-			{
-				myAvailableItems.Add(Guid.Empty);
-			}
+            RemoveRandomItemsExcept(count, random, new List<Guid>());
 		}
-	}
+
+        public void RemoveRandomItemsExcept(int count, Random random, List<Guid> exceptItems)
+        {
+            foreach (var item in exceptItems)
+            {
+                Pull(item);
+            }
+
+            for (int i = 0; i < count && myAvailableItems.Count > 0; i++)
+            {
+                Pull(random);
+            }
+
+            foreach(var item in exceptItems)
+            {
+                myAvailableItems.Add(item);
+            }
+
+            while(myAvailableItems.Count < 100)
+            {
+                myAvailableItems.Add(StaticKeys.Nothing);
+            }
+        }
+    }
 }

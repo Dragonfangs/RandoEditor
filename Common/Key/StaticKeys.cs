@@ -10,6 +10,8 @@ namespace Common.Key
     {
         //Items
 
+        public static readonly Guid Nothing                 = Guid.Parse("4fa4229d-db3f-4c88-91dd-899b7c4daeaa");
+
         public static readonly Guid ETank                   = Guid.Parse("54d8e47c-b29b-440d-9a8b-bab7bc995f1d");
 
         public static readonly Guid Morph                   = Guid.Parse("905940c7-fcef-4e24-b662-1cb2bc9e3eee");

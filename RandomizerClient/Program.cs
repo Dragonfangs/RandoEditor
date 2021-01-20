@@ -4,6 +4,7 @@ using Common.Utils;
 using mzmr_common;
 using Newtonsoft.Json;
 using Randomizer;
+using Randomizer.ItemRules;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -83,7 +84,7 @@ namespace RandomizerClient
 
 			var random = new Random();
 			var seed = random.Next();
-            // var seed = 1865013982;
+            // var seed = 1083686163;
 
             var count = 0;
 			_Timer.Start();
@@ -94,7 +95,8 @@ namespace RandomizerClient
                     var placer = new ItemPlacer();
 					var options = new FillOptions();
 					options.gameCompletion = gameCompletion;
-					options.noEarlyPbs = true;
+					// options.noEarlyPbs = true;
+
 					var result = false;
 
                     var itemMap = new Dictionary<string, Guid>();
@@ -110,11 +112,11 @@ namespace RandomizerClient
                     {
                         random = new Random(seed);
 
-						//pool.RemoveRandomItems(70, random);
+						//pool.RemoveRandomItemsExcept(90, random, new List<Guid>() { StaticKeys.Morph, StaticKeys.Missile, StaticKeys.Bombs, StaticKeys.IceBeam, StaticKeys.PlasmaBeam });
 
 						var testInventory = new Inventory(startingInventory);
 
-						testInventory.myKeys.AddRange(pool.AvailableItems().Where(key => key != Guid.Empty && (!options.noEarlyPbs || key != StaticKeys.PowerBombs)).Select(id => KeyManager.GetKey(id)));
+						testInventory.myKeys.AddRange(pool.AvailableItems().Where(key => key != StaticKeys.Nothing && (!options.noEarlyPbs || key != StaticKeys.PowerBombs)).Select(id => KeyManager.GetKey(id)));
 
 						if (traverser.VerifyBeatable(data, itemMap, testInventory))
 						{
