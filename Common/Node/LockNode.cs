@@ -13,6 +13,11 @@ namespace Common.Node
 			myNodeType = NodeType.Lock;
 		}
 
-		public ComplexRequirement myRequirement = new ComplexRequirement();
+        public override string Name()
+        {
+            return "Lock";
+        }
+
+        public ComplexRequirement myRequirement = new ComplexRequirement();
 	}
 }

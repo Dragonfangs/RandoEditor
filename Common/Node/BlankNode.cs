@@ -11,5 +11,10 @@ namespace Common.Node
 
 			myNodeType = NodeType.Blank;
 		}
-	}
+
+        public override string Name()
+        {
+            return "Blank";
+        }
+    }
 }

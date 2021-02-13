@@ -31,8 +31,10 @@ namespace Common.Node
 		public NodeType myNodeType;
 
 		public Vector2 myPos;
+        
+        public abstract string Name();
 
-		public List<Guid> myConnectionIds = new List<Guid>();
+        public List<Guid> myConnectionIds = new List<Guid>();
 		[NonSerialized]
 		public List<NodeBase> myConnections = new List<NodeBase>();
 

@@ -29,5 +29,21 @@ namespace Common.Node
 
 			return null;
 		}
-	}
+
+        public override string Name()
+        {
+            if(!myKeyId.HasValue)
+            {
+                return "Empty Event";
+            }
+
+            var key = KeyManager.GetKey(myKeyId.Value);
+            if(key == null)
+            {
+                return "Empty Event";
+            }
+
+            return key.Name;
+        }
+    }
 }

@@ -95,9 +95,9 @@ namespace RandomizerClient
                     var placer = new ItemPlacer();
 					var options = new FillOptions();
 					options.gameCompletion = gameCompletion;
-					// options.noEarlyPbs = true;
+                    // options.noEarlyPbs = true;
 
-					var result = false;
+                    var result = false;
 
                     var itemMap = new Dictionary<string, Guid>();
 
@@ -149,7 +149,9 @@ namespace RandomizerClient
 
 						_Timer.Stop();
 
-						resultItemMap = randomMap;
+                        File.WriteAllText(Environment.CurrentDirectory + "//placeLog.txt", placer.placeLog);
+
+                        resultItemMap = randomMap;
 						return;
 					}
 

@@ -19,5 +19,10 @@ namespace Common.Node
 		}
 
 		public string myRandomKeyIdentifier;
-	}
+
+        public override string Name()
+        {
+            return myRandomKeyIdentifier;
+        }
+    }
 }
