@@ -391,7 +391,7 @@ namespace Randomizer
                             itemMap.Add(node.myRandomKeyIdentifier, selectedKey);
                             inventory.myNodes.Add(node);
 
-                            placeLog += $"Selected Key placed: {KeyManager.GetKey(selectedKey).Name}{Environment.NewLine}";
+                            placeLog += $"Selected Key placed: {KeyManager.GetKey(selectedKey)?.Name ?? "Nothing"}{Environment.NewLine}";
                         }
                     }
 
@@ -472,7 +472,7 @@ namespace Randomizer
                 {
                     placeLog += $"Node: {keyNode.myRandomKeyIdentifier}{Environment.NewLine}";
 
-                    var itemsWithOpenLocationRule = itemRequiredLocationRules.Where(group => !group.Value.Where(loc => itemMap.ContainsKey(loc) && itemMap[loc] == group.Key).Any());
+                    var itemsWithOpenLocationRule = itemRequiredLocationRules.Where(group => !group.Value.Any(loc => itemMap.ContainsKey(loc) && itemMap[loc] == group.Key));
                     var itemsWithFilteredOpenLocations = itemsWithOpenLocationRule.ToDictionary(group => group.Key, group => group.Value.Where(loc => !itemMap.ContainsKey(loc))).Where(item => item.Value.Any());
                     var itemsInPool = itemsWithFilteredOpenLocations.Where(item => pool.AvailableItems().Contains(item.Key)).ToList();
 
@@ -524,29 +524,28 @@ namespace Randomizer
         {
             if(itemBlockedLocationRules.ContainsKey(key) && itemBlockedLocationRules[key].Contains(location))
             {
+                // Blocked from being placed here
                 return false;
             }
 
-            if(itemRequiredLocationRules.ContainsKey(key))
+            var hasRequirementForLocation = false;
+            var requirementFulfilled = true;
+            if (itemRequiredLocationRules.ContainsKey(key))
             {
-                var requirementFulfilled = false;
-                foreach(var loc in itemMap)
-                {
-                    if(itemRequiredLocationRules[key].Contains(loc.Key) && loc.Value == key)
-                    {
-                        requirementFulfilled = true;
-                        break;
-                    }
-                }
+                requirementFulfilled = itemMap.Any(loc => itemRequiredLocationRules[key].Contains(loc.Key) && loc.Value == key);
 
-                if (!requirementFulfilled && pool.CountKey(key) == 1 && !itemRequiredLocationRules[key].Contains(location))
-                {
-                    return false;
-                }
+                hasRequirementForLocation = itemRequiredLocationRules[key].Contains(location);
             }
 
-            if(restrictedLocations.Contains(location) && !(itemRequiredLocationRules.ContainsKey(key) && itemRequiredLocationRules[key].Contains(location)))
+            if (!requirementFulfilled && pool.CountKey(key) == 1 && !hasRequirementForLocation)
             {
+                // Has requirement to be placed somewhere else and placing it here would not leave any item to place in that location
+                return false;
+            }
+
+            if (restrictedLocations.Contains(location) && (requirementFulfilled || !hasRequirementForLocation))
+            {
+                // Location is restricted and this key is not one of the items with a requirement to be here
                 return false;
             }
 
@@ -573,8 +572,10 @@ namespace Randomizer
                     placeLog += $"Reachable Nodes: {reachableNodes.Select(node => node.Name()).Aggregate((i, j) => i + ", " + j)}{Environment.NewLine}";
                 }
 
+                var retracableKeys = reachableNodes.AsParallel().Where(node => node == endNode || NodeTraverser.PathExists(node, startNode, node is EventKeyNode ? inventory.Expand(node) : inventory)).ToList();
+
                 // Find all reachable events that are also possible to get back from
-                var retracableEvents = reachableNodes.AsParallel().Where(node => node is EventKeyNode && NodeTraverser.PathExists(node, startNode, inventory.Expand(node))).ToList();
+                var retracableEvents = retracableKeys.Where(node => node is EventKeyNode);
 
                 // If any events can be reached, add to inventory and update search before continuing
                 if (retracableEvents.Any())
@@ -584,11 +585,13 @@ namespace Randomizer
                     continue;
                 }
 
-                var reachableRandomNodes = reachableNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).OrderBy(x => x.id);
+                var fillNodes = retracableKeys.Any() ? retracableKeys : reachableNodes;
 
+                var fillRandomKeyNodes = fillNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).OrderBy(x => x.id);
+                
                 var nodesToAdd = new List<NodeBase>();
 
-                foreach (var node in reachableRandomNodes)
+                foreach (var node in fillRandomKeyNodes)
                 {
                     placeLog += $"Filling location:: {node.Name()}{Environment.NewLine}";
 

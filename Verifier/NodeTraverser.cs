@@ -83,7 +83,7 @@ namespace Verifier
 
 			while (true)
 			{
-				if (VerifyGoal(endNode, keyNodes, anInventory) || (baseNode != null && PathExists(startNode, baseNode, anInventory)))
+				if (VerifyGoal(startNode, endNode, keyNodes, anInventory) || (baseNode != null && PathExists(startNode, baseNode, anInventory)))
 					return (anInventory, log);
 				
 				reachableKeys.RemoveAll(node => anInventory.myNodes.Contains(node));
@@ -144,16 +144,16 @@ namespace Verifier
 			}
 		}
 
-		private bool VerifyGoal(NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
+		private bool VerifyGoal(NodeBase startNode, NodeBase endNode, List<NodeBase> keyNodes, Inventory anInventory)
 		{
 			if (fullComplete)
 			{
 				var nodesWithItem = keyNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).Where(node => node.GetKey() != null);
-				return nodesWithItem.All(node => anInventory.myNodes.Contains(node)) && anInventory.myNodes.Contains(endNode);
+				return nodesWithItem.All(node => anInventory.myNodes.Contains(node)) && PathExists(startNode, endNode, anInventory);
 			}
 			else
 			{
-				return anInventory.myNodes.Contains(endNode);
+                return PathExists(startNode, endNode, anInventory);
 			}
 		}
 
