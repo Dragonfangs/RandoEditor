@@ -30,6 +30,11 @@ namespace Common.Node
 			return null;
 		}
 
+        public override string GetKeyName()
+        {
+            return Name();
+        }
+
         public override string Name()
         {
             if(!myKeyId.HasValue)

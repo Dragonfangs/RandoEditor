@@ -1,6 +1,7 @@
 ﻿using Common.Key;
 using Common.Key.Requirement;
 using Common.Node;
+using Randomizer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,11 @@ namespace Verifier.Key
 		{
 			return GetCombinedKeys().Any(key => key.Id == keyId);
 		}
+
+        public LogLayer GetKeyLog()
+        {
+            return new LogLayer("Inventory", GetCombinedKeys().GroupBy(key => key.Id).Select(group => group.Count() > 1 ? $"{KeyManager.GetKeyName(group.Key)} - {group.Count()}" : KeyManager.GetKeyName(group.Key)));
+        }
 
 		public Inventory Expand(NodeBase key)
 		{

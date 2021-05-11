@@ -18,7 +18,12 @@ namespace Common.Node
 			return KeyManager.GetMappedRandomKey(myRandomKeyIdentifier);
 		}
 
-		public string myRandomKeyIdentifier;
+        public override string GetKeyName()
+        {
+            return KeyManager.GetMappedRandomKeyName(myRandomKeyIdentifier);
+        }
+
+        public string myRandomKeyIdentifier;
 
         public override string Name()
         {

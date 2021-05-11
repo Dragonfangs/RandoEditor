@@ -114,10 +114,25 @@ namespace Common.Key
 			return instance.myBasicKeys.SelectMany(keys => keys.Value).Where(key => key.Key == id).Select(x => x.Value).FirstOrDefault();
 		}
 
+        static public string GetKeyName(Guid id)
+        {
+            return GetKey(id)?.Name ?? "Blank";
+        }
+
         public static BaseKey GetKeyFromName(string keyName)
         {
             var allKeys = instance.myBasicKeys.Values.SelectMany(keylist => keylist.Values);
             return allKeys.FirstOrDefault(key => key.Name.Replace(" ", "").Equals(keyName.Replace(" ", ""), StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        static public string GetMappedRandomKeyName(string id)
+        {
+            if (instance.myRandomKeyMap.ContainsKey(id))
+            {
+                return GetKeyName(instance.myRandomKeyMap[id]);
+            }
+
+            return "Blank";
         }
 
         static public BaseKey GetMappedRandomKey(string id)

@@ -10,5 +10,7 @@ namespace Common.Node
 	public abstract class KeyNode : NodeBase
 	{
 		public abstract BaseKey GetKey();
-	}
+
+        public abstract string GetKeyName();
+    }
 }

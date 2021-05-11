@@ -55,7 +55,6 @@
     <Compile Include="Key\Inventory.cs" />
     <Compile Include="NodeTraverser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WaveLog.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

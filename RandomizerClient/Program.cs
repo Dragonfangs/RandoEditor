@@ -149,8 +149,6 @@ namespace RandomizerClient
 
 						_Timer.Stop();
 
-                        File.WriteAllText(Environment.CurrentDirectory + "//placeLog.txt", placer.placeLog);
-
                         resultItemMap = randomMap;
 						return;
 					}
