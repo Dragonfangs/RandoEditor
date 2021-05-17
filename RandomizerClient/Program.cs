@@ -102,7 +102,7 @@ namespace RandomizerClient
                     var itemMap = new Dictionary<string, Guid>();
 
                     ItemPool pool = new ItemPool();
-                    pool.CreatePool(data);
+                    pool.CreatePool();
                     foreach (var item in itemMap.Values)
                     {
                         pool.Pull(item);
@@ -125,7 +125,7 @@ namespace RandomizerClient
 
                         seed = random.Next();
 
-                        pool.CreatePool(data);
+                        pool.CreatePool();
                         foreach(var item in itemMap.Values)
                         {
                             pool.Pull(item);
@@ -160,7 +160,7 @@ namespace RandomizerClient
 				else if (randomizationType == 2)
 				{
 					var pool = new ItemPool();
-					pool.CreatePool(data);
+					pool.CreatePool();
 
                     random = new Random(seed);
 

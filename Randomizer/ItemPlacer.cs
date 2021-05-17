@@ -28,7 +28,7 @@ namespace Randomizer
 		public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options)
 		{
 			var pool = new ItemPool();
-			pool.CreatePool(someData);
+			pool.CreatePool();
 
 			return FillLocations(someData, options, pool);
 		}
@@ -43,7 +43,7 @@ namespace Randomizer
 		public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Inventory startingInventory)
 		{
 			var pool = new ItemPool();
-			pool.CreatePool(someData);
+			pool.CreatePool();
 
 			return FillLocations(someData, options, pool, startingInventory);
 		}
@@ -51,7 +51,7 @@ namespace Randomizer
 		public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Random random)
 		{
 			var pool = new ItemPool();
-			pool.CreatePool(someData);
+			pool.CreatePool();
 
 			return FillLocations(someData, options, pool, random);
 		}
@@ -59,7 +59,7 @@ namespace Randomizer
         public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Dictionary<string, Guid> itemMap)
         {
             var pool = new ItemPool();
-            pool.CreatePool(someData);
+            pool.CreatePool();
 
             return FillLocations(someData, options, pool, itemMap);
         }
@@ -88,7 +88,7 @@ namespace Randomizer
         public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Inventory startingInventory, Random random)
 		{
 			var pool = new ItemPool();
-			pool.CreatePool(someData);
+			pool.CreatePool();
 
 			return FillLocations(someData, options, pool, startingInventory, random);
 		}
@@ -96,7 +96,7 @@ namespace Randomizer
         public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Inventory startingInventory, Dictionary<string, Guid> itemMap)
         {
             var pool = new ItemPool();
-            pool.CreatePool(someData);
+            pool.CreatePool();
 
             return FillLocations(someData, options, pool, startingInventory, itemMap);
         }
@@ -104,7 +104,7 @@ namespace Randomizer
         public Dictionary<string, Guid> FillLocations(SaveData someData, FillOptions options, Random random, Dictionary<string, Guid> itemMap)
         {
             var pool = new ItemPool();
-            pool.CreatePool(someData);
+            pool.CreatePool();
 
             return FillLocations(someData, options, pool, random, itemMap);
         }

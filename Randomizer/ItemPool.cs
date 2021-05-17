@@ -12,7 +12,7 @@ namespace Randomizer
 	{
 		List<Guid> myAvailableItems = new List<Guid>();
 		
-		public void CreatePool(SaveData someData)
+		public void CreatePool()
 		{
 			myAvailableItems.Clear();
 
@@ -48,10 +48,25 @@ namespace Randomizer
 			myAvailableItems = new List<Guid>(someItems);
 		}
 
-		public List<Guid> AvailableItems()
+        public void Add(Guid item)
+        {
+            myAvailableItems.Add(item);
+        }
+
+        public void AddRange(IEnumerable<Guid> someItems)
+        {
+            myAvailableItems.AddRange(someItems);
+        }
+
+        public List<Guid> AvailableItems()
 		{
 			return new List<Guid>(myAvailableItems);
 		}
+
+        public bool Contains(Guid key)
+        {
+            return myAvailableItems.Contains(key);
+        }
 
         public int CountKey(Guid key)
         {
@@ -132,29 +147,9 @@ namespace Randomizer
 			return item;
 		}
 
-		public void RemoveRandomItems(int count, Random random)
-		{
-            RemoveRandomItemsExcept(count, random, new List<Guid>());
-		}
-
-        public void RemoveRandomItemsExcept(int count, Random random, List<Guid> exceptItems)
+        public void Pad(int expectedSize)
         {
-            foreach (var item in exceptItems)
-            {
-                Pull(item);
-            }
-
-            for (int i = 0; i < count && myAvailableItems.Count > 0; i++)
-            {
-                Pull(random);
-            }
-
-            foreach(var item in exceptItems)
-            {
-                myAvailableItems.Add(item);
-            }
-
-            while(myAvailableItems.Count < 100)
+            while (myAvailableItems.Count < expectedSize)
             {
                 myAvailableItems.Add(StaticKeys.Nothing);
             }
