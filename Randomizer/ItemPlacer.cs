@@ -280,11 +280,11 @@ namespace Randomizer
                 var randomizedLocationNames = randomizedLocations.Select(loc => loc.myRandomKeyIdentifier);
 
                 // Pick up any items already filled in on the map and update search before placing any items
-                var preFilledLocations = randomizedLocations.Where(loc => loc.GetKey() != null);
+                var preFilledLocations = randomizedLocations.Where(loc => itemMap.ContainsKey(loc.myRandomKeyIdentifier));
 
                 if (preFilledLocations.Any())
                 {
-                    logCurrentStep.AddChild("Prefilled locations", preFilledLocations.Select(node => node.Name()));
+                    logCurrentStep.AddChild("Prefilled locations", preFilledLocations.Select(node => $"{node.Name()} - {node.GetKeyName()}"));
                     inventory.myNodes.AddRange(preFilledLocations);
                     continue;
                 }
@@ -348,7 +348,7 @@ namespace Randomizer
                     // This is possible through Required Location Rules
                     if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
                     {
-                        locationLog.AddChild($"Already filled with: {KeyManager.GetKeyName(itemMap[node.myRandomKeyIdentifier])}");
+                        locationLog.AddChild($"Already filled with: {node.GetKeyName()}");
                         inventory.myNodes.Add(node);
                         continue;
                     }
