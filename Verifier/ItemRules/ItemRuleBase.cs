@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Randomizer.ItemRules
+namespace Verifier.ItemRules
 {
     public abstract class ItemRuleBase
     {

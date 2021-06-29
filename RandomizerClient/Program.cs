@@ -1,17 +1,13 @@
 ﻿using Common.Key;
 using Common.SaveData;
-using Common.Utils;
 using mzmr_common;
 using Newtonsoft.Json;
 using Randomizer;
-using Randomizer.ItemRules;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Verifier;
 using Verifier.Key;
 

@@ -1,4 +1,4 @@
-﻿namespace Randomizer.ItemRules
+﻿namespace Verifier.ItemRules
 {
     public class ItemRuleNotInLocation : ItemRuleBase
     {

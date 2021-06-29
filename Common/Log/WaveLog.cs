@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Common.Key;
 
-namespace Verifier
+namespace Common.Log
 {
 	public class WaveLog
 	{

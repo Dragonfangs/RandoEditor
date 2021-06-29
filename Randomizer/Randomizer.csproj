@@ -44,11 +44,6 @@
     <Compile Include="FillOptions.cs" />
     <Compile Include="ItemPlacer.cs" />
     <Compile Include="ItemPool.cs" />
-    <Compile Include="ItemRules\ItemRuleBase.cs" />
-    <Compile Include="ItemRules\ItemRuleNotInLocation.cs" />
-    <Compile Include="ItemRules\ItemRulePrioritizedAfterDepth.cs" />
-    <Compile Include="ItemRules\ItemRuleRestrictedBeforeDepth.cs" />
-    <Compile Include="ItemRules\ItemRuleInLocation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StaticData.cs" />
   </ItemGroup>

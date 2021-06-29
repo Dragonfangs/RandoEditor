@@ -52,6 +52,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FillSearcher.cs" />
+    <Compile Include="ItemRules\ItemRuleBase.cs" />
+    <Compile Include="ItemRules\ItemRuleInLocation.cs" />
+    <Compile Include="ItemRules\ItemRuleNotInLocation.cs" />
+    <Compile Include="ItemRules\ItemRulePrioritizedAfterDepth.cs" />
+    <Compile Include="ItemRules\ItemRuleRestrictedBeforeDepth.cs" />
+    <Compile Include="ItemRules\ItemRuleUtility.cs" />
     <Compile Include="Key\Inventory.cs" />
     <Compile Include="NodeTraverser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
