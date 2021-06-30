@@ -59,11 +59,17 @@ namespace Verifier.ItemRules
                 var actualLocations = itemMap.Where(item => item.Value == rule.Key);
                 itemLog.AddChild("Actual Location(s)", actualLocations.Select(loc => loc.Key));
 
-                var incorrectLocations = actualLocations.Where(loc => !rule.Value.Contains(loc.Key));
-                if (incorrectLocations.Any())
+                if (!actualLocations.Any())
                 {
-                    itemLog.AddChild("Incorrect Location(s)", incorrectLocations.Select(loc => loc.Key));
+                    itemLog.AddChild("Item not placed at all, skipping");
+                    continue;
+                }
 
+                var overlappingLocations = actualLocations.Where(loc => rule.Value.Contains(loc.Key));
+                itemLog.AddChild("Overlapping Location(s)", overlappingLocations.Select(loc => loc.Key));
+                if (!overlappingLocations.Any())
+                {
+                    itemLog.AddChild("No overlapping locations");
                     return false;
                 }
             }
@@ -81,6 +87,12 @@ namespace Verifier.ItemRules
 
                 var actualLocations = itemMap.Where(item => item.Value == rule.Key);
                 itemLog.AddChild("Actual Location(s)", actualLocations.Select(loc => loc.Key));
+
+                if (!actualLocations.Any())
+                {
+                    itemLog.AddChild("Item not placed at all, skipping");
+                    continue;
+                }
 
                 var incorrectLocations = actualLocations.Where(loc => rule.Value.Contains(loc.Key));
                 if (incorrectLocations.Any())

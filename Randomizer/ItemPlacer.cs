@@ -178,201 +178,208 @@ namespace Randomizer
             var searchDepth = 0;
             var stepCount = 1;
 
-            var logSteps = Log.AddChild("Standard Steps");
-            while(true)
-			{
-                var logCurrentStep = logSteps.AddChild($"Step {stepCount++}, depth {searchDepth}");
-                logCurrentStep.AddChild(inventory.GetKeyLog());
-
-                // Beatable conditional
-                if (options.gameCompletion == FillOptions.GameCompletion.Beatable && inventory.myNodes.Contains(endNode))
+            if (options.gameCompletion == FillOptions.GameCompletion.Unchanged)
+            {
+                Log.AddChild("Game Completion Unchanged - Skipping standard steps");
+            }
+            else
+            {
+                var logSteps = Log.AddChild("Standard Steps");
+                while (true)
                 {
-                    logCurrentStep.AddChild($"EndNode reached");
-                    break;
-                }
+                    var logCurrentStep = logSteps.AddChild($"Step {stepCount++}, depth {searchDepth}");
+                    logCurrentStep.AddChild(inventory.GetKeyLog());
 
-                // Do not place any power bombs until obtaining powered suit
-                restrictedItems.Clear();
-				if (options.noEarlyPbs && !inventory.ContainsKey(StaticKeys.CharlieDefeated))
-				{
-					restrictedItems.Add(StaticKeys.PowerBombs);
-				}
-
-                var itemDepthRestrictions = options.itemRules.Where(rest => rest is ItemRuleRestrictedBeforeDepth depthRest && depthRest.SearchDepth > searchDepth);
-                if (itemDepthRestrictions.Any())
-                {
-                    restrictedItems.AddRange(itemDepthRestrictions.Select(rest => rest.ItemId));
-                }
-
-                if (restrictedItems.Any())
-                {
-                    logCurrentStep.AddChild("Restricted Items", restrictedItems.Select(key => KeyManager.GetKeyName(key)));
-                }
-
-                // Find all nodes that can be reached with current inventory
-				reachableKeys.RemoveAll(node => inventory.myNodes.Contains(node));
-				reachableKeys.AddRange(searcher.ContinueSearch(startNode, inventory, node => (node is KeyNode) && !inventory.myNodes.Contains(node)));
-
-                logCurrentStep.AddChild("Reachable keys", reachableKeys.Select(node => node.Name()));
-
-                // Special case to handle how chozodia area is built 
-                // Specifically can't get out of it without power bombs, which creates awkward dynamics regarding the placements of said power bombs)
-                // Special case triggers on reaching charlie without picking up any power bombs
-                if (reachableKeys.Any(key => key is EventKeyNode eventKey && eventKey.myKeyId == StaticKeys.CharlieDefeated) &&
-					!inventory.ContainsKey(StaticKeys.PowerBombs))
-				{
-                    logCurrentStep.AddChild("Charlie special condition");
-
-                    FillRandomly(restrictedItems, inventory, itemMap, pool, random, logCurrentStep);
-
-                    if (!inventory.ContainsKey(StaticKeys.CharlieDefeated))
+                    // Beatable conditional
+                    if (options.gameCompletion == FillOptions.GameCompletion.Beatable && inventory.myNodes.Contains(endNode))
                     {
-                        // Unless Charlie was for some reason reached during fill, start new search with Charlie as new start node
-                        startNode = eventNodes.FirstOrDefault(x => x.myKeyId == StaticKeys.CharlieDefeated);
-                        inventory.myNodes.Add(startNode);
-                        searcher = new FillSearcher();
+                        logCurrentStep.AddChild($"EndNode reached");
+                        break;
                     }
 
-					continue;
-				}
-
-				// Find all reachable keys that are also possible to get back from
-                // (End node is always considered retracable, since being able to reach it at all is just akin to "being in go mode")
-				retracableKeys.RemoveAll(node => inventory.myNodes.Contains(node));
-				var notRetracable = reachableKeys.Except(retracableKeys);
-				retracableKeys.AddRange(notRetracable.AsParallel().Where(node => node == endNode || NodeTraverser.PathExists(node, startNode, node is EventKeyNode ? inventory.Expand(node) : inventory)).ToList());
-
-                logCurrentStep.AddChild("Retracable keys", retracableKeys.Select(node => node.Name()));
-
-                if (!retracableKeys.Any())
-                {
-                    break;
-                }
-
-                // If any events can be reached, add to inventory and update search before continuing
-                var retracableEvents = retracableKeys.Where(node => node is EventKeyNode).ToList();
-                if (retracableEvents.Any())
-				{
-                    logCurrentStep.AddChild("Retracable events", retracableEvents.Select(node => node.Name()));
-                    inventory.myNodes.AddRange(retracableEvents);
-					continue;
-				}
-
-                var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
-                var randomizedLocationNames = randomizedLocations.Select(loc => loc.myRandomKeyIdentifier);
-
-                // Pick up any items already filled in on the map and update search before placing any items
-                var preFilledLocations = randomizedLocations.Where(loc => itemMap.ContainsKey(loc.myRandomKeyIdentifier));
-
-                if (preFilledLocations.Any())
-                {
-                    logCurrentStep.AddChild("Prefilled locations", preFilledLocations.Select(node => $"{node.Name()} - {node.GetKeyName()}"));
-                    inventory.myNodes.AddRange(preFilledLocations);
-                    continue;
-                }
-
-                // Find which possible keys would expand number of retracable nodes
-                var relevantKeys = FindRelevantKeys(inventory, restrictedItems, reachableKeys.Except(retracableKeys), pool);
-
-                logCurrentStep.AddChild("Relevant Keys", relevantKeys.Select(key => KeyManager.GetKeyName(key)));
-
-                // Filter out any keys that by rules cannot be placed in any available location
-                var filteredKeys = relevantKeys.Where(key => randomizedLocationNames.Any(location => KeyAllowedInLocation(key, itemMap, pool, location)));
-
-                logCurrentStep.AddChild("FilteredKeys", filteredKeys.Select(key => KeyManager.GetKeyName(key)));
-                if (!filteredKeys.Any())
-                {
-                    break;
-                }
-
-                // Get items that are prioritized according to item rules
-                var prioritizedItems = options.itemRules.Where(rest => rest is ItemRulePrioritizedAfterDepth depthRest && depthRest.SearchDepth <= searchDepth)
-                    .Select(rest => rest.ItemId)
-                    .Where(item => !restrictedItems.Contains(item) && !inventory.ContainsKey(item))
-                    .ToList();
-
-                logCurrentStep.AddChild("Prioritized Items", prioritizedItems.Select(key => KeyManager.GetKeyName(key)));
-
-                // Correlate prioritized and relevant keys to select a relevant key to place
-                var prioritizedRelevantKeys = filteredKeys.Intersect(prioritizedItems);
-                var selectedRelevantKey = prioritizedRelevantKeys.Any() ? pool.PeekAmong(prioritizedRelevantKeys, random) : pool.PeekAmong(filteredKeys, random);
-
-                logCurrentStep.AddChild($"Selected Key: {KeyManager.GetKeyName(selectedRelevantKey)}");
-
-                // Filter out available locations where selected key cannot be placed
-                var filteredLocations = randomizedLocations.Where(location => KeyAllowedInLocation(selectedRelevantKey, itemMap, pool, location.myRandomKeyIdentifier)).OrderBy(x => x.id).ToList();
-
-                logCurrentStep.AddChild("Filtered Locations", filteredLocations.Select(node => node.Name()));
-
-                pool.Pull(selectedRelevantKey);
-
-                // Pick out one random accessible location, place the selected key there and add that item to inventory
-                var selectedLocation = filteredLocations.ElementAt(random.Next(filteredLocations.Count));
-                randomizedLocations.Remove(selectedLocation);
-				itemMap.Add(selectedLocation.myRandomKeyIdentifier, selectedRelevantKey);
-				inventory.myNodes.Add(selectedLocation);
-
-                logCurrentStep.AddChild($"Selected Location: {selectedLocation.Name()}");
-
-                prioritizedItems.Remove(selectedRelevantKey);
-
-                // Only increase searchDepth if an actual item is placed (debatable if this is the correct approach)
-                searchDepth++;
-
-                UpdateLocationRestrictions(inventory, itemMap, pool, random, logCurrentStep);
-
-                var randomizedLocationLog = logCurrentStep.AddChild("Randomized Locations");
-                // Fill remaining accessible locations with random items
-                foreach (var node in randomizedLocations)
-				{
-                    var locationLog = randomizedLocationLog.AddChild(node.Name());
-
-                    // This is possible through Required Location Rules
-                    if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
+                    // Do not place any power bombs until obtaining powered suit
+                    restrictedItems.Clear();
+                    if (options.noEarlyPbs && !inventory.ContainsKey(StaticKeys.CharlieDefeated))
                     {
-                        locationLog.AddChild($"Already filled with: {node.GetKeyName()}");
-                        inventory.myNodes.Add(node);
+                        restrictedItems.Add(StaticKeys.PowerBombs);
+                    }
+
+                    var itemDepthRestrictions = options.itemRules.Where(rest => rest is ItemRuleRestrictedBeforeDepth depthRest && depthRest.SearchDepth > searchDepth);
+                    if (itemDepthRestrictions.Any())
+                    {
+                        restrictedItems.AddRange(itemDepthRestrictions.Select(rest => rest.ItemId));
+                    }
+
+                    if (restrictedItems.Any())
+                    {
+                        logCurrentStep.AddChild("Restricted Items", restrictedItems.Select(key => KeyManager.GetKeyName(key)));
+                    }
+
+                    // Find all nodes that can be reached with current inventory
+                    reachableKeys.RemoveAll(node => inventory.myNodes.Contains(node));
+                    reachableKeys.AddRange(searcher.ContinueSearch(startNode, inventory, node => (node is KeyNode) && !inventory.myNodes.Contains(node)));
+
+                    logCurrentStep.AddChild("Reachable keys", reachableKeys.Select(node => node.Name()));
+
+                    // Special case to handle how chozodia area is built 
+                    // Specifically can't get out of it without power bombs, which creates awkward dynamics regarding the placements of said power bombs)
+                    // Special case triggers on reaching charlie without picking up any power bombs
+                    if (reachableKeys.Any(key => key is EventKeyNode eventKey && eventKey.myKeyId == StaticKeys.CharlieDefeated) &&
+                        !inventory.ContainsKey(StaticKeys.PowerBombs))
+                    {
+                        logCurrentStep.AddChild("Charlie special condition");
+
+                        FillRandomly(restrictedItems, inventory, itemMap, pool, random, logCurrentStep);
+
+                        if (!inventory.ContainsKey(StaticKeys.CharlieDefeated))
+                        {
+                            // Unless Charlie was for some reason reached during fill, start new search with Charlie as new start node
+                            startNode = eventNodes.FirstOrDefault(x => x.myKeyId == StaticKeys.CharlieDefeated);
+                            inventory.myNodes.Add(startNode);
+                            searcher = new FillSearcher();
+                        }
+
                         continue;
                     }
 
-                    var filteredPrioritizedItems = prioritizedItems.Where(key => KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier));
+                    // Find all reachable keys that are also possible to get back from
+                    // (End node is always considered retracable, since being able to reach it at all is just akin to "being in go mode")
+                    retracableKeys.RemoveAll(node => inventory.myNodes.Contains(node));
+                    var notRetracable = reachableKeys.Except(retracableKeys);
+                    retracableKeys.AddRange(notRetracable.AsParallel().Where(node => node == endNode || NodeTraverser.PathExists(node, startNode, node is EventKeyNode ? inventory.Expand(node) : inventory)).ToList());
 
-                    if (filteredPrioritizedItems.Any())
+                    logCurrentStep.AddChild("Retracable keys", retracableKeys.Select(node => node.Name()));
+
+                    if (!retracableKeys.Any())
                     {
-                        locationLog.AddChild("Filtered Prioritized Items", filteredPrioritizedItems.Select(key => KeyManager.GetKeyName(key)));
-
-                        var randomKey = pool.PullAmong(filteredPrioritizedItems, random);
-                        prioritizedItems.Remove(randomKey);
-                        itemMap.Add(node.myRandomKeyIdentifier, randomKey);
-                        inventory.myNodes.Add(node);
-
-                        locationLog.Message += $" : {KeyManager.GetKeyName(randomKey)}";
-                        locationLog.AddChild($"Prioritized Key placed: {KeyManager.GetKeyName(randomKey)}");
+                        break;
                     }
-                    else
+
+                    // If any events can be reached, add to inventory and update search before continuing
+                    var retracableEvents = retracableKeys.Where(node => node is EventKeyNode).ToList();
+                    if (retracableEvents.Any())
                     {
-                        // Add all items that cannot be in this location to restrictedItems
-                        var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier)));
+                        logCurrentStep.AddChild("Retracable events", retracableEvents.Select(node => node.Name()));
+                        inventory.myNodes.AddRange(retracableEvents);
+                        continue;
+                    }
 
-                        locationLog.AddChild("Location Restricted Items", locationRestrictedItems.Select(key => KeyManager.GetKeyName(key)));
+                    var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
+                    var randomizedLocationNames = randomizedLocations.Select(loc => loc.myRandomKeyIdentifier);
 
-                        var selectedKey = pool.PullExcept(locationRestrictedItems, random);
-                        
-                        if (selectedKey != Guid.Empty)
+                    // Pick up any items already filled in on the map and update search before placing any items
+                    var preFilledLocations = randomizedLocations.Where(loc => itemMap.ContainsKey(loc.myRandomKeyIdentifier));
+
+                    if (preFilledLocations.Any())
+                    {
+                        logCurrentStep.AddChild("Prefilled locations", preFilledLocations.Select(node => $"{node.Name()} - {node.GetKeyName()}"));
+                        inventory.myNodes.AddRange(preFilledLocations);
+                        continue;
+                    }
+
+                    // Find which possible keys would expand number of retracable nodes
+                    var relevantKeys = FindRelevantKeys(inventory, restrictedItems, reachableKeys.Except(retracableKeys), pool);
+
+                    logCurrentStep.AddChild("Relevant Keys", relevantKeys.Select(key => KeyManager.GetKeyName(key)));
+
+                    // Filter out any keys that by rules cannot be placed in any available location
+                    var filteredKeys = relevantKeys.Where(key => randomizedLocationNames.Any(location => KeyAllowedInLocation(key, itemMap, pool, location)));
+
+                    logCurrentStep.AddChild("FilteredKeys", filteredKeys.Select(key => KeyManager.GetKeyName(key)));
+                    if (!filteredKeys.Any())
+                    {
+                        break;
+                    }
+
+                    // Get items that are prioritized according to item rules
+                    var prioritizedItems = options.itemRules.Where(rest => rest is ItemRulePrioritizedAfterDepth depthRest && depthRest.SearchDepth <= searchDepth)
+                        .Select(rest => rest.ItemId)
+                        .Where(item => !restrictedItems.Contains(item) && !inventory.ContainsKey(item))
+                        .ToList();
+
+                    logCurrentStep.AddChild("Prioritized Items", prioritizedItems.Select(key => KeyManager.GetKeyName(key)));
+
+                    // Correlate prioritized and relevant keys to select a relevant key to place
+                    var prioritizedRelevantKeys = filteredKeys.Intersect(prioritizedItems);
+                    var selectedRelevantKey = prioritizedRelevantKeys.Any() ? pool.PeekAmong(prioritizedRelevantKeys, random) : pool.PeekAmong(filteredKeys, random);
+
+                    logCurrentStep.AddChild($"Selected Key: {KeyManager.GetKeyName(selectedRelevantKey)}");
+
+                    // Filter out available locations where selected key cannot be placed
+                    var filteredLocations = randomizedLocations.Where(location => KeyAllowedInLocation(selectedRelevantKey, itemMap, pool, location.myRandomKeyIdentifier)).OrderBy(x => x.id).ToList();
+
+                    logCurrentStep.AddChild("Filtered Locations", filteredLocations.Select(node => node.Name()));
+
+                    pool.Pull(selectedRelevantKey);
+
+                    // Pick out one random accessible location, place the selected key there and add that item to inventory
+                    var selectedLocation = filteredLocations.ElementAt(random.Next(filteredLocations.Count));
+                    randomizedLocations.Remove(selectedLocation);
+                    itemMap.Add(selectedLocation.myRandomKeyIdentifier, selectedRelevantKey);
+                    inventory.myNodes.Add(selectedLocation);
+
+                    logCurrentStep.AddChild($"Selected Location: {selectedLocation.Name()}");
+
+                    prioritizedItems.Remove(selectedRelevantKey);
+
+                    // Only increase searchDepth if an actual item is placed (debatable if this is the correct approach)
+                    searchDepth++;
+
+                    UpdateLocationRestrictions(inventory, itemMap, pool, random, logCurrentStep);
+
+                    var randomizedLocationLog = logCurrentStep.AddChild("Randomized Locations");
+                    // Fill remaining accessible locations with random items
+                    foreach (var node in randomizedLocations)
+                    {
+                        var locationLog = randomizedLocationLog.AddChild(node.Name());
+
+                        // This is possible through Required Location Rules
+                        if (itemMap.ContainsKey(node.myRandomKeyIdentifier))
                         {
-                            itemMap.Add(node.myRandomKeyIdentifier, selectedKey);
+                            locationLog.AddChild($"Already filled with: {node.GetKeyName()}");
+                            inventory.myNodes.Add(node);
+                            continue;
+                        }
+
+                        var filteredPrioritizedItems = prioritizedItems.Where(key => KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier));
+
+                        if (filteredPrioritizedItems.Any())
+                        {
+                            locationLog.AddChild("Filtered Prioritized Items", filteredPrioritizedItems.Select(key => KeyManager.GetKeyName(key)));
+
+                            var randomKey = pool.PullAmong(filteredPrioritizedItems, random);
+                            prioritizedItems.Remove(randomKey);
+                            itemMap.Add(node.myRandomKeyIdentifier, randomKey);
                             inventory.myNodes.Add(node);
 
-                            locationLog.Message += $" : {KeyManager.GetKeyName(selectedKey)}";
-                            locationLog.AddChild($"Selected Key placed: {KeyManager.GetKeyName(selectedKey)}");
+                            locationLog.Message += $" : {KeyManager.GetKeyName(randomKey)}";
+                            locationLog.AddChild($"Prioritized Key placed: {KeyManager.GetKeyName(randomKey)}");
                         }
+                        else
+                        {
+                            // Add all items that cannot be in this location to restrictedItems
+                            var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier)));
+
+                            locationLog.AddChild("Location Restricted Items", locationRestrictedItems.Select(key => KeyManager.GetKeyName(key)));
+
+                            var selectedKey = pool.PullExcept(locationRestrictedItems, random);
+
+                            if (selectedKey != Guid.Empty)
+                            {
+                                itemMap.Add(node.myRandomKeyIdentifier, selectedKey);
+                                inventory.myNodes.Add(node);
+
+                                locationLog.Message += $" : {KeyManager.GetKeyName(selectedKey)}";
+                                locationLog.AddChild($"Selected Key placed: {KeyManager.GetKeyName(selectedKey)}");
+                            }
+                        }
+
+                        UpdateLocationRestrictions(inventory, itemMap, pool, random, locationLog);
                     }
 
-                    UpdateLocationRestrictions(inventory, itemMap, pool, random, locationLog);
+                    // Go back to start of loop to continue search with updated inventory
                 }
-
-				// Go back to start of loop to continue search with updated inventory
-			}
+            }
 
             var postFillLog = Log.AddChild("Post fill");
 
@@ -404,6 +411,13 @@ namespace Randomizer
 
             // Fill remaining reachable nodes randomly
             FillRandomly(restrictedItems, inventory, itemMap, pool, random, reachableLog);
+
+            // refresh power bomb restriction
+            restrictedItems.Clear();
+            if (options.noEarlyPbs && !inventory.ContainsKey(StaticKeys.CharlieDefeated))
+            {
+                restrictedItems.Add(StaticKeys.PowerBombs);
+            }
 
             // Fill all remaining (unreachable) locations with any remaining items
             var remainingNodes = keyNodes.Where(node => node is RandomKeyNode randomNode && !itemMap.ContainsKey(randomNode.myRandomKeyIdentifier)).Select(key => key as RandomKeyNode).OrderBy(x => x.id);
