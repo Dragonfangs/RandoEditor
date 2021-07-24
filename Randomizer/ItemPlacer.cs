@@ -323,6 +323,11 @@ namespace Randomizer
 
                     logCurrentStep.AddChild("Filtered Locations", filteredLocations.Select(node => node.Name()));
 
+                    if (!filteredLocations.Any())
+                    {
+                        break;
+                    }
+
                     pool.Pull(selectedRelevantKey);
 
                     // Pick out one random accessible location, place the selected key there and add that item to inventory
@@ -779,7 +784,7 @@ namespace Randomizer
 			}
             
             // Filter out any keys that by rules cannot be placed in any available location
-            var filteredKeys = relevantKeys.Where(key => availableLocations.Any(location => KeyAllowedInLocation(key.Key, options, itemMap, pool, location)));
+            var filteredKeys = relevantKeys.Where(key => availableLocations.Any(location => KeyAllowedInLocation(key.Key, options, itemMap, pool, location))).ToDictionary(key => key.Key, key => key.Value);
 
             relevantKeyLog.AddChild("Filtered Keys", filteredKeys.Select(key => $"{KeyManager.GetKeyName(key.Key)}"));
 
@@ -793,15 +798,15 @@ namespace Randomizer
 
             if (prioritizedRelevantKeys.Any())
             {
-                relevantKeys = prioritizedRelevantKeys.ToDictionary(key => key.Key, key => key.Value);
+                filteredKeys = prioritizedRelevantKeys.ToDictionary(key => key.Key, key => key.Value);
             }
 
             relevantKeyLog.AddChild("Prioritized Relevant Keys", filteredKeys.Select(key => $"{KeyManager.GetKeyName(key.Key)}"));
 
             // Avoid sprawl calculation bias if value is not set or there is only one item to choose from
-            if (options.SprawlFactor == 0 || relevantKeys.Count < 2)
+            if (options.SprawlFactor == 0 || filteredKeys.Count < 2)
             {
-                var item = pool.PeekAmong(relevantKeys.Keys, random);
+                var item = pool.PeekAmong(filteredKeys.Keys, random);
 
                 relevantKeyLog.Message += $" : {KeyManager.GetKeyName(item)}";
                 relevantKeyLog.AddChild($"Item pulled from pool: {KeyManager.GetKeyName(item)}");
@@ -815,7 +820,7 @@ namespace Randomizer
             var sprawl = ((double)options.SprawlFactor)/10;
 
             // Weight is numberOfLocationsUnlocked ^ sprawl
-            var keysGroupedByWeight = relevantKeys.ToLookup(key => key.Value, key => key.Key).Select(group => new KeyValuePair<double, List<Guid>>(Math.Pow(group.Key, sprawl), group.ToList())).OrderBy(pair => pair.Key);
+            var keysGroupedByWeight = filteredKeys.ToLookup(key => key.Value, key => key.Key).Select(group => new KeyValuePair<double, List<Guid>>(Math.Pow(group.Key, sprawl), group.ToList())).OrderBy(pair => pair.Key);
 
             relevantKeyLog.AddChild("Keys with weights", keysGroupedByWeight.SelectMany(group => group.Value.Select(key => $"{KeyManager.GetKeyName(key)} - {group.Key}")));
 
