@@ -103,7 +103,12 @@ namespace RandoEditor
 			txtRandomId.Enabled = false;
 			txtRandomId.Visible = false;
 
-			lockPanelLogic1.Enabled = false;
+            comboBoxOrigItem.DataSource = KeyManager.GetRandomKeys().ToList();
+            comboBoxOrigItem.DisplayMember = "Name";
+            comboBoxOrigItem.Enabled = false;
+            comboBoxOrigItem.Visible = false;
+
+            lockPanelLogic1.Enabled = false;
 			lockPanelLogic1.Visible = false;
 		}
 
@@ -135,12 +140,17 @@ namespace RandoEditor
 				comboBoxEvent.Enabled = (selectedNode.myNodeType == NodeType.EventKey);
 				comboBoxEvent.Visible = (selectedNode.myNodeType == NodeType.EventKey);
 
-				if (selectedNode is RandomKeyNode randomNode)
-					txtRandomId.Text = randomNode.myRandomKeyIdentifier;
+                if (selectedNode is RandomKeyNode randomNode)
+                {
+                    txtRandomId.Text = randomNode.myRandomKeyIdentifier;
+                    comboBoxOrigItem.SelectedItem = randomNode.GetOriginalKey();
+                }
 
 				txtRandomId.Enabled = (selectedNode.myNodeType == NodeType.RandomKey);
 				txtRandomId.Visible = (selectedNode.myNodeType == NodeType.RandomKey);
-			}
+                comboBoxOrigItem.Enabled = (selectedNode.myNodeType == NodeType.RandomKey);
+                comboBoxOrigItem.Visible = (selectedNode.myNodeType == NodeType.RandomKey);
+            }
 			else
 			{
 				comboBoxEvent.Visible = false;
@@ -148,8 +158,10 @@ namespace RandoEditor
 
 				txtRandomId.Enabled = false;
 				txtRandomId.Visible = false;
+                comboBoxOrigItem.Enabled = false;
+                comboBoxOrigItem.Visible = false;
 
-				lockPanelLogic1.Visible = false;
+                lockPanelLogic1.Visible = false;
 				lockPanelLogic1.Enabled = false;
 			}
 		}
@@ -694,7 +706,17 @@ namespace RandoEditor
 			}
 		}
 
-		private void panel1_SizeChanged(object sender, EventArgs e)
+        private void comboBoxOrigItem_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (selectedNode is RandomKeyNode randomNode)
+            {
+                randomNode.SetOriginalKey((BaseKey)comboBoxOrigItem.SelectedItem);
+
+                SaveManager.Dirty = true;
+            }
+        }
+
+        private void panel1_SizeChanged(object sender, EventArgs e)
 		{
 			panel1.Invalidate();
 		}

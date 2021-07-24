@@ -138,20 +138,45 @@ namespace Randomizer
 		{
             Log = new LogLayer("Item Placement");
 
+            var inventory = new Inventory(startingInventory);
+
+            var nodeCollection = new NodeCollection();
+            nodeCollection.InitializeNodes(someData);
+
+            keyNodes = nodeCollection.myNodes.Where(node => node is KeyNode).ToList();
+            var eventNodes = keyNodes.Where(node => node is EventKeyNode).Select(node => node as EventKeyNode);
+            startNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameStart);
+            endNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameFinish);
+
+            // Generate Item map
             var itemMap = new Dictionary<string, Guid>(originalItemMap);
 
-			var inventory = new Inventory(startingInventory);
+            if (options.majorSwap == FillOptions.ItemSwap.Unchanged || options.minorSwap == FillOptions.ItemSwap.Unchanged)
+            {
+                var allRandomKeyNodes = keyNodes.Where(node => node is RandomKeyNode randomNode).Select(node => node as RandomKeyNode).OrderBy(node => node.id);
+                var openRandomKeyNodes = allRandomKeyNodes.Where(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier));
 
-			KeyManager.SetRandomKeyMap(itemMap);
-			
-			var nodeCollection = new NodeCollection();
-			nodeCollection.InitializeNodes(someData);
+                foreach (var keyNode in openRandomKeyNodes)
+                {
+                    var item = keyNode.GetOriginalKey();
+                    if (item == null)
+                        continue;
 
-			keyNodes = nodeCollection.myNodes.Where(node => node is KeyNode).ToList();
-			var eventNodes = keyNodes.Where(node => node is EventKeyNode).Select(node => node as EventKeyNode);
-			startNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameStart);
-			endNode = eventNodes.FirstOrDefault(node => node.myKeyId == StaticKeys.GameFinish);
+                    if ((StaticKeys.IsMajorItem(item.Id) && options.majorSwap == FillOptions.ItemSwap.Unchanged) ||
+                        (StaticKeys.IsMinorItem(item.Id) && options.minorSwap == FillOptions.ItemSwap.Unchanged))
+                    {
+                        var pulled = pool.Pull(item.Id);
+                        if (pulled)
+                        {
+                            itemMap.Add(keyNode.myRandomKeyIdentifier, item.Id);
+                        }
+                    }
+                }
+            }
 
+            KeyManager.SetRandomKeyMap(itemMap);
+
+            // Set up location rules
             itemRequiredLocationRules = ItemRuleUtility.GetRequiredLocationRules(options.itemRules);
             itemBlockedLocationRules = ItemRuleUtility.GetBlockedLocationRules(options.itemRules);
 
@@ -169,6 +194,7 @@ namespace Randomizer
 
             UpdateLocationRestrictions(inventory, itemMap, pool, random, Log);
 
+            // Initialize search terms
             searcher = new FillSearcher();
 
 			var reachableKeys = new List<NodeBase>();
@@ -178,9 +204,9 @@ namespace Randomizer
             var searchDepth = 0;
             var stepCount = 1;
 
-            if (options.gameCompletion == FillOptions.GameCompletion.Unchanged)
+            if (options.gameCompletion == FillOptions.GameCompletion.NoLogic)
             {
-                Log.AddChild("Game Completion Unchanged - Skipping standard steps");
+                Log.AddChild("Game Completion has No Logic - Skipping standard steps");
             }
             else
             {
@@ -229,7 +255,7 @@ namespace Randomizer
                     {
                         logCurrentStep.AddChild("Charlie special condition");
 
-                        FillRandomly(restrictedItems, inventory, itemMap, pool, random, logCurrentStep);
+                        FillRandomly(restrictedItems, inventory, options, itemMap, pool, random, logCurrentStep);
 
                         if (!inventory.ContainsKey(StaticKeys.CharlieDefeated))
                         {
@@ -265,7 +291,6 @@ namespace Randomizer
                     }
 
                     var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
-                    var randomizedLocationNames = randomizedLocations.Select(loc => loc.myRandomKeyIdentifier);
 
                     // Pick up any items already filled in on the map and update search before placing any items
                     var preFilledLocations = randomizedLocations.Where(loc => itemMap.ContainsKey(loc.myRandomKeyIdentifier));
@@ -277,20 +302,6 @@ namespace Randomizer
                         continue;
                     }
 
-                    // Find which possible keys would expand number of retracable nodes
-                    var relevantKeys = FindRelevantKeys(inventory, restrictedItems, reachableKeys.Except(retracableKeys), pool);
-
-                    logCurrentStep.AddChild("Relevant Keys", relevantKeys.Select(key => KeyManager.GetKeyName(key)));
-
-                    // Filter out any keys that by rules cannot be placed in any available location
-                    var filteredKeys = relevantKeys.Where(key => randomizedLocationNames.Any(location => KeyAllowedInLocation(key, itemMap, pool, location)));
-
-                    logCurrentStep.AddChild("FilteredKeys", filteredKeys.Select(key => KeyManager.GetKeyName(key)));
-                    if (!filteredKeys.Any())
-                    {
-                        break;
-                    }
-
                     // Get items that are prioritized according to item rules
                     var prioritizedItems = options.itemRules.Where(rest => rest is ItemRulePrioritizedAfterDepth depthRest && depthRest.SearchDepth <= searchDepth)
                         .Select(rest => rest.ItemId)
@@ -299,14 +310,16 @@ namespace Randomizer
 
                     logCurrentStep.AddChild("Prioritized Items", prioritizedItems.Select(key => KeyManager.GetKeyName(key)));
 
-                    // Correlate prioritized and relevant keys to select a relevant key to place
-                    var prioritizedRelevantKeys = filteredKeys.Intersect(prioritizedItems);
-                    var selectedRelevantKey = prioritizedRelevantKeys.Any() ? pool.PeekAmong(prioritizedRelevantKeys, random) : pool.PeekAmong(filteredKeys, random);
+                    // Find which possible keys would expand number of retracable nodes
+                    var selectedRelevantKey = FindRelevantKey(inventory, options, randomizedLocations, reachableKeys.Except(retracableKeys), restrictedItems, prioritizedItems, pool, itemMap, random, logCurrentStep);
 
-                    logCurrentStep.AddChild($"Selected Key: {KeyManager.GetKeyName(selectedRelevantKey)}");
+                    if (selectedRelevantKey == Guid.Empty)
+                    {
+                        break;
+                    }
 
                     // Filter out available locations where selected key cannot be placed
-                    var filteredLocations = randomizedLocations.Where(location => KeyAllowedInLocation(selectedRelevantKey, itemMap, pool, location.myRandomKeyIdentifier)).OrderBy(x => x.id).ToList();
+                    var filteredLocations = randomizedLocations.Where(location => KeyAllowedInLocation(selectedRelevantKey, options, itemMap, pool, location)).OrderBy(x => x.id).ToList();
 
                     logCurrentStep.AddChild("Filtered Locations", filteredLocations.Select(node => node.Name()));
 
@@ -341,7 +354,7 @@ namespace Randomizer
                             continue;
                         }
 
-                        var filteredPrioritizedItems = prioritizedItems.Where(key => KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier));
+                        var filteredPrioritizedItems = prioritizedItems.Where(key => KeyAllowedInLocation(key, options, itemMap, pool, node));
 
                         if (filteredPrioritizedItems.Any())
                         {
@@ -358,7 +371,7 @@ namespace Randomizer
                         else
                         {
                             // Add all items that cannot be in this location to restrictedItems
-                            var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier)));
+                            var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, options, itemMap, pool, node)));
 
                             locationLog.AddChild("Location Restricted Items", locationRestrictedItems.Select(key => KeyManager.GetKeyName(key)));
 
@@ -404,13 +417,13 @@ namespace Randomizer
                 var restrictedAndEmpty = new List<Guid>(restrictedItems);
                 restrictedAndEmpty.Add(StaticKeys.Nothing);
 
-                FillRandomly(restrictedAndEmpty, inventory, itemMap, pool, random, nonEmptyLog);
+                FillRandomly(restrictedAndEmpty, inventory, options, itemMap, pool, random, nonEmptyLog);
             }
 
             var reachableLog = postFillLog.AddChild("Fill remaining reachable locations");
 
             // Fill remaining reachable nodes randomly
-            FillRandomly(restrictedItems, inventory, itemMap, pool, random, reachableLog);
+            FillRandomly(restrictedItems, inventory, options, itemMap, pool, random, reachableLog);
 
             // refresh power bomb restriction
             restrictedItems.Clear();
@@ -424,12 +437,12 @@ namespace Randomizer
 
             if (remainingNodes.Any())
             {
-                var respectableLog = postFillLog.AddChild("Fill unreachable locations while respecting item rules");
+                var respectableLog = postFillLog.AddChild("Fill unreachable locations");
 
-                FillRandomly(remainingNodes, restrictedItems, inventory, itemMap, pool, random, respectableLog);
+                FillRandomly(remainingNodes, restrictedItems, inventory, options, itemMap, pool, random, respectableLog);
             }
 
-            // Fill final locations with whatever is left
+            // Fill final locations with blanks
             var finalEmptyLocations = keyNodes.Where(node => node is RandomKeyNode randomNode && !itemMap.ContainsKey(randomNode.myRandomKeyIdentifier)).Select(key => key as RandomKeyNode).OrderBy(x => x.id);
 
             if (finalEmptyLocations.Any())
@@ -444,7 +457,7 @@ namespace Randomizer
 
                     var locationLog = finalFill.AddChild(node.myRandomKeyIdentifier);
 
-                    var item = pool.Pull(random);
+                    var item = StaticKeys.Nothing;
 
                     locationLog.Message += $" : {KeyManager.GetKeyName(item)}";
                     locationLog.AddChild($"Selected item: {KeyManager.GetKeyName(item)}");
@@ -533,12 +546,44 @@ namespace Randomizer
             localLog.AddChild(new LogLayer("Restricted Locations", restrictedLocations));
         }
 
-        private bool KeyAllowedInLocation(Guid key, Dictionary<string, Guid> itemMap, ItemPool pool, string location)
+        private bool KeyAllowedInLocation(Guid key, FillOptions options, Dictionary<string, Guid> itemMap, ItemPool pool, RandomKeyNode location)
         {
-            if(itemBlockedLocationRules.ContainsKey(key) && itemBlockedLocationRules[key].Contains(location))
+            if(itemBlockedLocationRules.ContainsKey(key) && itemBlockedLocationRules[key].Contains(location.myRandomKeyIdentifier))
             {
                 // Blocked from being placed here
                 return false;
+            }
+
+            if ((StaticKeys.IsMajorItem(key) && options.majorSwap == FillOptions.ItemSwap.Unchanged) ||
+                (StaticKeys.IsMinorItem(key) && options.minorSwap == FillOptions.ItemSwap.Unchanged))
+            {
+                if (key != location.myOriginalKeyId)
+                    return false;
+            }
+
+            if (options.majorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMajorItem(key) && !StaticKeys.IsMajorItem(location.myOriginalKeyId))
+                return false;
+
+            if (options.minorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMinorItem(key) && !StaticKeys.IsMinorItem(location.myOriginalKeyId))
+                return false;
+
+            if (options.majorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMinorItem(key) && StaticKeys.IsMajorItem(location.myOriginalKeyId))
+            {
+                var allRandomKeyNodes = keyNodes.Where(node => node is RandomKeyNode randomNode).Select(node => node as RandomKeyNode).OrderBy(node => node.id);
+                var openMajorRandomKeyNodes = allRandomKeyNodes.Where(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier) && StaticKeys.IsMajorItem(node.myOriginalKeyId));
+
+                if (pool.AvailableItems().Count(item => StaticKeys.IsMajorItem(item)) <= openMajorRandomKeyNodes.Count())
+                    return false;
+            }
+
+            if (options.minorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMajorItem(key) && StaticKeys.IsMinorItem(location.myOriginalKeyId))
+            {
+                var allRandomKeyNodes = keyNodes.Where(node => node is RandomKeyNode randomNode).Select(node => node as RandomKeyNode).OrderBy(node => node.id);
+                var openMinorRandomKeyNodes = allRandomKeyNodes.Count(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier) && StaticKeys.IsMinorItem(node.myOriginalKeyId));
+
+                var poolCount = pool.AvailableItems().Count(item => StaticKeys.IsMinorItem(item));
+                if (poolCount <= openMinorRandomKeyNodes)
+                    return false;
             }
 
             var hasRequirementForLocation = false;
@@ -547,7 +592,7 @@ namespace Randomizer
             {
                 requirementFulfilled = itemMap.Any(loc => itemRequiredLocationRules[key].Contains(loc.Key) && loc.Value == key);
 
-                hasRequirementForLocation = itemRequiredLocationRules[key].Contains(location);
+                hasRequirementForLocation = itemRequiredLocationRules[key].Contains(location.myRandomKeyIdentifier);
             }
 
             if (!requirementFulfilled && pool.CountKey(key) == 1 && !hasRequirementForLocation)
@@ -556,7 +601,7 @@ namespace Randomizer
                 return false;
             }
 
-            if (restrictedLocations.Contains(location) && (requirementFulfilled || !hasRequirementForLocation))
+            if (restrictedLocations.Contains(location.myRandomKeyIdentifier) && (requirementFulfilled || !hasRequirementForLocation))
             {
                 // Location is restricted and this key is not one of the items with a requirement to be here
                 return false;
@@ -565,7 +610,9 @@ namespace Randomizer
             return true;
         }
 
-        private void FillRandomly(List<Guid> restrictedItems, Inventory inventory, Dictionary<string, Guid> itemMap, ItemPool pool, Random random, LogLayer log)
+        private void FillRandomly(List<Guid> restrictedItems, 
+            Inventory inventory, FillOptions options, Dictionary<string, Guid> itemMap, ItemPool pool, 
+            Random random, LogLayer log)
         {
             var fillLog = log.AddChild("Random Fill");
             fillLog.AddChild("Restricted Items", restrictedItems.Select(key => KeyManager.GetKeyName(key)));
@@ -603,7 +650,7 @@ namespace Randomizer
 
                 var fillRandomKeyNodes = fillNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).OrderBy(x => x.id);
 
-                var addedNodes = FillRandomly(fillRandomKeyNodes, restrictedItems, inventory, itemMap, pool, random, stepLog);
+                var addedNodes = FillRandomly(fillRandomKeyNodes, restrictedItems, inventory, options, itemMap, pool, random, stepLog);
 
                 if (!addedNodes)
                     break;
@@ -612,7 +659,9 @@ namespace Randomizer
             }
         }
 
-        private bool FillRandomly(IOrderedEnumerable<RandomKeyNode> locations, List<Guid> restrictedItems, Inventory inventory, Dictionary<string, Guid> itemMap, ItemPool pool, Random random, LogLayer log)
+        private bool FillRandomly(IOrderedEnumerable<RandomKeyNode> locations, List<Guid> restrictedItems, 
+            Inventory inventory, FillOptions options, Dictionary<string, Guid> itemMap, ItemPool pool,
+            Random random, LogLayer log)
         {
             var addedNodes = false;
 
@@ -631,7 +680,7 @@ namespace Randomizer
                 else
                 {
                     // Add all items that cannot be in this location to restrictedItems
-                    var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, itemMap, pool, node.myRandomKeyIdentifier)));
+                    var locationRestrictedItems = restrictedItems.Union(pool.AvailableItems().Where(key => !KeyAllowedInLocation(key, options, itemMap, pool, node)));
 
                     locationLog.AddChild(new LogLayer("Location Restricted Items", locationRestrictedItems.Select(key => KeyManager.GetKeyName(key))));
 
@@ -660,26 +709,145 @@ namespace Randomizer
             return addedNodes;
         }
 
-        private List<Guid> FindRelevantKeys(Inventory inventory, List<Guid> restrictedItems, IEnumerable<NodeBase> untracableKeys, ItemPool pool)
+        private Guid FindRelevantKey(Inventory inventory, FillOptions options,
+            IEnumerable<RandomKeyNode> availableLocations, IEnumerable<NodeBase> unRetracableKeys, 
+            IEnumerable<Guid> restrictedItems, IEnumerable<Guid> prioritizedItems,
+            ItemPool pool, Dictionary<string, Guid> itemMap,
+            Random random, LogLayer log)
 		{
-			var returnList = new List<Guid>();
+            var relevantKeyLog = log.AddChild("Relevant Key");
+
+            var relevantKeys = new Dictionary<Guid, int>();
 			foreach (var item in pool.AvailableItems().Distinct().Where(key => !restrictedItems.Contains(key)))
 			{
 				var testInventory = inventory.Expand(KeyManager.GetKey(item));
 
 				var tempSearcher = new FillSearcher(searcher);
 
-				var combinedReachableKeys = untracableKeys.Union(tempSearcher.ContinueSearch(startNode, testInventory, node => (node is KeyNode) && !testInventory.myNodes.Contains(node)));
+                var currentKeyLog = relevantKeyLog.AddChild(KeyManager.GetKeyName(item));
 
-				var retracableKeys = combinedReachableKeys.AsParallel().Where(node => node == endNode || NodeTraverser.PathExists(node, startNode, node is EventKeyNode ? testInventory.Expand(node) : testInventory)).ToList();
+                var reachableKeys = new List<NodeBase>();
+                bool searchAgain;
+                do
+                {
+                    // Find all nodes that can be reached with current inventory
+                    reachableKeys.RemoveAll(node => testInventory.myNodes.Contains(node));
+                    reachableKeys.AddRange(tempSearcher.ContinueSearch(startNode, testInventory, node => (node is KeyNode) && !testInventory.myNodes.Contains(node)));
 
-				if (retracableKeys.Any())
-				{
-					returnList.Add(item);
-				}
+                    var combinedReachableKeys = unRetracableKeys.Where(key => !testInventory.myNodes.Contains(key)).Union(reachableKeys);
+                    
+                    searchAgain = false;
+
+                    var retracableKeys = combinedReachableKeys.AsParallel().Where(node => node == endNode || NodeTraverser.PathExists(node, startNode, node is EventKeyNode ? testInventory.Expand(node) : testInventory)).ToList();
+
+                    if (retracableKeys.Any())
+                    {
+                        // If any events can be reached, add to inventory and update search before continuing
+                        var retracableEvents = retracableKeys.Where(node => node is EventKeyNode).ToList();
+                        if (retracableEvents.Any())
+                        {
+                            currentKeyLog.AddChild("Retracable events", retracableEvents.Select(node => node.Name()));
+                            testInventory.myNodes.AddRange(retracableEvents);
+
+                            searchAgain = true;
+
+                            continue;
+                        }
+
+                        var randomizedLocations = retracableKeys.Where(key => key is RandomKeyNode randomNode).Select(key => key as RandomKeyNode).OrderBy(x => x.id).ToList();
+
+                        // Pick up any items already filled in on the map and update search before placing any items
+                        var preFilledLocations = randomizedLocations.Where(loc => itemMap.ContainsKey(loc.myRandomKeyIdentifier));
+
+                        if (preFilledLocations.Any())
+                        {
+                            currentKeyLog.AddChild("Prefilled locations", preFilledLocations.Select(node => $"{node.Name()} - {node.GetKeyName()}"));
+                            testInventory.myNodes.AddRange(preFilledLocations);
+
+                            searchAgain = true;
+
+                            continue;
+                        }
+
+                        var keyCount = retracableKeys.Count();
+
+                        currentKeyLog.AddChild($"Locations", retracableKeys.Select(key => key.Name()));
+
+                        relevantKeys.Add(item, keyCount);
+                    }
+                } while (searchAgain) ;
 			}
+            
+            // Filter out any keys that by rules cannot be placed in any available location
+            var filteredKeys = relevantKeys.Where(key => availableLocations.Any(location => KeyAllowedInLocation(key.Key, options, itemMap, pool, location)));
 
-			return returnList;
+            relevantKeyLog.AddChild("Filtered Keys", filteredKeys.Select(key => $"{KeyManager.GetKeyName(key.Key)}"));
+
+            if (!filteredKeys.Any())
+            {
+                return Guid.Empty;
+            }
+
+            // Correlate prioritized and relevant keys
+            var prioritizedRelevantKeys = filteredKeys.Where(key => prioritizedItems.Contains(key.Key));
+
+            if (prioritizedRelevantKeys.Any())
+            {
+                relevantKeys = prioritizedRelevantKeys.ToDictionary(key => key.Key, key => key.Value);
+            }
+
+            relevantKeyLog.AddChild("Prioritized Relevant Keys", filteredKeys.Select(key => $"{KeyManager.GetKeyName(key.Key)}"));
+
+            // Avoid sprawl calculation bias if value is not set or there is only one item to choose from
+            if (options.SprawlFactor == 0 || relevantKeys.Count < 2)
+            {
+                var item = pool.PeekAmong(relevantKeys.Keys, random);
+
+                relevantKeyLog.Message += $" : {KeyManager.GetKeyName(item)}";
+                relevantKeyLog.AddChild($"Item pulled from pool: {KeyManager.GetKeyName(item)}");
+
+                return item;
+            }
+
+            relevantKeyLog.AddChild($"Sprawl factor: {options.SprawlFactor}");
+
+            // Translate sprawl factor to a decimal
+            var sprawl = ((double)options.SprawlFactor)/10;
+
+            // Weight is numberOfLocationsUnlocked ^ sprawl
+            var keysGroupedByWeight = relevantKeys.ToLookup(key => key.Value, key => key.Key).Select(group => new KeyValuePair<double, List<Guid>>(Math.Pow(group.Key, sprawl), group.ToList())).OrderBy(pair => pair.Key);
+
+            relevantKeyLog.AddChild("Keys with weights", keysGroupedByWeight.SelectMany(group => group.Value.Select(key => $"{KeyManager.GetKeyName(key)} - {group.Key}")));
+
+            // Sum of all weights
+            var weightSum = keysGroupedByWeight.Select(pair => pair.Key).Sum();
+
+            relevantKeyLog.AddChild($"Sum of Weights: {weightSum}");
+
+            // Pick random number between 0 and weightSum
+            var weightRandom = random.NextDouble()* weightSum;
+
+            relevantKeyLog.AddChild($"Weight Random: {weightRandom}");
+
+            // Remove weight from random value until it goes below zero then pick that key
+            foreach (var key in keysGroupedByWeight)
+            {
+                weightRandom -= key.Key;
+                if (weightRandom < 0)
+                {
+                    relevantKeyLog.AddChild($"Chosen weight: {key.Key}");
+
+                    var item = pool.PeekAmong(key.Value, random);
+
+                    relevantKeyLog.Message += $" : {KeyManager.GetKeyName(item)}";
+                    relevantKeyLog.AddChild($"Selected Key: {KeyManager.GetKeyName(item)}");
+
+                    return item;
+                }
+            }
+
+            relevantKeyLog.AddChild($"No Key Selected");
+            return Guid.Empty;
 		}
-	}
+    }
 }

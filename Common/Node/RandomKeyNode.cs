@@ -23,7 +23,23 @@ namespace Common.Node
             return KeyManager.GetMappedRandomKeyName(myRandomKeyIdentifier);
         }
 
+        public void SetOriginalKey(BaseKey key)
+        {
+            myOriginalKeyId = key?.Id;
+        }
+
+        public BaseKey GetOriginalKey()
+        {
+            if (myOriginalKeyId.HasValue)
+            {
+                return KeyManager.GetKey(myOriginalKeyId.Value);
+            }
+
+            return null;
+        }
+
         public string myRandomKeyIdentifier;
+        public Guid? myOriginalKeyId;
 
         public override string Name()
         {

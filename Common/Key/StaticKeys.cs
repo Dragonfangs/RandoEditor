@@ -68,5 +68,30 @@ namespace Common.Key
 
         public static readonly Guid RandomizeEnemies        = Guid.Parse("784c6b79-e1a3-4ad8-a3fa-1b2495171d39");
 
+        public static bool IsMajorItem(Guid? id)
+        {
+            return (id == Morph ||
+                id == PowerGrip ||
+                id == SpeedBooster ||
+                id == HiJump ||
+                id == ScrewAttack ||
+                id == SpaceJump ||
+                id == Bombs ||
+                id == LongBeam ||
+                id == ChargeBeam ||
+                id == IceBeam ||
+                id == WaveBeam ||
+                id == PlasmaBeam ||
+                id == VariaSuit ||
+                id == GravitySuit);
+        }
+
+        public static bool IsMinorItem(Guid? id)
+        {
+            return (id == Missile ||
+                id == SuperMissile ||
+                id == PowerBombs ||
+                id == ETank);
+        }
     }
 }

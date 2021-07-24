@@ -91,6 +91,8 @@ namespace RandomizerClient
                     var placer = new ItemPlacer();
 					var options = new FillOptions();
 					options.gameCompletion = gameCompletion;
+                    options.majorSwap = FillOptions.ItemSwap.GlobalPool;
+                    options.minorSwap = FillOptions.ItemSwap.LocalPool;
                     // options.noEarlyPbs = true;
 
                     var result = false;
@@ -225,7 +227,7 @@ namespace RandomizerClient
 		public static FillOptions.GameCompletion ChooseGameCompletion()
 		{
 			Console.WriteLine($"Game Completion?");
-            Console.WriteLine($"1. Unchanged");
+            Console.WriteLine($"1. No Logic");
             Console.WriteLine($"2. Beatable (default)");
 			Console.WriteLine($"3. 100%");
 
@@ -236,7 +238,7 @@ namespace RandomizerClient
 				switch (result)
 				{
                     case 1:
-                        return FillOptions.GameCompletion.Unchanged;
+                        return FillOptions.GameCompletion.NoLogic;
                     case 2:
                         return FillOptions.GameCompletion.Beatable;
                     case 3:
