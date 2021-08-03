@@ -572,22 +572,23 @@ namespace Randomizer
             if (options.minorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMinorItem(key) && !StaticKeys.IsMinorItem(location.myOriginalKeyId))
                 return false;
 
-            if (options.majorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMinorItem(key) && StaticKeys.IsMajorItem(location.myOriginalKeyId))
+            if (options.majorSwap == FillOptions.ItemSwap.LocalPool && !StaticKeys.IsMajorItem(key) && StaticKeys.IsMajorItem(location.myOriginalKeyId))
             {
                 var allRandomKeyNodes = keyNodes.Where(node => node is RandomKeyNode randomNode).Select(node => node as RandomKeyNode).OrderBy(node => node.id);
-                var openMajorRandomKeyNodes = allRandomKeyNodes.Where(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier) && StaticKeys.IsMajorItem(node.myOriginalKeyId));
+                var openMajorRandomKeyNodes = allRandomKeyNodes.Count(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier) && StaticKeys.IsMajorItem(node.myOriginalKeyId));
 
-                if (pool.AvailableItems().Count(item => StaticKeys.IsMajorItem(item)) <= openMajorRandomKeyNodes.Count())
+                var poolCount = pool.AvailableItems().Count(item => StaticKeys.IsMajorItem(item));
+                if (openMajorRandomKeyNodes <= poolCount)
                     return false;
             }
 
-            if (options.minorSwap == FillOptions.ItemSwap.LocalPool && StaticKeys.IsMajorItem(key) && StaticKeys.IsMinorItem(location.myOriginalKeyId))
+            if (options.minorSwap == FillOptions.ItemSwap.LocalPool && !StaticKeys.IsMinorItem(key) && StaticKeys.IsMinorItem(location.myOriginalKeyId))
             {
                 var allRandomKeyNodes = keyNodes.Where(node => node is RandomKeyNode randomNode).Select(node => node as RandomKeyNode).OrderBy(node => node.id);
                 var openMinorRandomKeyNodes = allRandomKeyNodes.Count(node => !itemMap.ContainsKey(node.myRandomKeyIdentifier) && StaticKeys.IsMinorItem(node.myOriginalKeyId));
 
                 var poolCount = pool.AvailableItems().Count(item => StaticKeys.IsMinorItem(item));
-                if (poolCount <= openMinorRandomKeyNodes)
+                if (openMinorRandomKeyNodes <= poolCount)
                     return false;
             }
 
@@ -754,6 +755,14 @@ namespace Randomizer
                             currentKeyLog.AddChild("Retracable events", retracableEvents.Select(node => node.Name()));
                             testInventory.myNodes.AddRange(retracableEvents);
 
+                            // Prioritize item that will let you beat the game
+                            if (options.gameCompletion == FillOptions.GameCompletion.Beatable && retracableEvents.Any(node => node == endNode))
+                            {
+                                relevantKeyLog.Message += $" : {KeyManager.GetKeyName(item)}";
+
+                                return item;
+                            }
+
                             searchAgain = true;
 
                             continue;
@@ -780,7 +789,7 @@ namespace Randomizer
 
                         relevantKeys.Add(item, keyCount);
                     }
-                } while (searchAgain) ;
+                } while (searchAgain);
 			}
             
             // Filter out any keys that by rules cannot be placed in any available location
