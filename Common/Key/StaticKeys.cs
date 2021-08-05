@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common.Node;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,6 +68,26 @@ namespace Common.Key
         public static readonly Guid ChozoStatueHints        = Guid.Parse("399e6355-c2d2-42e5-bc89-33175c5bb3a9");
 
         public static readonly Guid RandomizeEnemies        = Guid.Parse("784c6b79-e1a3-4ad8-a3fa-1b2495171d39");
+
+        public static bool IsMajorLocation(NodeBase node)
+        {
+            var randomNode = node as RandomKeyNode;
+
+            if (randomNode == null)
+                return false;
+
+            return IsMajorItem(randomNode.myOriginalKeyId);
+        }
+
+        public static bool IsMinorLocation(NodeBase node)
+        {
+            var randomNode = node as RandomKeyNode;
+
+            if (randomNode == null)
+                return false;
+
+            return IsMinorItem(randomNode.myOriginalKeyId);
+        }
 
         public static bool IsMajorItem(Guid? id)
         {

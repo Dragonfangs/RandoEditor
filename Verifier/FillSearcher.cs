@@ -29,8 +29,16 @@ namespace Verifier
 			isNew = other.isNew;
 		}
 
-		public List<NodeBase> NewSearch(NodeBase startNode, Inventory anInventory, Func<NodeBase, bool> predicate)
+        public List<NodeBase> NewSearch(NodeBase startNode, Inventory anInventory)
+        {
+            return NewSearch(startNode, anInventory, node => true);
+        }
+
+        public List<NodeBase> NewSearch(NodeBase startNode, Inventory anInventory, Func<NodeBase, bool> predicate)
 		{
+            if (startNode == null)
+                return new List<NodeBase>();
+
 			searchQueue.Clear();
 			visitedNodes.Clear();
 			lockedNodes.Clear();
@@ -42,23 +50,38 @@ namespace Verifier
 			return Search(anInventory, predicate);
 		}
 
-		public List<NodeBase> ContinueSearch(NodeBase startNode, Inventory anInventory, Func<NodeBase, bool> predicate)
-		{
-			if (isNew)
-				return NewSearch(startNode, anInventory, predicate);
+        public List<NodeBase> ContinueSearch(NodeBase startNode, Inventory anInventory)
+        {
+            return ContinueSearch(startNode, anInventory, node => true);
+        }
 
-			searchQueue.Clear();
-			
-			foreach (var node in lockedNodes)
-			{
-				visitedNodes.Remove(node);
-				searchQueue.Enqueue(node);
-			}
+        public List<NodeBase> ContinueSearch(NodeBase startNode, Inventory anInventory, Func<NodeBase, bool> predicate)
+        {
+            if (isNew)
+                return NewSearch(startNode, anInventory, predicate);
 
-			lockedNodes.Clear();
+            return ContinueSearch(anInventory, predicate);
+        }
 
-			return Search(anInventory, predicate);
-		}
+        public List<NodeBase> ContinueSearch(Inventory anInventory)
+        {
+            return ContinueSearch(anInventory, node => true);
+        }
+
+        public List<NodeBase> ContinueSearch(Inventory anInventory, Func<NodeBase, bool> predicate)
+        {
+            searchQueue.Clear();
+
+            foreach (var node in lockedNodes)
+            {
+                visitedNodes.Remove(node);
+                searchQueue.Enqueue(node);
+            }
+
+            lockedNodes.Clear();
+
+            return Search(anInventory, predicate);
+        }
 
 		private List<NodeBase> Search(Inventory anInventory, Func<NodeBase, bool> predicate)
 		{
