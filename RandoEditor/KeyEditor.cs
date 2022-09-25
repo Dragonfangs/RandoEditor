@@ -3,6 +3,7 @@ using Common.Key.Requirement;
 using Common.Node;
 using RandoEditor.SaveData;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -20,7 +21,27 @@ namespace RandoEditor
 			GenerateLists();
 		}
 
-		private void GenerateLists()
+        public class SortStaticKeys : IComparer
+        {
+            // Call CaseInsensitiveComparer.Compare with the parameters reversed.
+            int IComparer.Compare(object x, object y)
+            {
+                if (x is ListViewItem item1 && y is ListViewItem item2)
+                {
+                    if (item1.Tag is BaseKey key1 && item2.Tag is BaseKey key2)
+                    {
+                        if (key1.Static && !key2.Static)
+                            return -1;
+
+                        if (!key1.Static && key2.Static)
+                            return 1;
+                    }
+                }
+                return 0;
+            }
+        }
+
+        private void GenerateLists()
 		{
 			listViewCustoms.Items.Clear();
 			listViewEvents.Items.Clear();
@@ -44,6 +65,9 @@ namespace RandoEditor
 				listViewEvents.Items.Add(item);
 			}
 
+            listViewEvents.ListViewItemSorter = new SortStaticKeys();
+            listViewEvents.Sort();
+
 			foreach (var key in KeyManager.GetSettingKeys())
 			{
 				var item = new ListViewItem(key.Name);
@@ -55,7 +79,10 @@ namespace RandoEditor
 				listViewSettings.Items.Add(item);
 			}
 
-			listViewCustoms.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
+            listViewSettings.ListViewItemSorter = new SortStaticKeys();
+            listViewSettings.Sort();
+
+            listViewCustoms.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
 			listViewEvents.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
 			listViewSettings.Columns[0].AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
 

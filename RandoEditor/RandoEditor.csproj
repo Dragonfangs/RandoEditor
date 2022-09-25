@@ -87,6 +87,8 @@
     <Compile Include="Node\NodeImageFactory.cs" />
     <Compile Include="Node\NodeRenderer.cs" />
     <Compile Include="Node\NodeRenderOptions.cs" />
+    <Compile Include="Node\NodeSearchBoxItem.cs" />
+    <Compile Include="Node\NodeSearcher.cs" />
     <Compile Include="SaveData\SaveManager.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>

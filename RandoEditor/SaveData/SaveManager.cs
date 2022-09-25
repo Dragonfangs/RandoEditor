@@ -13,7 +13,7 @@ namespace RandoEditor.SaveData
 	{
 		public static Common.SaveData.SaveData Data { get; set; } = new Common.SaveData.SaveData();
 
-		public static Version CurrentVersion { get; set; } = new Version(0, 2, 0, 0);
+		public static Version CurrentVersion { get; set; } = new Version(0, 3, 0, 0);
 
 		private static SaveManager instance = new SaveManager();
 
@@ -119,12 +119,30 @@ namespace RandoEditor.SaveData
 				change = true;
 			}
 
-			Data.version = CurrentVersion;
+            if (Data.version < new Version(0, 3, 0, 0))
+            {
+                Handle0300Update();
+                change = true;
+            }
+
+            Data.version = CurrentVersion;
 
 			return change;
 		}
 
-		private static void Handle0200Update()
+        private static void Handle0300Update()
+        {
+            // Add New Keys
+            var disableInfiniteBombJump = new BaseKey(new Guid("647b3ffa-61e7-4ed2-92d7-01ac8ad7b4ff"), "Disable Infinite Bomb Jump");
+            disableInfiniteBombJump.Static = true;
+            Data.BasicKeys["Setting"][disableInfiniteBombJump.Id] = disableInfiniteBombJump;
+
+            var disableWallJump = new BaseKey(new Guid("8f26b3ad-7672-4ff3-8e21-011c63094202"), "Disable Wall Jump");
+            disableWallJump.Static = true;
+            Data.BasicKeys["Setting"][disableWallJump.Id] = disableWallJump;
+        }
+
+        private static void Handle0200Update()
 		{
 			// Set specified keys to static
 			var staticKeys = new List<Guid>

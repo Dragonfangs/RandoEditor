@@ -20,7 +20,8 @@ namespace Common.Key.Requirement
 		public abstract void RestoreMemento(RequirementMemento memento);
 
 		public abstract bool ContainsKey(Guid id);
-		public abstract bool RemoveKey(Guid id);
+        public abstract bool ContainsKeyWithString(string searchString);
+        public abstract bool RemoveKey(Guid id);
 		public abstract void ReplaceKey(Guid id, Guid otherId);
 
 		public static Requirement CreateFromMemento(RequirementMemento memento)

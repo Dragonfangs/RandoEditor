@@ -11,6 +11,7 @@ using RandoEditor.SaveData;
 using RandoEditor.Node;
 using Common.Memento;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace RandoEditor
 {
@@ -30,7 +31,8 @@ namespace RandoEditor
 		private AreaMap myMap = new AreaMap();
 		private NodeRenderer myNodeRenderer = new NodeRenderer();
 		private NodeCollection myNodeCollection = new NodeCollection();
-		private List<NodeMemento> myMementos = new List<NodeMemento>();
+        private NodeSearcher myNodeSearcher = null;
+        private List<NodeMemento> myMementos = new List<NodeMemento>();
 		private NodeBase carriedNode = null;
 		private NodeBase selectedNode = null;
 		private Connection selectedConnection = null;
@@ -49,14 +51,25 @@ namespace RandoEditor
 		private float baseZoomScale = 0.1f;
 		private float ZoomScale { get { return baseZoomScale * (Utility.CalcDiag(panel1.Width, panel1.Height) / 1000f); } set { baseZoomScale = value; } }
 
-		private PointerState myPointerState = PointerState.None;
+        private bool traveling = false;
+        private Vector2 travelOrigPos = new Vector2(0, 0);
+        private Vector2 travelTargetPos = new Vector2(0, 0);
+        private float travelOrigZoom = 0f;
+        private float travelTargetZoom = 0f;
+        private DateTime travelStartTime = DateTime.MinValue;
+        private TimeSpan travelTime = TimeSpan.MinValue;
+
+        private PointerState myPointerState = PointerState.None;
 
 		public Form1()
 		{
 			if (!SaveManager.Open((string)Properties.Settings.Default["LatestFilePath"]))
 				SaveManager.New();
 
-			InitializeComponent();
+            myNodeSearcher = new NodeSearcher(myNodeCollection);
+            myNodeSearcher.SearchComplete += NodeSearchComplete;
+
+            InitializeComponent();
 
 			LoadData();
 
@@ -267,7 +280,30 @@ namespace RandoEditor
 			// DrawDebugMessage($"{mopusepos.x}, {mopusepos.y}", graphicsObj);
 		}
 
-		private void UpdatePointerState()
+        private void Travel()
+        {
+            try
+            {
+                traveling = true;
+                while (DateTime.Now < travelStartTime + travelTime)
+                {
+                    var currentTime = DateTime.Now - travelStartTime;
+                    var timeFraction = (float)(currentTime.TotalMilliseconds / travelTime.TotalMilliseconds);
+
+                    baseZoomScale = travelOrigZoom + (travelTargetZoom - travelOrigZoom) * timeFraction;
+                    var targetPos = travelOrigPos + (travelTargetPos - travelOrigPos) * timeFraction;
+
+                    imageBasePos = new Vector2(panel1.Size.Width / 2, panel1.Size.Height / 2) / ZoomScale - targetPos;
+                    panel1.Invalidate();
+                }
+            }
+            finally
+            {
+                traveling = false;
+            }
+        }
+
+        private void UpdatePointerState()
 		{
 			if (chkNewBlankNode.Checked)
 			{
@@ -960,5 +996,59 @@ namespace RandoEditor
 				}
 			}
 		}
-	}
+
+        private void txtNodeSearch_TextChanged(object sender, EventArgs e)
+        {
+            myNodeSearcher.Search(txtNodeSearch.Text);
+        }
+
+        private delegate void NodeSearchCompleteDelegate();
+        private void NodeSearchComplete()
+        {
+            if (lstNodeSearchResult.InvokeRequired)
+            {
+                Invoke(new NodeSearchCompleteDelegate(NodeSearchComplete));
+                return;
+            }
+
+            lstNodeSearchResult.Items.Clear();
+
+            foreach (var item in myNodeSearcher.SearchResult)
+            {
+                if (item is LockNode)
+                {
+
+                    lstNodeSearchResult.Items.Add(new NodeSearchBoxItem($"Lock {item.myPos.x} : {item.myPos.y}", item));
+                }
+
+                if (item is KeyNode key)
+                {
+                    lstNodeSearchResult.Items.Add(new NodeSearchBoxItem(key.Name(), key));
+                }
+            }
+        }
+
+        private void lstNodeSearchResult_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (lstNodeSearchResult.SelectedItem != null)
+            {
+                var selectedItem = (NodeSearchBoxItem)lstNodeSearchResult.SelectedItem;
+                var targetNode = selectedItem?.Node;
+                if (targetNode != null)
+                {
+                    selectedNode = targetNode;
+                    UpdateNodeSettings();
+
+                    travelOrigPos = new Vector2(panel1.Size.Width / 2, panel1.Size.Height / 2) / ZoomScale - imageBasePos;
+                    travelOrigZoom = baseZoomScale;
+                    travelStartTime = DateTime.Now;
+                    travelTargetPos = targetNode.myPos;
+                    travelTargetZoom = 0.3f;
+                    travelTime = TimeSpan.FromMilliseconds(400);
+
+                    Task.Run(() => Travel());
+                }
+            }
+        }
+    }
 }

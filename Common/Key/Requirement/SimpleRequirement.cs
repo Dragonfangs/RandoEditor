@@ -51,7 +51,12 @@ namespace Common.Key.Requirement
 			return myKeyId == id;
 		}
 
-		public override bool RemoveKey(Guid id)
+        public override bool ContainsKeyWithString(string searchString)
+        {
+            return KeyManager.GetKeyName(myKeyId).ToLowerInvariant().Contains(searchString.ToLowerInvariant());
+        }
+
+        public override bool RemoveKey(Guid id)
 		{
 			if (myKeyId != id)
 				return false;

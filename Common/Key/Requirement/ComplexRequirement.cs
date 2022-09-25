@@ -68,8 +68,13 @@ namespace Common.Key.Requirement
 			return myRequirements.Any(req => req.ContainsKey(id));
 		}
 
-		// Returns true if Requirement became obsolete because of the removal
-		public override bool RemoveKey(Guid id)
+        public override bool ContainsKeyWithString(string searchString)
+        {
+            return myRequirements.Any(req => req.ContainsKeyWithString(searchString));
+        }
+
+        // Returns true if Requirement became obsolete because of the removal
+        public override bool RemoveKey(Guid id)
 		{
 			if (!myRequirements.Any())
 				return false;

@@ -64,12 +64,20 @@ namespace RandoEditor
             this.chkNewEventNode = new System.Windows.Forms.CheckBox();
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.lstNodeSearchResult = new System.Windows.Forms.ListBox();
+            this.lblNodeSearch = new System.Windows.Forms.Label();
+            this.txtNodeSearch = new System.Windows.Forms.TextBox();
             this.comboBoxOrigItem = new System.Windows.Forms.ComboBox();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel1.SuspendLayout();
+            this.splitContainer2.Panel2.SuspendLayout();
+            this.splitContainer2.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -78,9 +86,10 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.Black;
-            this.panel1.Location = new System.Drawing.Point(-2, -2);
+            this.panel1.Location = new System.Drawing.Point(3, 3);
+            this.panel1.Margin = new System.Windows.Forms.Padding(0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(747, 646);
+            this.panel1.Size = new System.Drawing.Size(632, 635);
             this.panel1.TabIndex = 0;
             this.panel1.SizeChanged += new System.EventHandler(this.panel1_SizeChanged);
             this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
@@ -98,7 +107,7 @@ namespace RandoEditor
             this.comboBoxEvent.FormattingEnabled = true;
             this.comboBoxEvent.Location = new System.Drawing.Point(1, 3);
             this.comboBoxEvent.Name = "comboBoxEvent";
-            this.comboBoxEvent.Size = new System.Drawing.Size(168, 21);
+            this.comboBoxEvent.Size = new System.Drawing.Size(171, 21);
             this.comboBoxEvent.TabIndex = 3;
             this.comboBoxEvent.SelectedIndexChanged += new System.EventHandler(this.comboBoxEvent_SelectedIndexChanged);
             // 
@@ -186,7 +195,7 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Right)));
             this.lockPanelLogic1.Location = new System.Drawing.Point(-2, -1);
             this.lockPanelLogic1.Name = "lockPanelLogic1";
-            this.lockPanelLogic1.Size = new System.Drawing.Size(174, 640);
+            this.lockPanelLogic1.Size = new System.Drawing.Size(177, 640);
             this.lockPanelLogic1.TabIndex = 5;
             // 
             // chkOneWayConnection
@@ -194,7 +203,7 @@ namespace RandoEditor
             this.chkOneWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkOneWayConnection.BackgroundImage = global::RandoEditor.Properties.Resources.SingleConnection;
             this.chkOneWayConnection.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkOneWayConnection.Location = new System.Drawing.Point(12, 186);
+            this.chkOneWayConnection.Location = new System.Drawing.Point(3, 73);
             this.chkOneWayConnection.Name = "chkOneWayConnection";
             this.chkOneWayConnection.Size = new System.Drawing.Size(29, 29);
             this.chkOneWayConnection.TabIndex = 7;
@@ -207,7 +216,7 @@ namespace RandoEditor
             this.chkTwoWayConnection.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkTwoWayConnection.BackgroundImage = global::RandoEditor.Properties.Resources.DoubleConnection;
             this.chkTwoWayConnection.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkTwoWayConnection.Location = new System.Drawing.Point(12, 221);
+            this.chkTwoWayConnection.Location = new System.Drawing.Point(38, 73);
             this.chkTwoWayConnection.Name = "chkTwoWayConnection";
             this.chkTwoWayConnection.Size = new System.Drawing.Size(29, 29);
             this.chkTwoWayConnection.TabIndex = 8;
@@ -221,7 +230,7 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Right)));
             this.txtRandomId.Location = new System.Drawing.Point(1, 3);
             this.txtRandomId.Name = "txtRandomId";
-            this.txtRandomId.Size = new System.Drawing.Size(168, 20);
+            this.txtRandomId.Size = new System.Drawing.Size(171, 20);
             this.txtRandomId.TabIndex = 9;
             this.txtRandomId.TextChanged += new System.EventHandler(this.txtRandomId_TextChanged);
             // 
@@ -230,7 +239,7 @@ namespace RandoEditor
             this.chkNewBlankNode.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkNewBlankNode.BackgroundImage = global::RandoEditor.Properties.Resources.crossroads;
             this.chkNewBlankNode.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkNewBlankNode.Location = new System.Drawing.Point(13, 46);
+            this.chkNewBlankNode.Location = new System.Drawing.Point(3, 3);
             this.chkNewBlankNode.Name = "chkNewBlankNode";
             this.chkNewBlankNode.Size = new System.Drawing.Size(29, 29);
             this.chkNewBlankNode.TabIndex = 6;
@@ -243,7 +252,7 @@ namespace RandoEditor
             this.chkNewLockNode.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkNewLockNode.BackgroundImage = global::RandoEditor.Properties.Resources.keyhole;
             this.chkNewLockNode.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkNewLockNode.Location = new System.Drawing.Point(13, 81);
+            this.chkNewLockNode.Location = new System.Drawing.Point(38, 38);
             this.chkNewLockNode.Name = "chkNewLockNode";
             this.chkNewLockNode.Size = new System.Drawing.Size(29, 29);
             this.chkNewLockNode.TabIndex = 10;
@@ -256,7 +265,7 @@ namespace RandoEditor
             this.chkNewRandomNode.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkNewRandomNode.BackgroundImage = global::RandoEditor.Properties.Resources.question;
             this.chkNewRandomNode.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkNewRandomNode.Location = new System.Drawing.Point(13, 116);
+            this.chkNewRandomNode.Location = new System.Drawing.Point(3, 38);
             this.chkNewRandomNode.Name = "chkNewRandomNode";
             this.chkNewRandomNode.Size = new System.Drawing.Size(29, 29);
             this.chkNewRandomNode.TabIndex = 11;
@@ -269,7 +278,7 @@ namespace RandoEditor
             this.chkNewEventNode.Appearance = System.Windows.Forms.Appearance.Button;
             this.chkNewEventNode.BackgroundImage = global::RandoEditor.Properties.Resources.exclamation;
             this.chkNewEventNode.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.chkNewEventNode.Location = new System.Drawing.Point(13, 151);
+            this.chkNewEventNode.Location = new System.Drawing.Point(38, 3);
             this.chkNewEventNode.Name = "chkNewEventNode";
             this.chkNewEventNode.Size = new System.Drawing.Size(29, 29);
             this.chkNewEventNode.TabIndex = 12;
@@ -288,12 +297,12 @@ namespace RandoEditor
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.splitContainer1.Location = new System.Drawing.Point(48, 27);
+            this.splitContainer1.Location = new System.Drawing.Point(12, 27);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.panel1);
+            this.splitContainer1.Panel1.Controls.Add(this.splitContainer2);
             // 
             // splitContainer1.Panel2
             // 
@@ -301,10 +310,72 @@ namespace RandoEditor
             this.splitContainer1.Panel2.Controls.Add(this.comboBoxEvent);
             this.splitContainer1.Panel2.Controls.Add(this.txtRandomId);
             this.splitContainer1.Panel2.Controls.Add(this.lockPanelLogic1);
-            this.splitContainer1.Size = new System.Drawing.Size(931, 646);
-            this.splitContainer1.SplitterDistance = 748;
+            this.splitContainer1.Size = new System.Drawing.Size(967, 646);
+            this.splitContainer1.SplitterDistance = 776;
             this.splitContainer1.SplitterWidth = 5;
             this.splitContainer1.TabIndex = 13;
+            // 
+            // splitContainer2
+            // 
+            this.splitContainer2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.splitContainer2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.splitContainer2.Location = new System.Drawing.Point(-2, -1);
+            this.splitContainer2.Margin = new System.Windows.Forms.Padding(0, 3, 0, 3);
+            this.splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel1
+            // 
+            this.splitContainer2.Panel1.Controls.Add(this.lstNodeSearchResult);
+            this.splitContainer2.Panel1.Controls.Add(this.lblNodeSearch);
+            this.splitContainer2.Panel1.Controls.Add(this.txtNodeSearch);
+            this.splitContainer2.Panel1.Controls.Add(this.chkNewBlankNode);
+            this.splitContainer2.Panel1.Controls.Add(this.chkOneWayConnection);
+            this.splitContainer2.Panel1.Controls.Add(this.chkNewEventNode);
+            this.splitContainer2.Panel1.Controls.Add(this.chkTwoWayConnection);
+            this.splitContainer2.Panel1.Controls.Add(this.chkNewRandomNode);
+            this.splitContainer2.Panel1.Controls.Add(this.chkNewLockNode);
+            // 
+            // splitContainer2.Panel2
+            // 
+            this.splitContainer2.Panel2.Controls.Add(this.panel1);
+            this.splitContainer2.Size = new System.Drawing.Size(774, 645);
+            this.splitContainer2.SplitterDistance = 128;
+            this.splitContainer2.TabIndex = 1;
+            // 
+            // lstNodeSearchResult
+            // 
+            this.lstNodeSearchResult.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lstNodeSearchResult.DisplayMember = "DisplayText";
+            this.lstNodeSearchResult.FormattingEnabled = true;
+            this.lstNodeSearchResult.Location = new System.Drawing.Point(3, 199);
+            this.lstNodeSearchResult.Name = "lstNodeSearchResult";
+            this.lstNodeSearchResult.Size = new System.Drawing.Size(117, 433);
+            this.lstNodeSearchResult.TabIndex = 15;
+            this.lstNodeSearchResult.ValueMember = "Node";
+            this.lstNodeSearchResult.SelectedIndexChanged += new System.EventHandler(this.lstNodeSearchResult_SelectedIndexChanged);
+            // 
+            // lblNodeSearch
+            // 
+            this.lblNodeSearch.AutoSize = true;
+            this.lblNodeSearch.Location = new System.Drawing.Point(3, 152);
+            this.lblNodeSearch.Name = "lblNodeSearch";
+            this.lblNodeSearch.Size = new System.Drawing.Size(44, 13);
+            this.lblNodeSearch.TabIndex = 14;
+            this.lblNodeSearch.Text = "Search:";
+            // 
+            // txtNodeSearch
+            // 
+            this.txtNodeSearch.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtNodeSearch.Location = new System.Drawing.Point(3, 171);
+            this.txtNodeSearch.Name = "txtNodeSearch";
+            this.txtNodeSearch.Size = new System.Drawing.Size(117, 20);
+            this.txtNodeSearch.TabIndex = 13;
+            this.txtNodeSearch.TextChanged += new System.EventHandler(this.txtNodeSearch_TextChanged);
             // 
             // comboBoxOrigItem
             // 
@@ -314,7 +385,7 @@ namespace RandoEditor
             this.comboBoxOrigItem.FormattingEnabled = true;
             this.comboBoxOrigItem.Location = new System.Drawing.Point(0, 30);
             this.comboBoxOrigItem.Name = "comboBoxOrigItem";
-            this.comboBoxOrigItem.Size = new System.Drawing.Size(169, 21);
+            this.comboBoxOrigItem.Size = new System.Drawing.Size(172, 21);
             this.comboBoxOrigItem.TabIndex = 10;
             this.comboBoxOrigItem.SelectedIndexChanged += new System.EventHandler(this.comboBoxOrigItem_SelectedIndexChanged);
             // 
@@ -324,13 +395,7 @@ namespace RandoEditor
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(979, 685);
             this.Controls.Add(this.splitContainer1);
-            this.Controls.Add(this.chkNewEventNode);
-            this.Controls.Add(this.chkNewRandomNode);
-            this.Controls.Add(this.chkNewLockNode);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.chkTwoWayConnection);
-            this.Controls.Add(this.chkOneWayConnection);
-            this.Controls.Add(this.chkNewBlankNode);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.MinimumSize = new System.Drawing.Size(700, 400);
@@ -344,6 +409,11 @@ namespace RandoEditor
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.splitContainer2.Panel1.ResumeLayout(false);
+            this.splitContainer2.Panel1.PerformLayout();
+            this.splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
+            this.splitContainer2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -374,6 +444,10 @@ namespace RandoEditor
 		private ContextMenuStrip contextMenuStrip;
 		private SplitContainer splitContainer1;
         private ComboBox comboBoxOrigItem;
+        private SplitContainer splitContainer2;
+        private TextBox txtNodeSearch;
+        private ListBox lstNodeSearchResult;
+        private Label lblNodeSearch;
     }
 }
 
