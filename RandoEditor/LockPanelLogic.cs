@@ -74,7 +74,7 @@ namespace RandoEditor
 					NumericUpDown.Tag = this;
 
 					NumericUpDown.Minimum = 1;
-					NumericUpDown.Maximum = 9;
+					NumericUpDown.Maximum = 50;
 					NumericUpDown.Increment = 1;
 
 					NumericUpDown.Value = req.myRepeatCount;

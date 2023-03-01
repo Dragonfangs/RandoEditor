@@ -11,7 +11,7 @@ namespace Verifier
 	public class NodeTraverser
 	{
 		private bool fullComplete;
-		private WaveLog myWaveLog;
+		private WaveLog myWaveLog = new WaveLog();
 		private List<NodeBase> globalReachable = new List<NodeBase>();
 
 		public string GetWaveLog()
@@ -103,18 +103,18 @@ namespace Verifier
                 var stepLog = localLog.AddChild($"Step {stepCount++}");
                 stepLog.AddChild(anInventory.GetKeyLog());
 
-				reachableKeys.RemoveAll(node => anInventory.myNodes.Contains(node));
-				reachableKeys.AddRange(currentSearcher.ContinueSearch(startNode, anInventory, node => (node is KeyNode) && !anInventory.myNodes.Contains(node)));
-
-                stepLog.AddChild("Reachable Keys", reachableKeys.Select(key => GetNodeWithKeyName(key)));
-
-                globalReachable = globalReachable.Union(reachableKeys).ToList();
-
                 if (VerifyGoal(startNode, endNode, keyNodes, anInventory) || (baseNode != null && PathExists(startNode, baseNode, anInventory)))
                 {
                     stepLog.AddChild("Goal verified");
                     return (anInventory, log);
                 }
+
+                reachableKeys.RemoveAll(node => anInventory.myNodes.Contains(node));
+				reachableKeys.AddRange(currentSearcher.ContinueSearch(startNode, anInventory, node => (node is KeyNode) && !anInventory.myNodes.Contains(node)));
+
+                stepLog.AddChild("Reachable Keys", reachableKeys.Select(key => GetNodeWithKeyName(key)));
+
+                globalReachable = globalReachable.Union(reachableKeys).ToList();
 
                 var retracableKeys = reachableKeys.AsParallel().Where(node => node == endNode || PathExists(node, startNode, anInventory.Expand(node))).ToList();
 
@@ -187,11 +187,11 @@ namespace Verifier
 			if (fullComplete)
 			{
 				var nodesWithItem = keyNodes.Where(node => node is RandomKeyNode).Select(node => node as RandomKeyNode).Where(node => node.GetKey() != null);
-				return nodesWithItem.All(node => anInventory.myNodes.Contains(node)) && PathExists(startNode, endNode, anInventory);
+				return nodesWithItem.All(node => anInventory.myNodes.Contains(node)) && anInventory.myNodes.Contains(endNode);
 			}
 			else
 			{
-                return PathExists(startNode, endNode, anInventory);
+                return anInventory.myNodes.Contains(endNode);
 			}
 		}
 

@@ -505,7 +505,10 @@ namespace RandoEditor
 			if (e.Button != MouseButtons.Left)
 				return;
 
-			NodeBase newNode = null;
+            if (traveling)
+                return;
+
+            NodeBase newNode = null;
 
 			switch (myPointerState)
 			{
