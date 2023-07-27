@@ -156,12 +156,14 @@
 		"f4e387f0-6780-4da8-857e-dbea447c566d": {
 			"Id": "f4e387f0-6780-4da8-857e-dbea447c566d",
 			"Name": "Can Infinite Bomb Jump",
-			"Repeatable": false
+			"Repeatable": false,
+			"Static": true
 		},
 		"10e88c02-e694-4daf-8348-afdb2ef4c29a": {
 			"Id": "10e88c02-e694-4daf-8348-afdb2ef4c29a",
 			"Name": "Can Wall jump",
-			"Repeatable": false
+			"Repeatable": false,
+			"Static": true
 		},
 		"ed4a621c-0703-4ed8-af77-40b8d74facb5": {
 			"Id": "ed4a621c-0703-4ed8-af77-40b8d74facb5",
