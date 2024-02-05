@@ -1018,9 +1018,13 @@ namespace RandoEditor
 
             foreach (var item in myNodeSearcher.SearchResult)
             {
+                if (item is BlankNode)
+                {
+                    lstNodeSearchResult.Items.Add(new NodeSearchBoxItem($"Blank {item.myPos.x} : {item.myPos.y}", item));
+                }
+
                 if (item is LockNode)
                 {
-
                     lstNodeSearchResult.Items.Add(new NodeSearchBoxItem($"Lock {item.myPos.x} : {item.myPos.y}", item));
                 }
 
