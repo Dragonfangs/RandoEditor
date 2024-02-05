@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.14
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RandoEditor", "RandoEditor\RandoEditor.csproj", "{061FECD6-04EE-41A7-BFC9-9EB57C82B661}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,8 +11,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Verifier", "Verifier\Verifier.csproj", "{A157BE40-AB44-4806-BD1A-670DEDE2824A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{07E29104-B1D6-4A8F-AE7E-8A0934D69166}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VerifierTests", "VerifierTests\VerifierTests.csproj", "{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VerifierClient", "VerifierClient\VerifierClient.csproj", "{E85A9437-A89A-492F-92A0-223C39F69DA3}"
 EndProject
@@ -40,10 +38,6 @@ Global
 		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07E29104-B1D6-4A8F-AE7E-8A0934D69166}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0B17F523-B2B2-4FCB-B1D1-BE0E5CEAEEAB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E85A9437-A89A-492F-92A0-223C39F69DA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E85A9437-A89A-492F-92A0-223C39F69DA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E85A9437-A89A-492F-92A0-223C39F69DA3}.Release|Any CPU.ActiveCfg = Release|Any CPU
