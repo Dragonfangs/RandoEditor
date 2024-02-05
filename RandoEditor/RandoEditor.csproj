@@ -8,10 +8,11 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>RandoEditor</RootNamespace>
     <AssemblyName>RandoEditor</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -223,6 +224,10 @@
     <ProjectReference Include="..\Common\Common.csproj">
       <Project>{07e29104-b1d6-4a8f-ae7e-8a0934d69166}</Project>
       <Name>Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Verifier\Verifier.csproj">
+      <Project>{A157BE40-AB44-4806-BD1A-670DEDE2824A}</Project>
+      <Name>Verifier</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
